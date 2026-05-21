@@ -24,6 +24,7 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
   final ScreenshotController _screenshotController = ScreenshotController();
   final List<TextItem> _textItems = [];
   TextItem? _selectedItem;
+  bool _isSquareWithBlur = true;
 
   final List<Color> _colors = [
     Colors.white,
@@ -55,7 +56,7 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
 
   Future<void> _captureSticker() async {
     setState(() => _selectedItem = null);
-    await Future.delayed(const Duration(milliseconds: 100));
+    await Future.delayed(const Duration(milliseconds: 200));
 
     try {
       final Uint8List? imageBytes = await _screenshotController.capture();
@@ -65,8 +66,10 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
         imageBytes,
         minWidth: 512,
         minHeight: 512,
+        maxWidth: 512,
+        maxHeight: 512,
         format: CompressFormat.webp,
-        quality: 80,
+        quality: 70,
       );
 
       final tempDir = await getTemporaryDirectory();
@@ -93,60 +96,6 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
     }
   }
 
-  Future<void> _exportToWhatsApp() async {
-    final stickerProvider = context.read<StickerProvider>();
-    final packStickers = stickerProvider.currentPack;
-
-    if (packStickers.length < 3) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Need ${3 - packStickers.length} more stickers to create a pack!'),
-          backgroundColor: Colors.orange,
-        ),
-      );
-      return;
-    }
-
-    try {
-      final tempDir = await getTemporaryDirectory();
-      
-      // Use the first sticker in the pack to generate a tray icon
-      final firstStickerBytes = await File(packStickers[0].imagePath).readAsBytes();
-      final Uint8List trayBytes = await FlutterImageCompress.compressWithList(
-        firstStickerBytes,
-        minWidth: 96,
-        minHeight: 96,
-        format: CompressFormat.png,
-        quality: 80,
-      );
-      final trayFile = File('${tempDir.path}/tray_${DateTime.now().millisecondsSinceEpoch}.png');
-      await trayFile.writeAsBytes(trayBytes);
-
-      var stickerPack = WhatsappStickers(
-        identifier: 'mewmer_pack_${DateTime.now().millisecondsSinceEpoch}',
-        name: 'Mewmer Pack',
-        publisher: 'mewmer.com',
-        trayImageFileName: WhatsappStickerImage.fromFile(trayFile.path),
-        publisherWebsite: 'https://mewmer.com',
-        privacyPolicyWebsite: 'https://mewmer.com/privacy',
-        licenseAgreementWebsite: 'https://mewmer.com/license',
-      );
-
-      for (var sticker in packStickers) {
-        stickerPack.addSticker(WhatsappStickerImage.fromFile(sticker.imagePath), ['✨']);
-      }
-
-      await stickerPack.sendToWhatsApp();
-      stickerProvider.clearPack();
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Export Error: $e')),
-        );
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final packLength = context.watch<StickerProvider>().currentPack.length;
@@ -155,7 +104,10 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
       appBar: AppBar(
         title: const Text('Edit Meme'),
         actions: [
-          // Counter for stickers in current pack
+          IconButton(
+            icon: Icon(_isSquareWithBlur ? Icons.crop_square : Icons.crop_original, color: Colors.blueAccent),
+            onPressed: () => setState(() => _isSquareWithBlur = !_isSquareWithBlur),
+          ),
           Center(
             child: Padding(
               padding: const EdgeInsets.only(right: 8.0),
@@ -171,13 +123,7 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
           ),
           IconButton(
             icon: const Icon(Icons.check_circle_outline),
-            tooltip: 'Add to Pack',
             onPressed: _captureSticker,
-          ),
-          IconButton(
-            icon: const Icon(Icons.share),
-            tooltip: 'Export Pack',
-            onPressed: _exportToWhatsApp,
           ),
         ],
       ),
@@ -187,54 +133,12 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
             child: GestureDetector(
               onTap: () => setState(() => _selectedItem = null),
               child: Center(
-                child: AspectRatio(
-                  aspectRatio: 1,
-                  child: Screenshot(
-                    controller: _screenshotController,
-                    child: Stack(
-                      children: [
-                        Positioned.fill(
-                          child: Container(
-                            color: Colors.black,
-                            child: Stack(
-                              fit: StackFit.expand,
-                              children: [
-                                Image.file(widget.imageFile, fit: BoxFit.cover),
-                                BackdropFilter(
-                                  filter: ui.ImageFilter.blur(
-                                    sigmaX: 15,
-                                    sigmaY: 15,
-                                  ),
-                                  child: Container(
-                                    color: Colors.black.withValues(alpha: 0.4),
-                                  ),
-                                ),
-                                Image.file(
-                                  widget.imageFile,
-                                  fit: BoxFit.contain,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        ..._textItems.map(
-                          (item) => DraggableText(
-                            item: item,
-                            isSelected: _selectedItem == item,
-                            onTap: () => setState(() => _selectedItem = item),
-                            onUpdate: () => setState(() {}),
-                            onDelete: () {
-                              setState(() {
-                                _textItems.remove(item);
-                                _selectedItem = null;
-                              });
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+                child: _isSquareWithBlur 
+                  ? AspectRatio(
+                      aspectRatio: 1,
+                      child: _buildEditorCanvas(),
+                    )
+                  : _buildEditorCanvas(),
               ),
             ),
           ),
@@ -243,15 +147,9 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surface,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(24),
-              ),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
               boxShadow: [
-                BoxShadow(
-                  color: Colors.black26,
-                  blurRadius: 10,
-                  offset: const Offset(0, -2),
-                ),
+                BoxShadow(color: Colors.black26, blurRadius: 10, offset: const Offset(0, -2)),
               ],
             ),
             child: Row(
@@ -262,13 +160,8 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
                   icon: const Icon(Icons.text_fields),
                   label: const Text('Add Text'),
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 12,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
               ],
@@ -279,12 +172,57 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
     );
   }
 
+  Widget _buildEditorCanvas() {
+    return Screenshot(
+      controller: _screenshotController,
+      child: Container(
+        color: Colors.transparent,
+        child: Stack(
+          alignment: Alignment.center,
+          fit: _isSquareWithBlur ? StackFit.loose : StackFit.passthrough,
+          children: [
+            if (_isSquareWithBlur)
+              Positioned.fill(
+                child: Container(
+                  color: Colors.black,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Image.file(widget.imageFile, fit: BoxFit.cover),
+                      BackdropFilter(
+                        filter: ui.ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                        child: Container(color: Colors.black.withValues(alpha: 0.4)),
+                      ),
+                      Image.file(widget.imageFile, fit: BoxFit.contain),
+                    ],
+                  ),
+                ),
+              )
+            else
+              Image.file(widget.imageFile, fit: BoxFit.contain),
+            
+            ..._textItems.map((item) => DraggableText(
+              item: item,
+              isSelected: _selectedItem == item,
+              onTap: () => setState(() => _selectedItem = item),
+              onUpdate: () => setState(() {}),
+              onDelete: () {
+                setState(() {
+                  _textItems.remove(item);
+                  _selectedItem = null;
+                });
+              },
+            )),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildPropertyPanel() {
     return Container(
       padding: const EdgeInsets.all(16),
-      color: Theme.of(
-        context,
-      ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+      color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -321,9 +259,7 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
                     color: color,
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: _selectedItem!.color == color
-                          ? Colors.blue
-                          : Colors.grey,
+                      color: _selectedItem!.color == color ? Colors.blue : Colors.grey,
                       width: 2,
                     ),
                     boxShadow: [

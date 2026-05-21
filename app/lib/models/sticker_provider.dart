@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 
 class Sticker {
@@ -13,9 +14,16 @@ class Sticker {
 class StickerProvider extends ChangeNotifier {
   final List<Sticker> _recentStickers = [];
   final List<Sticker> _currentPack = [];
+  String _currentPackName = 'Mewmer Pack';
 
   List<Sticker> get recentStickers => List.unmodifiable(_recentStickers);
   List<Sticker> get currentPack => List.unmodifiable(_currentPack);
+  String get currentPackName => _currentPackName;
+
+  void setPackName(String name) {
+    _currentPackName = name.isEmpty ? 'Mewmer Pack' : name;
+    notifyListeners();
+  }
 
   void addStickerToRecent(String path) {
     _recentStickers.insert(0, Sticker(imagePath: path, createdAt: DateTime.now()));
@@ -29,6 +37,7 @@ class StickerProvider extends ChangeNotifier {
 
   void clearPack() {
     _currentPack.clear();
+    _currentPackName = 'Mewmer Pack';
     notifyListeners();
   }
 }

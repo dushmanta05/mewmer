@@ -19,6 +19,13 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final ImagePicker _picker = ImagePicker();
+  final TextEditingController _packNameController = TextEditingController();
+
+  @override
+  void dispose() {
+    _packNameController.dispose();
+    super.dispose();
+  }
 
   Future<void> _pickImage() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
@@ -32,6 +39,36 @@ class _HomePageState extends State<HomePage> {
         );
       }
     }
+  }
+
+  void _showPackNameDialog(BuildContext context) {
+    final provider = context.read<StickerProvider>();
+    _packNameController.text = provider.currentPackName;
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Pack Name'),
+        content: TextField(
+          controller: _packNameController,
+          decoration: const InputDecoration(hintText: 'Enter pack name'),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              provider.setPackName(_packNameController.text);
+              Navigator.pop(context);
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _exportToWhatsApp(BuildContext context) async {
@@ -64,7 +101,7 @@ class _HomePageState extends State<HomePage> {
 
       var stickerPack = WhatsappStickers(
         identifier: 'mewmer_pack_${DateTime.now().millisecondsSinceEpoch}',
-        name: 'Mewmer Pack',
+        name: stickerProvider.currentPackName,
         publisher: 'mewmer.com',
         trayImageFileName: WhatsappStickerImage.fromFile(trayFile.path),
         publisherWebsite: 'https://mewmer.com',
@@ -73,7 +110,6 @@ class _HomePageState extends State<HomePage> {
       );
 
       for (var sticker in packStickers) {
-        // Passing exactly 1 emoji which is safest
         stickerPack.addSticker(WhatsappStickerImage.fromFile(sticker.imagePath), ['✨']);
       }
 
@@ -117,7 +153,6 @@ class _HomePageState extends State<HomePage> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const SizedBox(height: 20),
-              // App Bar styled title
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
@@ -144,30 +179,47 @@ class _HomePageState extends State<HomePage> {
               ),
               const SizedBox(height: 20),
               
-              // Recent Stickers Section
               if (recentStickers.isNotEmpty) ...[
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  child: Column(
                     children: [
-                      Text(
-                        'Recent Creations',
-                        style: GoogleFonts.poppins(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                        ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Recent Creations',
+                            style: GoogleFonts.poppins(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          if (currentPack.isNotEmpty)
+                            GestureDetector(
+                              onTap: () => _showPackNameDialog(context),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: currentPack.length >= 3 ? Colors.green : Colors.orange,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  stickerProvider.currentPackName,
+                                  style: const TextStyle(fontSize: 12, color: Colors.white, fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                       if (currentPack.isNotEmpty)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: currentPack.length >= 3 ? Colors.green : Colors.orange,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            'Pack: ${currentPack.length}',
-                            style: const TextStyle(fontSize: 12, color: Colors.white, fontWeight: FontWeight.bold),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 4, right: 8),
+                            child: Text(
+                              '${currentPack.length} stickers in pack',
+                              style: const TextStyle(fontSize: 10, color: Colors.white60),
+                            ),
                           ),
                         ),
                     ],
