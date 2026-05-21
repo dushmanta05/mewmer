@@ -5,9 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:screenshot/screenshot.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:whatsapp_stickers_injector/whatsapp_stickers.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:provider/provider.dart';
+import 'package:image/image.dart' as img;
 import '../models/text_item.dart';
 import '../models/sticker_provider.dart';
 import '../widgets/draggable_text.dart';
@@ -24,7 +24,6 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
   final ScreenshotController _screenshotController = ScreenshotController();
   final List<TextItem> _textItems = [];
   TextItem? _selectedItem;
-  bool _isSquareWithBlur = true;
 
   final List<Color> _colors = [
     Colors.white,
@@ -54,24 +53,34 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
 
   Future<void> _captureSticker() async {
     setState(() => _selectedItem = null);
-    await Future.delayed(const Duration(milliseconds: 200));
+    await Future.delayed(const Duration(milliseconds: 300));
 
     try {
       final Uint8List? imageBytes = await _screenshotController.capture();
       if (imageBytes == null) return;
 
+      // 1. Force exact 512x512 using 'image' package
+      img.Image? decoded = img.decodeImage(imageBytes);
+      if (decoded == null) return;
+      
+      img.Image resized = img.copyResize(
+        decoded, 
+        width: 512, 
+        height: 512, 
+        interpolation: img.Interpolation.linear
+      );
+      
+      final Uint8List rawResizedBytes = Uint8List.fromList(img.encodePng(resized));
+
+      // 2. Compress to WebP using flutter_image_compress for efficiency
       final Uint8List webpBytes = await FlutterImageCompress.compressWithList(
-        imageBytes,
-        minWidth: 512,
-        minHeight: 512,
-        maxWidth: 512,
-        maxHeight: 512,
+        rawResizedBytes,
         format: CompressFormat.webp,
-        quality: 70,
+        quality: 40, // Extreme safety quality
       );
 
       final tempDir = await getTemporaryDirectory();
-      final String fileName = 'sticker_${DateTime.now().millisecondsSinceEpoch}.webp';
+      final String fileName = 's_${DateTime.now().millisecondsSinceEpoch}.webp';
       final stickerFile = File('${tempDir.path}/$fileName');
       await stickerFile.writeAsBytes(webpBytes);
 
@@ -81,7 +90,7 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
         stickerProvider.addToCurrentPack(stickerFile.path);
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Sticker added to pack!')),
+          const SnackBar(content: Text('Added to Pack!')),
         );
         Navigator.pop(context);
       }
@@ -102,10 +111,6 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
       appBar: AppBar(
         title: const Text('Edit Meme'),
         actions: [
-          IconButton(
-            icon: Icon(_isSquareWithBlur ? Icons.crop_square : Icons.crop_original, color: Colors.blueAccent),
-            onPressed: () => setState(() => _isSquareWithBlur = !_isSquareWithBlur),
-          ),
           Center(
             child: Padding(
               padding: const EdgeInsets.only(right: 8.0),
@@ -131,12 +136,10 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
             child: GestureDetector(
               onTap: () => setState(() => _selectedItem = null),
               child: Center(
-                child: _isSquareWithBlur 
-                  ? AspectRatio(
-                      aspectRatio: 1,
-                      child: _buildEditorCanvas(),
-                    )
-                  : _buildEditorCanvas(),
+                child: AspectRatio(
+                  aspectRatio: 1,
+                  child: _buildEditorCanvas(),
+                ),
               ),
             ),
           ),
@@ -173,46 +176,29 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
   Widget _buildEditorCanvas() {
     return Screenshot(
       controller: _screenshotController,
-      child: Container(
-        color: Colors.transparent,
-        child: Stack(
-          alignment: Alignment.center,
-          fit: _isSquareWithBlur ? StackFit.loose : StackFit.passthrough,
-          children: [
-            if (_isSquareWithBlur)
-              Positioned.fill(
-                child: Container(
-                  color: Colors.black,
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      Image.file(widget.imageFile, fit: BoxFit.cover),
-                      BackdropFilter(
-                        filter: ui.ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                        child: Container(color: Colors.black.withValues(alpha: 0.4)),
-                      ),
-                      Image.file(widget.imageFile, fit: BoxFit.contain),
-                    ],
-                  ),
-                ),
-              )
-            else
-              Image.file(widget.imageFile, fit: BoxFit.contain),
-            
-            ..._textItems.map((item) => DraggableText(
-              item: item,
-              isSelected: _selectedItem == item,
-              onTap: () => setState(() => _selectedItem = item),
-              onUpdate: () => setState(() {}),
-              onDelete: () {
-                setState(() {
-                  _textItems.remove(item);
-                  _selectedItem = null;
-                });
-              },
-            )),
-          ],
-        ),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.file(widget.imageFile, fit: BoxFit.cover),
+          BackdropFilter(
+            filter: ui.ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+            child: Container(color: Colors.black.withValues(alpha: 0.2)),
+          ),
+          Image.file(widget.imageFile, fit: BoxFit.contain),
+          
+          ..._textItems.map((item) => DraggableText(
+            item: item,
+            isSelected: _selectedItem == item,
+            onTap: () => setState(() => _selectedItem = item),
+            onUpdate: () => setState(() {}),
+            onDelete: () {
+              setState(() {
+                _textItems.remove(item);
+                _selectedItem = null;
+              });
+            },
+          )),
+        ],
       ),
     );
   }
