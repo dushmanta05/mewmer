@@ -7,7 +7,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:whatsapp_stickers_injector/whatsapp_stickers.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'package:provider/provider.dart';
 import '../models/text_item.dart';
+import '../models/sticker_provider.dart';
 import '../widgets/draggable_text.dart';
 
 class MemeEditorPage extends StatefulWidget {
@@ -51,11 +53,8 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
     });
   }
 
-  Future<void> _exportSticker() async {
-    setState(() {
-      _selectedItem = null;
-    });
-
+  Future<void> _captureSticker() async {
+    setState(() => _selectedItem = null);
     await Future.delayed(const Duration(milliseconds: 100));
 
     try {
@@ -71,22 +70,61 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
       );
 
       final tempDir = await getTemporaryDirectory();
-      final stickerFile = File('${tempDir.path}/sticker.webp');
+      final String fileName = 'sticker_${DateTime.now().millisecondsSinceEpoch}.webp';
+      final stickerFile = File('${tempDir.path}/$fileName');
       await stickerFile.writeAsBytes(webpBytes);
 
+      if (mounted) {
+        final stickerProvider = context.read<StickerProvider>();
+        stickerProvider.addStickerToRecent(stickerFile.path);
+        stickerProvider.addToCurrentPack(stickerFile.path);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Sticker added to pack!')),
+        );
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _exportToWhatsApp() async {
+    final stickerProvider = context.read<StickerProvider>();
+    final packStickers = stickerProvider.currentPack;
+
+    if (packStickers.length < 3) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Need ${3 - packStickers.length} more stickers to create a pack!'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    try {
+      final tempDir = await getTemporaryDirectory();
+      
+      // Use the first sticker in the pack to generate a tray icon
+      final firstStickerBytes = await File(packStickers[0].imagePath).readAsBytes();
       final Uint8List trayBytes = await FlutterImageCompress.compressWithList(
-        imageBytes,
+        firstStickerBytes,
         minWidth: 96,
         minHeight: 96,
         format: CompressFormat.png,
         quality: 80,
       );
-      final trayFile = File('${tempDir.path}/tray.png');
+      final trayFile = File('${tempDir.path}/tray_${DateTime.now().millisecondsSinceEpoch}.png');
       await trayFile.writeAsBytes(trayBytes);
 
       var stickerPack = WhatsappStickers(
         identifier: 'mewmer_pack_${DateTime.now().millisecondsSinceEpoch}',
-        name: 'mewmer',
+        name: 'Mewmer Pack',
         publisher: 'mewmer.com',
         trayImageFileName: WhatsappStickerImage.fromFile(trayFile.path),
         publisherWebsite: 'https://mewmer.com',
@@ -94,33 +132,53 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
         licenseAgreementWebsite: 'https://mewmer.com/license',
       );
 
-      stickerPack.addSticker(WhatsappStickerImage.fromFile(stickerFile.path), [
-        '😊',
-      ]);
-      stickerPack.addSticker(WhatsappStickerImage.fromFile(stickerFile.path), [
-        '😎',
-      ]);
-      stickerPack.addSticker(WhatsappStickerImage.fromFile(stickerFile.path), [
-        '🔥',
-      ]);
+      for (var sticker in packStickers) {
+        stickerPack.addSticker(WhatsappStickerImage.fromFile(sticker.imagePath), ['✨']);
+      }
 
       await stickerPack.sendToWhatsApp();
+      stickerProvider.clearPack();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Export Error: $e')),
+        );
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final packLength = context.watch<StickerProvider>().currentPack.length;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Edit Meme'),
         actions: [
-          IconButton(icon: const Icon(Icons.share), onPressed: _exportSticker),
+          // Counter for stickers in current pack
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.only(right: 8.0),
+              child: CircleAvatar(
+                radius: 12,
+                backgroundColor: packLength >= 3 ? Colors.green : Colors.orange,
+                child: Text(
+                  '$packLength',
+                  style: const TextStyle(fontSize: 12, color: Colors.white),
+                ),
+              ),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.check_circle_outline),
+            tooltip: 'Add to Pack',
+            onPressed: _captureSticker,
+          ),
+          IconButton(
+            icon: const Icon(Icons.share),
+            tooltip: 'Export Pack',
+            onPressed: _exportToWhatsApp,
+          ),
         ],
       ),
       body: Column(

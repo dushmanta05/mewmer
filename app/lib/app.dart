@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'models/sticker_provider.dart';
 import 'screens/home_page.dart';
 
 class MewmerApp extends StatelessWidget {
@@ -6,17 +8,20 @@ class MewmerApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'mewmer',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.deepPurple,
-          brightness: Brightness.dark,
+    return ChangeNotifierProvider(
+      create: (_) => StickerProvider(),
+      child: MaterialApp(
+        title: 'mewmer',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: Colors.deepPurple,
+            brightness: Brightness.dark,
+          ),
+          useMaterial3: true,
         ),
-        useMaterial3: true,
+        home: const HomePage(),
       ),
-      home: const HomePage(),
     );
   }
 }
