@@ -226,6 +226,36 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.remove_circle_outline),
+                onPressed: () {
+                  setState(() {
+                    if (_selectedItem!.fontSize > 8) {
+                      _selectedItem!.fontSize -= 2;
+                    }
+                  });
+                },
+              ),
+              Text(
+                'Size: ${_selectedItem!.fontSize.toInt()}',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              IconButton(
+                icon: const Icon(Icons.add_circle_outline),
+                onPressed: () {
+                  setState(() {
+                    if (_selectedItem!.fontSize < 100) {
+                      _selectedItem!.fontSize += 2;
+                    }
+                  });
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(

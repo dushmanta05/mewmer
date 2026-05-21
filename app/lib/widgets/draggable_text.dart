@@ -48,10 +48,8 @@ class _DraggableTextState extends State<DraggableText> {
           widget.onTap();
           setState(() {
             if (details.pointerCount == 1) {
-              // Dragging
               widget.item.position += details.focalPointDelta;
             } else if (details.pointerCount > 1) {
-              // Scaling and Rotation
               widget.item.scale *= details.scale;
               widget.item.rotation += details.rotation;
             }
@@ -84,7 +82,7 @@ class _DraggableTextState extends State<DraggableText> {
                         autofocus: true,
                         style: widget.item.fontStyle.copyWith(
                           color: widget.item.color,
-                          fontSize: 24,
+                          fontSize: widget.item.fontSize,
                         ),
                         onSubmitted: (val) {
                           setState(() {
@@ -99,7 +97,7 @@ class _DraggableTextState extends State<DraggableText> {
                       widget.item.text,
                       style: widget.item.fontStyle.copyWith(
                         color: widget.item.color,
-                        fontSize: 24,
+                        fontSize: widget.item.fontSize,
                         fontWeight: FontWeight.bold,
                       ),
                     ),

@@ -7,6 +7,7 @@ class TextItem {
   TextStyle fontStyle;
   double scale;
   double rotation;
+  double fontSize;
 
   TextItem({
     required this.text,
@@ -15,5 +16,6 @@ class TextItem {
     required this.fontStyle,
     this.scale = 1.0,
     this.rotation = 0.0,
+    this.fontSize = 24.0,
   });
 }
