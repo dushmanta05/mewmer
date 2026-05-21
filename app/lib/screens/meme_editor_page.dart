@@ -36,8 +36,6 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
 
   final List<TextStyle> _fonts = [
     GoogleFonts.poppins(),
-    GoogleFonts.roboto(),
-    GoogleFonts.bebasNeue(),
     GoogleFonts.caveat(),
   ];
 
