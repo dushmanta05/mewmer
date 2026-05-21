@@ -230,26 +230,46 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               IconButton(
-                icon: const Icon(Icons.remove_circle_outline),
+                icon: const Icon(Icons.rotate_left),
                 onPressed: () {
                   setState(() {
-                    if (_selectedItem!.fontSize > 8) {
-                      _selectedItem!.fontSize -= 2;
-                    }
+                    _selectedItem!.rotation -= 0.15;
                   });
                 },
               ),
-              Text(
-                'Size: ${_selectedItem!.fontSize.toInt()}',
-                style: const TextStyle(fontWeight: FontWeight.bold),
+              Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.remove_circle_outline),
+                    onPressed: () {
+                      setState(() {
+                        if (_selectedItem!.fontSize > 8) {
+                          _selectedItem!.fontSize -= 2;
+                        }
+                      });
+                    },
+                  ),
+                  Text(
+                    'Size: ${_selectedItem!.fontSize.toInt()}',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.add_circle_outline),
+                    onPressed: () {
+                      setState(() {
+                        if (_selectedItem!.fontSize < 100) {
+                          _selectedItem!.fontSize += 2;
+                        }
+                      });
+                    },
+                  ),
+                ],
               ),
               IconButton(
-                icon: const Icon(Icons.add_circle_outline),
+                icon: const Icon(Icons.rotate_right),
                 onPressed: () {
                   setState(() {
-                    if (_selectedItem!.fontSize < 100) {
-                      _selectedItem!.fontSize += 2;
-                    }
+                    _selectedItem!.rotation += 0.15;
                   });
                 },
               ),
