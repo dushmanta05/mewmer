@@ -32,9 +32,9 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _pickImage() async {
     if (_isPickingImage) return;
-    
+
     setState(() => _isPickingImage = true);
-    
+
     try {
       final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
       if (image != null && mounted) {
@@ -47,9 +47,9 @@ class _HomePageState extends State<HomePage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Picker Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Picker Error: $e')));
       }
     } finally {
       if (mounted) {
@@ -61,7 +61,7 @@ class _HomePageState extends State<HomePage> {
   void _showPackNameDialog(BuildContext context) {
     final provider = context.read<StickerProvider>();
     _packNameController.text = provider.currentPackName;
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -97,7 +97,9 @@ class _HomePageState extends State<HomePage> {
     if (packStickers.length < 3) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Need ${3 - packStickers.length} more stickers to create a pack!'),
+          content: Text(
+            'Need ${3 - packStickers.length} more stickers to create a pack!',
+          ),
           backgroundColor: Colors.orange,
         ),
       );
@@ -108,15 +110,20 @@ class _HomePageState extends State<HomePage> {
 
     try {
       final tempDir = await getTemporaryDirectory();
-      
-      final firstStickerBytes = await File(packStickers[0].imagePath).readAsBytes();
+
+      final firstStickerBytes = await File(
+        packStickers[0].imagePath,
+      ).readAsBytes();
       img.Image? decoded = img.decodeImage(firstStickerBytes);
       if (decoded == null) throw 'Could not decode sticker for tray icon';
-      
+
       img.Image trayResized = img.copyResize(decoded, width: 96, height: 96);
-      final Uint8List trayPngBytes = Uint8List.fromList(img.encodePng(trayResized));
-      
-      final String trayFileName = 't_${DateTime.now().millisecondsSinceEpoch}.png';
+      final Uint8List trayPngBytes = Uint8List.fromList(
+        img.encodePng(trayResized),
+      );
+
+      final String trayFileName =
+          't_${DateTime.now().millisecondsSinceEpoch}.png';
       final trayFile = File('${tempDir.path}/$trayFileName');
       await trayFile.writeAsBytes(trayPngBytes);
 
@@ -131,24 +138,30 @@ class _HomePageState extends State<HomePage> {
       );
 
       for (var sticker in packStickers) {
-        stickerPack.addSticker(WhatsappStickerImage.fromFile(sticker.imagePath), ['✨']);
+        stickerPack.addSticker(
+          WhatsappStickerImage.fromFile(sticker.imagePath),
+          ['✨'],
+        );
       }
 
       await stickerPack.sendToWhatsApp();
-      
+
       await Future.delayed(const Duration(seconds: 2));
       stickerProvider.clearPack();
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Pack shared to WhatsApp!'), backgroundColor: Colors.green),
+          const SnackBar(
+            content: Text('Pack shared to WhatsApp!'),
+            backgroundColor: Colors.green,
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Export Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Export Error: $e')));
       }
     } finally {
       if (mounted) {
@@ -174,7 +187,9 @@ class _HomePageState extends State<HomePage> {
                 end: Alignment.bottomRight,
                 colors: [
                   Theme.of(context).colorScheme.surface,
-                  Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
+                  Theme.of(
+                    context,
+                  ).colorScheme.primaryContainer.withValues(alpha: 0.3),
                 ],
               ),
             ),
@@ -188,7 +203,10 @@ class _HomePageState extends State<HomePage> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Icon(Icons.auto_awesome, color: Colors.deepPurple),
+                        const Icon(
+                          Icons.auto_awesome,
+                          color: Colors.deepPurple,
+                        ),
                         Text(
                           'mewmer',
                           style: GoogleFonts.poppins(
@@ -199,8 +217,13 @@ class _HomePageState extends State<HomePage> {
                         ),
                         if (currentPack.length >= 3)
                           IconButton(
-                            icon: const Icon(Icons.share, color: Colors.greenAccent),
-                            onPressed: isBusy ? null : () => _exportToWhatsApp(context),
+                            icon: const Icon(
+                              Icons.share,
+                              color: Colors.greenAccent,
+                            ),
+                            onPressed: isBusy
+                                ? null
+                                : () => _exportToWhatsApp(context),
                           )
                         else
                           const SizedBox(width: 48),
@@ -208,7 +231,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  
+
                   if (recentStickers.isNotEmpty) ...[
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -226,16 +249,27 @@ class _HomePageState extends State<HomePage> {
                               ),
                               if (currentPack.isNotEmpty)
                                 GestureDetector(
-                                  onTap: isBusy ? null : () => _showPackNameDialog(context),
+                                  onTap: isBusy
+                                      ? null
+                                      : () => _showPackNameDialog(context),
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 4,
+                                    ),
                                     decoration: BoxDecoration(
-                                      color: currentPack.length >= 3 ? Colors.green : Colors.orange,
+                                      color: currentPack.length >= 3
+                                          ? Colors.green
+                                          : Colors.orange,
                                       borderRadius: BorderRadius.circular(20),
                                     ),
                                     child: Text(
                                       stickerProvider.currentPackName,
-                                      style: const TextStyle(fontSize: 12, color: Colors.white, fontWeight: FontWeight.bold),
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -245,10 +279,16 @@ class _HomePageState extends State<HomePage> {
                             Align(
                               alignment: Alignment.centerRight,
                               child: Padding(
-                                padding: const EdgeInsets.only(top: 4, right: 8),
+                                padding: const EdgeInsets.only(
+                                  top: 4,
+                                  right: 8,
+                                ),
                                 child: Text(
                                   '${currentPack.length} stickers in pack',
-                                  style: const TextStyle(fontSize: 10, color: Colors.white60),
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.white60,
+                                  ),
                                 ),
                               ),
                             ),
@@ -269,7 +309,9 @@ class _HomePageState extends State<HomePage> {
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(12),
                               image: DecorationImage(
-                                image: FileImage(File(recentStickers[index].imagePath)),
+                                image: FileImage(
+                                  File(recentStickers[index].imagePath),
+                                ),
                                 fit: BoxFit.cover,
                               ),
                               border: Border.all(color: Colors.white10),
@@ -286,11 +328,18 @@ class _HomePageState extends State<HomePage> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.add_photo_alternate, size: 80, color: Colors.white24),
+                          const Icon(
+                            Icons.add_photo_alternate,
+                            size: 80,
+                            color: Colors.white24,
+                          ),
                           const SizedBox(height: 16),
                           Text(
                             'Start your next meme',
-                            style: GoogleFonts.poppins(fontSize: 16, color: Colors.white70),
+                            style: GoogleFonts.poppins(
+                              fontSize: 16,
+                              color: Colors.white70,
+                            ),
                           ),
                           const SizedBox(height: 40),
                           ElevatedButton.icon(
@@ -319,9 +368,7 @@ class _HomePageState extends State<HomePage> {
           if (isBusy)
             Container(
               color: Colors.black54,
-              child: const Center(
-                child: CircularProgressIndicator(),
-              ),
+              child: const Center(child: CircularProgressIndicator()),
             ),
         ],
       ),

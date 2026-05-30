@@ -4,10 +4,7 @@ class Sticker {
   final String imagePath;
   final DateTime createdAt;
 
-  Sticker({
-    required this.imagePath,
-    required this.createdAt,
-  });
+  Sticker({required this.imagePath, required this.createdAt});
 }
 
 class StickerProvider extends ChangeNotifier {
@@ -25,7 +22,10 @@ class StickerProvider extends ChangeNotifier {
   }
 
   void addStickerToRecent(String path) {
-    _recentStickers.insert(0, Sticker(imagePath: path, createdAt: DateTime.now()));
+    _recentStickers.insert(
+      0,
+      Sticker(imagePath: path, createdAt: DateTime.now()),
+    );
     notifyListeners();
   }
 

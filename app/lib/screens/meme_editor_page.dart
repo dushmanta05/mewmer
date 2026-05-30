@@ -33,10 +33,7 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
     Colors.deepPurple,
   ];
 
-  final List<TextStyle> _fonts = [
-    GoogleFonts.poppins(),
-    GoogleFonts.caveat(),
-  ];
+  final List<TextStyle> _fonts = [GoogleFonts.poppins(), GoogleFonts.caveat()];
 
   void _addText() {
     final newItem = TextItem(
@@ -62,21 +59,22 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
       // 1. Force exact 512x512 using 'image' package
       img.Image? decoded = img.decodeImage(imageBytes);
       if (decoded == null) return;
-      
-      img.Image resized = img.copyResize(
-        decoded, 
-        width: 512, 
-        height: 512, 
-        interpolation: img.Interpolation.linear
-      );
-      
-      final Uint8List rawResizedBytes = Uint8List.fromList(img.encodePng(resized));
 
-      // 2. Compress to WebP using flutter_image_compress for efficiency
+      img.Image resized = img.copyResize(
+        decoded,
+        width: 512,
+        height: 512,
+        interpolation: img.Interpolation.linear,
+      );
+
+      final Uint8List rawResizedBytes = Uint8List.fromList(
+        img.encodePng(resized),
+      );
+
       final Uint8List webpBytes = await FlutterImageCompress.compressWithList(
         rawResizedBytes,
         format: CompressFormat.webp,
-        quality: 40, // Extreme safety quality
+        quality: 40,
       );
 
       final tempDir = await getTemporaryDirectory();
@@ -89,16 +87,16 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
         stickerProvider.addStickerToRecent(stickerFile.path);
         stickerProvider.addToCurrentPack(stickerFile.path);
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Added to Pack!')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Added to Pack!')));
         Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
@@ -136,10 +134,7 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
             child: GestureDetector(
               onTap: () => setState(() => _selectedItem = null),
               child: Center(
-                child: AspectRatio(
-                  aspectRatio: 1,
-                  child: _buildEditorCanvas(),
-                ),
+                child: AspectRatio(aspectRatio: 1, child: _buildEditorCanvas()),
               ),
             ),
           ),
@@ -148,9 +143,15 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surface,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(24),
+              ),
               boxShadow: [
-                BoxShadow(color: Colors.black26, blurRadius: 10, offset: const Offset(0, -2)),
+                BoxShadow(
+                  color: Colors.black26,
+                  blurRadius: 10,
+                  offset: const Offset(0, -2),
+                ),
               ],
             ),
             child: Row(
@@ -161,8 +162,13 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
                   icon: const Icon(Icons.text_fields),
                   label: const Text('Add Text'),
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
               ],
@@ -185,19 +191,21 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
             child: Container(color: Colors.black.withValues(alpha: 0.2)),
           ),
           Image.file(widget.imageFile, fit: BoxFit.contain),
-          
-          ..._textItems.map((item) => DraggableText(
-            item: item,
-            isSelected: _selectedItem == item,
-            onTap: () => setState(() => _selectedItem = item),
-            onUpdate: () => setState(() {}),
-            onDelete: () {
-              setState(() {
-                _textItems.remove(item);
-                _selectedItem = null;
-              });
-            },
-          )),
+
+          ..._textItems.map(
+            (item) => DraggableText(
+              item: item,
+              isSelected: _selectedItem == item,
+              onTap: () => setState(() => _selectedItem = item),
+              onUpdate: () => setState(() {}),
+              onDelete: () {
+                setState(() {
+                  _textItems.remove(item);
+                  _selectedItem = null;
+                });
+              },
+            ),
+          ),
         ],
       ),
     );
@@ -206,7 +214,9 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
   Widget _buildPropertyPanel() {
     return Container(
       padding: const EdgeInsets.all(16),
-      color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+      color: Theme.of(
+        context,
+      ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -293,7 +303,9 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
                     color: color,
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: _selectedItem!.color == color ? Colors.blue : Colors.grey,
+                      color: _selectedItem!.color == color
+                          ? Colors.blue
+                          : Colors.grey,
                       width: 2,
                     ),
                     boxShadow: [
