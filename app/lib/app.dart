@@ -9,7 +9,7 @@ class MewmerApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => StickerProvider(),
+      create: (_) => StickerProvider()..init(),
       child: MaterialApp(
         title: 'mewmer',
         debugShowCheckedModeBanner: false,
