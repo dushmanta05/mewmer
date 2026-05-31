@@ -9,6 +9,12 @@ class TextItem {
   double rotation;
   double fontSize;
 
+  bool isMemeStyle;
+  double outlineWidth;
+  Color outlineColor;
+  bool useCaps;
+  bool hasShadow;
+
   TextItem({
     required this.text,
     required this.position,
@@ -17,5 +23,10 @@ class TextItem {
     this.scale = 1.0,
     this.rotation = 0.0,
     this.fontSize = 24.0,
+    this.isMemeStyle = false,
+    this.outlineWidth = 4.0,
+    this.outlineColor = Colors.black,
+    this.useCaps = false,
+    this.hasShadow = false,
   });
 }

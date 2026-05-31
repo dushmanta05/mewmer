@@ -37,6 +37,59 @@ class _DraggableTextState extends State<DraggableText> {
     super.dispose();
   }
 
+  Widget _buildTextWidget() {
+    final String displayText = widget.item.useCaps
+        ? widget.item.text.toUpperCase()
+        : widget.item.text;
+
+    final TextStyle baseStyle = widget.item.fontStyle.copyWith(
+      fontSize: widget.item.fontSize,
+      fontWeight: FontWeight.bold,
+    );
+
+    if (widget.item.isMemeStyle) {
+      return Stack(
+        children: [
+          Text(
+            displayText,
+            textAlign: TextAlign.center,
+            style: baseStyle.copyWith(
+              color: null,
+              foreground: Paint()
+                ..style = PaintingStyle.stroke
+                ..strokeWidth = widget.item.outlineWidth
+                ..strokeJoin = StrokeJoin.round
+                ..strokeCap = StrokeCap.round
+                ..color = widget.item.outlineColor,
+            ),
+          ),
+          Text(
+            displayText,
+            textAlign: TextAlign.center,
+            style: baseStyle.copyWith(
+              color: widget.item.color,
+              shadows: widget.item.hasShadow
+                  ? [
+                      Shadow(
+                        offset: const Offset(2.0, 2.0),
+                        blurRadius: 3.0,
+                        color: Colors.black.withValues(alpha: 0.6),
+                      ),
+                    ]
+                  : null,
+            ),
+          ),
+        ],
+      );
+    } else {
+      return Text(
+        displayText,
+        textAlign: TextAlign.center,
+        style: baseStyle.copyWith(color: widget.item.color),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Positioned(
@@ -83,7 +136,9 @@ class _DraggableTextState extends State<DraggableText> {
                         style: widget.item.fontStyle.copyWith(
                           color: widget.item.color,
                           fontSize: widget.item.fontSize,
+                          fontWeight: FontWeight.bold,
                         ),
+                        textAlign: TextAlign.center,
                         onSubmitted: (val) {
                           setState(() {
                             widget.item.text = val;
@@ -93,14 +148,7 @@ class _DraggableTextState extends State<DraggableText> {
                         },
                       ),
                     )
-                  : Text(
-                      widget.item.text,
-                      style: widget.item.fontStyle.copyWith(
-                        color: widget.item.color,
-                        fontSize: widget.item.fontSize,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                  : _buildTextWidget(),
             ),
           ),
         ),
