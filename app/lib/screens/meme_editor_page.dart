@@ -56,7 +56,6 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
       final Uint8List? imageBytes = await _screenshotController.capture();
       if (imageBytes == null) return;
 
-      // 1. Force exact 512x512 using 'image' package
       img.Image? decoded = img.decodeImage(imageBytes);
       if (decoded == null) return;
 
@@ -83,14 +82,7 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
       await stickerFile.writeAsBytes(webpBytes);
 
       if (mounted) {
-        final stickerProvider = context.read<StickerProvider>();
-        stickerProvider.addStickerToRecent(stickerFile.path);
-        stickerProvider.addToCurrentPack(stickerFile.path);
-
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Added to Pack!')));
-        Navigator.pop(context);
+        await _showSavePackDialog(stickerFile.path);
       }
     } catch (e) {
       if (mounted) {
@@ -101,29 +93,188 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
     }
   }
 
+  Future<void> _showSavePackDialog(String tempStickerPath) async {
+    final stickerProvider = context.read<StickerProvider>();
+    final packs = stickerProvider.packs;
+
+    String? selectedPackId = packs.isNotEmpty ? packs.first.identifier : null;
+    final textController = TextEditingController();
+    bool createNew = packs.isEmpty;
+
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (dialogContext, setDialogState) {
+            return AlertDialog(
+              title: const Text('Save to Sticker Pack'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (packs.isNotEmpty) ...[
+                      const Text(
+                        'Choose an existing pack:',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      DropdownButtonFormField<String>(
+                        isExpanded: true,
+                        initialValue: selectedPackId,
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                        ),
+                        items: packs.map((pack) {
+                          return DropdownMenuItem<String>(
+                            value: pack.identifier,
+                            child: Text(
+                              '${pack.name} (${pack.stickerPaths.length} stickers)',
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: createNew
+                            ? null
+                            : (val) {
+                                setDialogState(() {
+                                  selectedPackId = val;
+                                });
+                              },
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Checkbox(
+                            value: createNew,
+                            onChanged: (val) {
+                              setDialogState(() {
+                                createNew = val ?? false;
+                                if (createNew) selectedPackId = null;
+                              });
+                            },
+                          ),
+                          const Text('Or create a new pack'),
+                        ],
+                      ),
+                    ],
+                    if (createNew) ...[
+                      const SizedBox(height: 8),
+                      const Text(
+                        'New Pack Name:',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: textController,
+                        decoration: const InputDecoration(
+                          hintText: 'Enter pack name',
+                          border: OutlineInputBorder(),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 12,
+                          ),
+                        ),
+                        autofocus: true,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    final packName = textController.text.trim();
+                    if (createNew && packName.isEmpty) {
+                      ScaffoldMessenger.of(dialogContext).showSnackBar(
+                        const SnackBar(
+                          content: Text('Please enter a pack name'),
+                        ),
+                      );
+                      return;
+                    }
+                    if (!createNew && selectedPackId == null) {
+                      ScaffoldMessenger.of(dialogContext).showSnackBar(
+                        const SnackBar(content: Text('Please select a pack')),
+                      );
+                      return;
+                    }
+
+                    Navigator.pop(dialogContext);
+
+                    showDialog(
+                      context: context,
+                      barrierDismissible: false,
+                      builder: (context) =>
+                          const Center(child: CircularProgressIndicator()),
+                    );
+
+                    try {
+                      String targetPackId;
+                      if (createNew) {
+                        await stickerProvider.createPack(packName);
+                        targetPackId = stickerProvider.packs.first.identifier;
+                      } else {
+                        targetPackId = selectedPackId!;
+                      }
+
+                      await stickerProvider.addStickerToPack(
+                        targetPackId,
+                        tempStickerPath,
+                      );
+
+                      if (mounted) {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Sticker saved and added to pack!'),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                        Navigator.pop(context);
+                      }
+                    } catch (e) {
+                      if (mounted) {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Failed to save sticker: $e')),
+                        );
+                      }
+                    }
+                  },
+                  child: const Text('Save'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final packLength = context.watch<StickerProvider>().currentPack.length;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Edit Meme'),
         actions: [
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.only(right: 8.0),
-              child: CircleAvatar(
-                radius: 12,
-                backgroundColor: packLength >= 3 ? Colors.green : Colors.orange,
-                child: Text(
-                  '$packLength',
-                  style: const TextStyle(fontSize: 12, color: Colors.white),
-                ),
-              ),
-            ),
-          ),
           IconButton(
-            icon: const Icon(Icons.check_circle_outline),
+            icon: const Icon(Icons.check_circle_outline, size: 28),
             onPressed: _captureSticker,
           ),
         ],
@@ -213,10 +364,10 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
 
   Widget _buildPropertyPanel() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       color: Theme.of(
         context,
-      ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+      ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.8),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -270,6 +421,83 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
             ],
           ),
           const SizedBox(height: 8),
+
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ChoiceChip(
+                  label: const Text('Meme Style'),
+                  selected: _selectedItem!.isMemeStyle,
+                  onSelected: (val) {
+                    setState(() {
+                      _selectedItem!.isMemeStyle = val;
+                      if (val) {
+                        _selectedItem!.useCaps = true;
+                        _selectedItem!.hasShadow = true;
+                        _selectedItem!.color = Colors.white;
+                        _selectedItem!.outlineColor = Colors.black;
+                      }
+                    });
+                  },
+                ),
+                const SizedBox(width: 8),
+                ChoiceChip(
+                  label: const Text('ALL CAPS'),
+                  selected: _selectedItem!.useCaps,
+                  onSelected: (val) {
+                    setState(() {
+                      _selectedItem!.useCaps = val;
+                    });
+                  },
+                ),
+                const SizedBox(width: 8),
+                ChoiceChip(
+                  label: const Text('Drop Shadow'),
+                  selected: _selectedItem!.hasShadow,
+                  onSelected: (val) {
+                    setState(() {
+                      _selectedItem!.hasShadow = val;
+                    });
+                  },
+                ),
+              ],
+            ),
+          ),
+
+          if (_selectedItem!.isMemeStyle) ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: Row(
+                children: [
+                  const Text(
+                    'Outline: ',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                  ),
+                  Expanded(
+                    child: Slider(
+                      value: _selectedItem!.outlineWidth,
+                      min: 1.0,
+                      max: 12.0,
+                      divisions: 11,
+                      onChanged: (val) {
+                        setState(() {
+                          _selectedItem!.outlineWidth = val;
+                        });
+                      },
+                    ),
+                  ),
+                  Text(
+                    '${_selectedItem!.outlineWidth.toInt()} px',
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          const SizedBox(height: 8),
+
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
@@ -290,6 +518,7 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
             ),
           ),
           const SizedBox(height: 12),
+
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: _colors.map((color) {
