@@ -39,10 +39,10 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
 
   void _addText() {
     final newItem = TextItem(
-      text: 'Tap to edit',
+      text: 'mewmer.com',
       position: const Offset(100, 100),
       color: Colors.white,
-      fontStyle: _fonts[0],
+      fontStyle: _fonts[1],
     );
     setState(() {
       _textItems.add(newItem);
