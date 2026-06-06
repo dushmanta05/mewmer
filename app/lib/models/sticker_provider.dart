@@ -27,6 +27,7 @@ class StickerPack {
   final List<String> stickerPaths;
   String? trayImagePath;
   final DateTime createdAt;
+  bool? isAnimated;
 
   StickerPack({
     required this.identifier,
@@ -35,6 +36,7 @@ class StickerPack {
     required this.stickerPaths,
     this.trayImagePath,
     required this.createdAt,
+    this.isAnimated,
   });
 
   Map<String, dynamic> toJson() => {
@@ -44,6 +46,7 @@ class StickerPack {
     'stickerPaths': stickerPaths,
     'trayImagePath': trayImagePath,
     'createdAt': createdAt.toIso8601String(),
+    'isAnimated': isAnimated,
   };
 
   factory StickerPack.fromJson(Map<String, dynamic> json) => StickerPack(
@@ -53,6 +56,7 @@ class StickerPack {
     stickerPaths: List<String>.from(json['stickerPaths'] as List),
     trayImagePath: json['trayImagePath'] as String?,
     createdAt: DateTime.parse(json['createdAt'] as String),
+    isAnimated: json['isAnimated'] as bool?,
   );
 }
 
@@ -167,7 +171,7 @@ class StickerProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> addStickerToPack(String packIdentifier, String path) async {
+  Future<void> addStickerToPack(String packIdentifier, String path, {required bool isAnimated}) async {
     String persistentPath = path;
     if (path.contains('/temp/') || path.contains('/cache/')) {
       persistentPath = await persistStickerFile(path);
@@ -176,6 +180,13 @@ class StickerProvider extends ChangeNotifier {
     final packIndex = _packs.indexWhere((p) => p.identifier == packIdentifier);
     if (packIndex != -1) {
       final pack = _packs[packIndex];
+      
+      if (pack.isAnimated != null && pack.isAnimated != isAnimated) {
+        throw 'Cannot mix animated and static stickers in the same pack!';
+      }
+
+      pack.isAnimated ??= isAnimated;
+
       if (!pack.stickerPaths.contains(persistentPath)) {
         pack.stickerPaths.add(persistentPath);
 

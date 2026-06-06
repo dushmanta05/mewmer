@@ -53,12 +53,12 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
   img.Image _processFrame(img.Image frame, img.Image textOverlay) {
     final int w = frame.width;
     final int h = frame.height;
-    
+
     int newWidth = 512;
     int newHeight = 512;
     int xOffset = 0;
     int yOffset = 0;
-    
+
     if (w > h) {
       newWidth = 512;
       newHeight = (h * 512 / w).round();
@@ -68,16 +68,20 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
       newWidth = (w * 512 / h).round();
       xOffset = (512 - newWidth) ~/ 2;
     }
-    
+
     final img.Image resizedFrame = img.copyResize(
       frame,
       width: newWidth,
       height: newHeight,
       interpolation: img.Interpolation.linear,
     );
-    
-    final img.Image baseImage = img.Image(width: 512, height: 512, numChannels: 4);
-    
+
+    final img.Image baseImage = img.Image(
+      width: 512,
+      height: 512,
+      numChannels: 4,
+    );
+
     if (!_useTransparentPadding) {
       final img.Image bg = img.copyResize(
         frame,
@@ -86,7 +90,7 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
         interpolation: img.Interpolation.linear,
       );
       img.gaussianBlur(bg, radius: 5);
-      
+
       img.compositeImage(baseImage, bg);
       final darkOverlay = img.Image(width: 512, height: 512, numChannels: 4);
       img.fill(darkOverlay, color: img.ColorRgba8(0, 0, 0, 50));
@@ -94,10 +98,10 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
     } else {
       img.fill(baseImage, color: img.ColorRgba8(0, 0, 0, 0));
     }
-    
+
     img.compositeImage(baseImage, resizedFrame, dstX: xOffset, dstY: yOffset);
     img.compositeImage(baseImage, textOverlay);
-    
+
     return baseImage;
   }
 
@@ -109,7 +113,8 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
       final Uint8List sourceBytes = await widget.imageFile.readAsBytes();
       if (!mounted) return;
       final img.Image? decodedSource = img.decodeImage(sourceBytes);
-      final bool isAnimated = decodedSource != null && decodedSource.numFrames > 1;
+      final bool isAnimated =
+          decodedSource != null && decodedSource.numFrames > 1;
       Uint8List webpBytes;
 
       if (isAnimated) {
@@ -141,7 +146,8 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
             _hideBackgroundForCapture = true;
           });
           await Future.delayed(const Duration(milliseconds: 100));
-          final Uint8List? textOverlayPngBytes = await _screenshotController.capture();
+          final Uint8List? textOverlayPngBytes = await _screenshotController
+              .capture();
           setState(() {
             _hideBackgroundForCapture = false;
           });
@@ -168,7 +174,9 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
           int accumulatedDuration = 0;
           for (int i = 0; i < decodedSource.frames.length; i += step) {
             final frame = decodedSource.frames[i];
-            final duration = frame.frameDuration > 0 ? frame.frameDuration : 100;
+            final duration = frame.frameDuration > 0
+                ? frame.frameDuration
+                : 100;
 
             if (accumulatedDuration + duration * step > 3000) {
               break;
@@ -176,12 +184,15 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
 
             final img.Image processedFrame = _processFrame(frame, textOverlay);
 
-            final Uint8List pngBytes = Uint8List.fromList(img.encodePng(processedFrame));
-            final Uint8List webpFrameBytes = await FlutterImageCompress.compressWithList(
-              pngBytes,
-              format: CompressFormat.webp,
-              quality: 30,
+            final Uint8List pngBytes = Uint8List.fromList(
+              img.encodePng(processedFrame),
             );
+            final Uint8List webpFrameBytes =
+                await FlutterImageCompress.compressWithList(
+                  pngBytes,
+                  format: CompressFormat.webp,
+                  quality: 30,
+                );
 
             frameWebPs.add(webpFrameBytes);
             frameDurations.add(duration * step);
@@ -192,8 +203,11 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
             }
           }
 
-          webpBytes = WebPMuxer.assembleAnimatedWebP(frameWebPs, frameDurations);
-          
+          webpBytes = WebPMuxer.assembleAnimatedWebP(
+            frameWebPs,
+            frameDurations,
+          );
+
           if (mounted) {
             Navigator.pop(context);
           }
@@ -234,7 +248,7 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
       await stickerFile.writeAsBytes(webpBytes);
 
       if (mounted) {
-        await _showSavePackDialog(stickerFile.path);
+        await _showSavePackDialog(stickerFile.path, isAnimated: isAnimated);
       }
     } catch (e) {
       if (mounted) {
@@ -245,13 +259,13 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
     }
   }
 
-  Future<void> _showSavePackDialog(String tempStickerPath) async {
+  Future<void> _showSavePackDialog(String tempStickerPath, {required bool isAnimated}) async {
     final stickerProvider = context.read<StickerProvider>();
-    final packs = stickerProvider.packs;
+    final compatiblePacks = stickerProvider.packs.where((pack) => pack.isAnimated == null || pack.isAnimated == isAnimated).toList();
 
-    String? selectedPackId = packs.isNotEmpty ? packs.first.identifier : null;
+    String? selectedPackId = compatiblePacks.isNotEmpty ? compatiblePacks.first.identifier : null;
     final textController = TextEditingController();
-    bool createNew = packs.isEmpty;
+    bool createNew = compatiblePacks.isEmpty;
 
     await showDialog(
       context: context,
@@ -266,7 +280,7 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (packs.isNotEmpty) ...[
+                    if (compatiblePacks.isNotEmpty) ...[
                       const Text(
                         'Choose an existing pack:',
                         style: TextStyle(
@@ -285,11 +299,12 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
                             vertical: 8,
                           ),
                         ),
-                        items: packs.map((pack) {
+                        items: compatiblePacks.map((pack) {
+                          final String typeLabel = pack.isAnimated == true ? 'Animated' : (pack.isAnimated == false ? 'Static' : 'New');
                           return DropdownMenuItem<String>(
                             value: pack.identifier,
                             child: Text(
-                              '${pack.name} (${pack.stickerPaths.length} stickers)',
+                              '${pack.name} (${pack.stickerPaths.length} stickers - $typeLabel)',
                               overflow: TextOverflow.ellipsis,
                             ),
                           );
@@ -310,7 +325,11 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
                             onChanged: (val) {
                               setDialogState(() {
                                 createNew = val ?? false;
-                                if (createNew) selectedPackId = null;
+                                if (createNew) {
+                                  selectedPackId = null;
+                                } else if (compatiblePacks.isNotEmpty) {
+                                  selectedPackId = compatiblePacks.first.identifier;
+                                }
                               });
                             },
                           ),
@@ -388,6 +407,7 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
                       await stickerProvider.addStickerToPack(
                         targetPackId,
                         tempStickerPath,
+                        isAnimated: isAnimated,
                       );
 
                       if (mounted) {
@@ -476,7 +496,9 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
                 ),
                 ChoiceChip(
                   avatar: Icon(
-                    _useTransparentPadding ? Icons.check_box_outlined : Icons.blur_on,
+                    _useTransparentPadding
+                        ? Icons.check_box_outlined
+                        : Icons.blur_on,
                     size: 18,
                   ),
                   label: const Text('Transparent Padding'),
@@ -724,7 +746,10 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
 }
 
 class WebPMuxer {
-  static Uint8List assembleAnimatedWebP(List<Uint8List> frameWebPs, List<int> durationsMs) {
+  static Uint8List assembleAnimatedWebP(
+    List<Uint8List> frameWebPs,
+    List<int> durationsMs,
+  ) {
     final List<int> builder = [];
 
     builder.addAll(utf8Encode('RIFF'));
@@ -749,7 +774,7 @@ class WebPMuxer {
       final framePayload = extractWebPFramePayload(frameBytes);
 
       final int anmfPayloadSize = 16 + framePayload.length;
-      
+
       builder.addAll(utf8Encode('ANMF'));
       builder.addAll(uint32ToBytes(anmfPayloadSize));
       builder.addAll(uint24ToBytes(0));
@@ -760,7 +785,7 @@ class WebPMuxer {
       builder.add(0x03);
 
       builder.addAll(framePayload);
-      
+
       if (anmfPayloadSize % 2 == 1) {
         builder.add(0);
       }
@@ -768,7 +793,8 @@ class WebPMuxer {
 
     final Uint8List result = Uint8List.fromList(builder);
     final int fileSize = result.length - 8;
-    final ByteData sizeBytes = ByteData(4)..setUint32(0, fileSize, Endian.little);
+    final ByteData sizeBytes = ByteData(4)
+      ..setUint32(0, fileSize, Endian.little);
     result.setRange(4, 8, sizeBytes.buffer.asUint8List());
 
     return result;
@@ -777,15 +803,21 @@ class WebPMuxer {
   static Uint8List extractWebPFramePayload(Uint8List bytes) {
     final List<int> payload = [];
     int offset = 12;
-    
+
     while (offset < bytes.length) {
       if (offset + 8 > bytes.length) break;
-      final String tag = String.fromCharCodes(bytes.sublist(offset, offset + 4));
-      
-      final int size = ByteData.sublistView(bytes, offset + 4, offset + 8).getUint32(0, Endian.little);
+      final String tag = String.fromCharCodes(
+        bytes.sublist(offset, offset + 4),
+      );
+
+      final int size = ByteData.sublistView(
+        bytes,
+        offset + 4,
+        offset + 8,
+      ).getUint32(0, Endian.little);
       final int padding = size % 2 == 1 ? 1 : 0;
       final int totalChunkSize = 8 + size + padding;
-      
+
       if (offset + totalChunkSize > bytes.length) break;
 
       if (tag == 'VP8 ' || tag == 'VP8L' || tag == 'ALPH') {
@@ -794,7 +826,7 @@ class WebPMuxer {
           payload.add(0);
         }
       }
-      
+
       offset += totalChunkSize;
     }
     return Uint8List.fromList(payload);
