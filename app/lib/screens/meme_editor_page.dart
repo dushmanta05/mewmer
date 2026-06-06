@@ -24,6 +24,7 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
   final ScreenshotController _screenshotController = ScreenshotController();
   final List<TextItem> _textItems = [];
   TextItem? _selectedItem;
+  bool _useTransparentPadding = true;
 
   final List<Color> _colors = [
     Colors.white,
@@ -322,6 +323,19 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
                     ),
                   ),
                 ),
+                ChoiceChip(
+                  avatar: Icon(
+                    _useTransparentPadding ? Icons.check_box_outlined : Icons.blur_on,
+                    size: 18,
+                  ),
+                  label: const Text('Transparent Padding'),
+                  selected: _useTransparentPadding,
+                  onSelected: (val) {
+                    setState(() {
+                      _useTransparentPadding = val;
+                    });
+                  },
+                ),
               ],
             ),
           ),
@@ -336,11 +350,14 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          Image.file(widget.imageFile, fit: BoxFit.cover),
-          BackdropFilter(
-            filter: ui.ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-            child: Container(color: Colors.black.withValues(alpha: 0.2)),
-          ),
+          if (!_useTransparentPadding) ...[
+            Image.file(widget.imageFile, fit: BoxFit.cover),
+            BackdropFilter(
+              filter: ui.ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+              child: Container(color: Colors.black.withValues(alpha: 0.2)),
+            ),
+          ] else
+            Container(color: Colors.transparent),
           Image.file(widget.imageFile, fit: BoxFit.contain),
 
           ..._textItems.map(
