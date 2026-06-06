@@ -25,6 +25,7 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
   final List<TextItem> _textItems = [];
   TextItem? _selectedItem;
   bool _useTransparentPadding = true;
+  bool _hideBackgroundForCapture = false;
 
   final List<Color> _colors = [
     Colors.white,
@@ -49,33 +50,183 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
     });
   }
 
+  img.Image _processFrame(img.Image frame, img.Image textOverlay) {
+    final int w = frame.width;
+    final int h = frame.height;
+    
+    int newWidth = 512;
+    int newHeight = 512;
+    int xOffset = 0;
+    int yOffset = 0;
+    
+    if (w > h) {
+      newWidth = 512;
+      newHeight = (h * 512 / w).round();
+      yOffset = (512 - newHeight) ~/ 2;
+    } else if (h > w) {
+      newHeight = 512;
+      newWidth = (w * 512 / h).round();
+      xOffset = (512 - newWidth) ~/ 2;
+    }
+    
+    final img.Image resizedFrame = img.copyResize(
+      frame,
+      width: newWidth,
+      height: newHeight,
+      interpolation: img.Interpolation.linear,
+    );
+    
+    final img.Image baseImage = img.Image(width: 512, height: 512, numChannels: 4);
+    
+    if (!_useTransparentPadding) {
+      final img.Image bg = img.copyResize(
+        frame,
+        width: 512,
+        height: 512,
+        interpolation: img.Interpolation.linear,
+      );
+      img.gaussianBlur(bg, radius: 5);
+      
+      img.compositeImage(baseImage, bg);
+      final darkOverlay = img.Image(width: 512, height: 512, numChannels: 4);
+      img.fill(darkOverlay, color: img.ColorRgba8(0, 0, 0, 50));
+      img.compositeImage(baseImage, darkOverlay);
+    } else {
+      img.fill(baseImage, color: img.ColorRgba8(0, 0, 0, 0));
+    }
+    
+    img.compositeImage(baseImage, resizedFrame, dstX: xOffset, dstY: yOffset);
+    img.compositeImage(baseImage, textOverlay);
+    
+    return baseImage;
+  }
+
   Future<void> _captureSticker() async {
     setState(() => _selectedItem = null);
     await Future.delayed(const Duration(milliseconds: 300));
 
     try {
-      final Uint8List? imageBytes = await _screenshotController.capture();
-      if (imageBytes == null) return;
+      final Uint8List sourceBytes = await widget.imageFile.readAsBytes();
+      if (!mounted) return;
+      final img.Image? decodedSource = img.decodeImage(sourceBytes);
+      final bool isAnimated = decodedSource != null && decodedSource.numFrames > 1;
+      Uint8List webpBytes;
 
-      img.Image? decoded = img.decodeImage(imageBytes);
-      if (decoded == null) return;
+      if (isAnimated) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => const Center(
+            child: Card(
+              child: Padding(
+                padding: EdgeInsets.all(20.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircularProgressIndicator(),
+                    SizedBox(height: 16),
+                    Text(
+                      'Processing animation frames...',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
 
-      img.Image resized = img.copyResize(
-        decoded,
-        width: 512,
-        height: 512,
-        interpolation: img.Interpolation.linear,
-      );
+        try {
+          setState(() {
+            _hideBackgroundForCapture = true;
+          });
+          await Future.delayed(const Duration(milliseconds: 100));
+          final Uint8List? textOverlayPngBytes = await _screenshotController.capture();
+          setState(() {
+            _hideBackgroundForCapture = false;
+          });
 
-      final Uint8List rawResizedBytes = Uint8List.fromList(
-        img.encodePng(resized),
-      );
+          if (textOverlayPngBytes == null) {
+            if (mounted) Navigator.pop(context);
+            return;
+          }
 
-      final Uint8List webpBytes = await FlutterImageCompress.compressWithList(
-        rawResizedBytes,
-        format: CompressFormat.webp,
-        quality: 40,
-      );
+          final img.Image? textOverlay = img.decodePng(textOverlayPngBytes);
+          if (textOverlay == null) {
+            if (mounted) Navigator.pop(context);
+            return;
+          }
+
+          final List<Uint8List> frameWebPs = [];
+          final List<int> frameDurations = [];
+
+          int step = 1;
+          if (decodedSource.numFrames > 20) {
+            step = (decodedSource.numFrames / 20).ceil();
+          }
+
+          int accumulatedDuration = 0;
+          for (int i = 0; i < decodedSource.frames.length; i += step) {
+            final frame = decodedSource.frames[i];
+            final duration = frame.frameDuration > 0 ? frame.frameDuration : 100;
+
+            if (accumulatedDuration + duration * step > 3000) {
+              break;
+            }
+
+            final img.Image processedFrame = _processFrame(frame, textOverlay);
+
+            final Uint8List pngBytes = Uint8List.fromList(img.encodePng(processedFrame));
+            final Uint8List webpFrameBytes = await FlutterImageCompress.compressWithList(
+              pngBytes,
+              format: CompressFormat.webp,
+              quality: 30,
+            );
+
+            frameWebPs.add(webpFrameBytes);
+            frameDurations.add(duration * step);
+            accumulatedDuration += duration * step;
+
+            if (frameWebPs.length >= 20) {
+              break;
+            }
+          }
+
+          webpBytes = WebPMuxer.assembleAnimatedWebP(frameWebPs, frameDurations);
+          
+          if (mounted) {
+            Navigator.pop(context);
+          }
+        } catch (e) {
+          if (mounted) {
+            Navigator.pop(context);
+          }
+          rethrow;
+        }
+      } else {
+        final Uint8List? imageBytes = await _screenshotController.capture();
+        if (imageBytes == null) return;
+
+        img.Image? decoded = img.decodeImage(imageBytes);
+        if (decoded == null) return;
+
+        img.Image resized = img.copyResize(
+          decoded,
+          width: 512,
+          height: 512,
+          interpolation: img.Interpolation.linear,
+        );
+
+        final Uint8List rawResizedBytes = Uint8List.fromList(
+          img.encodePng(resized),
+        );
+
+        webpBytes = await FlutterImageCompress.compressWithList(
+          rawResizedBytes,
+          format: CompressFormat.webp,
+          quality: 40,
+        );
+      }
 
       final tempDir = await getTemporaryDirectory();
       final String fileName = 's_${DateTime.now().millisecondsSinceEpoch}.webp';
@@ -350,7 +501,9 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          if (!_useTransparentPadding) ...[
+          if (_hideBackgroundForCapture)
+            Container(color: Colors.transparent)
+          else if (!_useTransparentPadding) ...[
             Image.file(widget.imageFile, fit: BoxFit.cover),
             BackdropFilter(
               filter: ui.ImageFilter.blur(sigmaX: 5, sigmaY: 5),
@@ -358,7 +511,8 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
             ),
           ] else
             Container(color: Colors.transparent),
-          Image.file(widget.imageFile, fit: BoxFit.contain),
+          if (!_hideBackgroundForCapture)
+            Image.file(widget.imageFile, fit: BoxFit.contain),
 
           ..._textItems.map(
             (item) => DraggableText(
@@ -566,5 +720,109 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
         ],
       ),
     );
+  }
+}
+
+class WebPMuxer {
+  static Uint8List assembleAnimatedWebP(List<Uint8List> frameWebPs, List<int> durationsMs) {
+    final List<int> builder = [];
+
+    builder.addAll(utf8Encode('RIFF'));
+    builder.addAll([0, 0, 0, 0]);
+    builder.addAll(utf8Encode('WEBP'));
+
+    builder.addAll(utf8Encode('VP8X'));
+    builder.addAll(uint32ToBytes(10));
+    builder.add(0x12);
+    builder.addAll([0, 0, 0]);
+    builder.addAll(uint24ToBytes(511));
+    builder.addAll(uint24ToBytes(511));
+
+    builder.addAll(utf8Encode('ANIM'));
+    builder.addAll(uint32ToBytes(6));
+    builder.addAll([0, 0, 0, 0]);
+    builder.addAll(uint16ToBytes(0));
+
+    for (int i = 0; i < frameWebPs.length; i++) {
+      final frameBytes = frameWebPs[i];
+      final durationMs = durationsMs[i];
+      final framePayload = extractWebPFramePayload(frameBytes);
+
+      final int anmfPayloadSize = 16 + framePayload.length;
+      
+      builder.addAll(utf8Encode('ANMF'));
+      builder.addAll(uint32ToBytes(anmfPayloadSize));
+      builder.addAll(uint24ToBytes(0));
+      builder.addAll(uint24ToBytes(0));
+      builder.addAll(uint24ToBytes(511));
+      builder.addAll(uint24ToBytes(511));
+      builder.addAll(uint24ToBytes(durationMs));
+      builder.add(0x03);
+
+      builder.addAll(framePayload);
+      
+      if (anmfPayloadSize % 2 == 1) {
+        builder.add(0);
+      }
+    }
+
+    final Uint8List result = Uint8List.fromList(builder);
+    final int fileSize = result.length - 8;
+    final ByteData sizeBytes = ByteData(4)..setUint32(0, fileSize, Endian.little);
+    result.setRange(4, 8, sizeBytes.buffer.asUint8List());
+
+    return result;
+  }
+
+  static Uint8List extractWebPFramePayload(Uint8List bytes) {
+    final List<int> payload = [];
+    int offset = 12;
+    
+    while (offset < bytes.length) {
+      if (offset + 8 > bytes.length) break;
+      final String tag = String.fromCharCodes(bytes.sublist(offset, offset + 4));
+      
+      final int size = ByteData.sublistView(bytes, offset + 4, offset + 8).getUint32(0, Endian.little);
+      final int padding = size % 2 == 1 ? 1 : 0;
+      final int totalChunkSize = 8 + size + padding;
+      
+      if (offset + totalChunkSize > bytes.length) break;
+
+      if (tag == 'VP8 ' || tag == 'VP8L' || tag == 'ALPH') {
+        payload.addAll(bytes.sublist(offset, offset + 8 + size));
+        if (padding == 1) {
+          payload.add(0);
+        }
+      }
+      
+      offset += totalChunkSize;
+    }
+    return Uint8List.fromList(payload);
+  }
+
+  static List<int> utf8Encode(String str) => str.codeUnits;
+
+  static List<int> uint32ToBytes(int value) {
+    final List<int> bytes = List.filled(4, 0);
+    bytes[0] = value & 0xFF;
+    bytes[1] = (value >> 8) & 0xFF;
+    bytes[2] = (value >> 16) & 0xFF;
+    bytes[3] = (value >> 24) & 0xFF;
+    return bytes;
+  }
+
+  static List<int> uint24ToBytes(int value) {
+    final List<int> bytes = List.filled(3, 0);
+    bytes[0] = value & 0xFF;
+    bytes[1] = (value >> 8) & 0xFF;
+    bytes[2] = (value >> 16) & 0xFF;
+    return bytes;
+  }
+
+  static List<int> uint16ToBytes(int value) {
+    final List<int> bytes = List.filled(2, 0);
+    bytes[0] = value & 0xFF;
+    bytes[1] = (value >> 8) & 0xFF;
+    return bytes;
   }
 }

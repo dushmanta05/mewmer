@@ -46,7 +46,16 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
       img.Image? decoded = img.decodeImage(firstStickerBytes);
       if (decoded == null) throw 'Could not decode sticker for tray icon';
 
-      img.Image trayResized = img.copyResize(decoded, width: 96, height: 96);
+      final bool isAnimated = decoded.numFrames > 1;
+      final img.Image firstFrame = isAnimated ? decoded.frames[0] : decoded;
+      final img.Image staticFrame = img.Image(
+        width: firstFrame.width,
+        height: firstFrame.height,
+        numChannels: 4,
+      );
+      img.compositeImage(staticFrame, firstFrame);
+
+      img.Image trayResized = img.copyResize(staticFrame, width: 96, height: 96);
       final Uint8List trayPngBytes = Uint8List.fromList(
         img.encodePng(trayResized),
       );
@@ -64,6 +73,7 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
         publisherWebsite: 'https://mewmer.com',
         privacyPolicyWebsite: 'https://mewmer.com/privacy',
         licenseAgreementWebsite: 'https://mewmer.com/license',
+        animatedStickerPack: isAnimated,
       );
 
       for (var stickerPath in pack.stickerPaths) {
