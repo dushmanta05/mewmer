@@ -95,62 +95,92 @@ class _DraggableTextState extends State<DraggableText> {
     return Positioned(
       left: widget.item.position.dx,
       top: widget.item.position.dy,
-      child: GestureDetector(
-        onTap: widget.onTap,
-        onScaleUpdate: (details) {
-          widget.onTap();
-          setState(() {
-            if (details.pointerCount == 1) {
-              widget.item.position += details.focalPointDelta;
-            } else if (details.pointerCount > 1) {
-              widget.item.scale *= details.scale;
-              widget.item.rotation += details.rotation;
-            }
-          });
-          widget.onUpdate();
-        },
-        onDoubleTap: () {
-          setState(() {
-            _isEditing = true;
-          });
-        },
-        onLongPress: widget.onDelete,
-        child: Container(
-          decoration: BoxDecoration(
-            border: widget.isSelected
-                ? Border.all(
-                    color: Colors.blue.withValues(alpha: 0.5),
-                    width: 1,
-                  )
-                : null,
-          ),
-          child: Transform.rotate(
-            angle: widget.item.rotation,
-            child: Transform.scale(
-              scale: widget.item.scale,
-              child: _isEditing
-                  ? IntrinsicWidth(
-                      child: TextField(
-                        controller: _controller,
-                        autofocus: true,
-                        style: widget.item.fontStyle.copyWith(
-                          color: widget.item.color,
-                          fontSize: widget.item.fontSize,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        textAlign: TextAlign.center,
-                        onSubmitted: (val) {
-                          setState(() {
-                            widget.item.text = val;
-                            _isEditing = false;
-                          });
-                          widget.onUpdate();
-                        },
-                      ),
-                    )
-                  : _buildTextWidget(),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        color: Colors.transparent,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            GestureDetector(
+              onTap: widget.onTap,
+              onScaleUpdate: (details) {
+                widget.onTap();
+                setState(() {
+                  if (details.pointerCount == 1) {
+                    widget.item.position += details.focalPointDelta;
+                  } else if (details.pointerCount > 1) {
+                    widget.item.scale *= details.scale;
+                    widget.item.rotation += details.rotation;
+                  }
+                });
+                widget.onUpdate();
+              },
+              onDoubleTap: () {
+                setState(() {
+                  _isEditing = true;
+                });
+              },
+              onLongPress: widget.onDelete,
+              child: Container(
+                decoration: BoxDecoration(
+                  border: widget.isSelected
+                      ? Border.all(
+                          color: Colors.blue.withValues(alpha: 0.5),
+                          width: 1,
+                        )
+                      : null,
+                ),
+                child: Transform.rotate(
+                  angle: widget.item.rotation,
+                  child: Transform.scale(
+                    scale: widget.item.scale,
+                    child: _isEditing
+                        ? IntrinsicWidth(
+                            child: TextField(
+                              controller: _controller,
+                              autofocus: true,
+                              style: widget.item.fontStyle.copyWith(
+                                color: widget.item.color,
+                                fontSize: widget.item.fontSize,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              textAlign: TextAlign.center,
+                              onSubmitted: (val) {
+                                setState(() {
+                                  widget.item.text = val;
+                                  _isEditing = false;
+                                });
+                                widget.onUpdate();
+                              },
+                            ),
+                          )
+                        : _buildTextWidget(),
+                  ),
+                ),
+              ),
             ),
-          ),
+            if (widget.isSelected)
+              Positioned(
+                top: -10,
+                right: -10,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: widget.onDelete,
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                    padding: const EdgeInsets.all(4),
+                    child: const Icon(
+                      Icons.close,
+                      color: Colors.white,
+                      size: 14,
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );
