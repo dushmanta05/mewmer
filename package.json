@@ -1,0 +1,12 @@
+{
+  "name": "mewmer",
+  "private": true,
+  "scripts": {
+    "dev": "bash scripts/dev.sh",
+    "dev:backend": "cd server && PORT=3030 go run main.go",
+    "dev:frontend": "cd frontend && pnpm dev",
+    "build:frontend": "cd frontend && pnpm build",
+    "build:backend": "cd server && go build -o mewmer-server .",
+    "check": "cd frontend && pnpm check && cd ../server && go vet ./..."
+  }
+}
