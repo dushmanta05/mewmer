@@ -1,0 +1,16 @@
+# Go binaries
+mewmer-server
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Uploads and temporary files
+uploads/*
+!uploads/.gitkeep
+
+# Environment files
+.env
+.env.*
+!.env.example
