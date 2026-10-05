@@ -1,0 +1,352 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+const featuredPacks = [
+  {
+    id: 'cats-chaotic',
+    title: 'Chaotic Felines Vol. 1',
+    publisher: 'Mewmer Originals',
+    stickersCount: 12,
+    preview: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=400&auto=format&fit=crop&q=80',
+    downloads: '14.2k',
+    isAnimated: false,
+    tag: 'Trending',
+  },
+  {
+    id: 'doge-reactions',
+    title: 'Good Boi Express',
+    publisher: 'DogeLover',
+    stickersCount: 8,
+    preview: 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=400&auto=format&fit=crop&q=80',
+    downloads: '9.8k',
+    isAnimated: false,
+    tag: 'Popular',
+  },
+  {
+    id: 'office-dev-chaos',
+    title: 'Junior Dev Survived',
+    publisher: 'Mewmer Community',
+    stickersCount: 15,
+    preview: 'https://images.unsplash.com/photo-1573865526739-10659fec78a5?w=400&auto=format&fit=crop&q=80',
+    downloads: '22.1k',
+    isAnimated: true,
+    tag: 'Animated',
+  }
+];
+
+const features = [
+  {
+    icon: '⚡',
+    title: 'Zero Latency Studio',
+    desc: 'Render stickers locally in your browser with real-time 60 FPS preview. No loading spinners or server delays.',
+  },
+  {
+    icon: '💬',
+    title: 'Single-Sticker Chat Share',
+    desc: 'Send single stickers directly into any WhatsApp chat. Recipients can tap ⭐ "Add to Favorites" to keep them instantly.',
+  },
+  {
+    icon: '📐',
+    title: 'Official 512×512 WebP Spec',
+    desc: 'Automatically formatted, cropped, and compressed to comply with WhatsApp official transparency and size requirements.',
+  },
+  {
+    icon: '🎬',
+    title: 'GIF & Video Stickers',
+    desc: 'Convert short videos and animated GIFs into WhatsApp-ready looping animated WebP stickers with custom framerates.',
+  },
+  {
+    icon: '📦',
+    title: 'Full Sticker Packs',
+    desc: 'Bundle 3 to 30 stickers into a published pack that anyone can discover, import, and install to their sticker tray.',
+  },
+  {
+    icon: '🚫',
+    title: '100% Free & No Watermarks',
+    desc: 'No forced watermarks, no account required to generate, and no hidden subscriptions. Your stickers belong to you.',
+  },
+];
+
+const steps = [
+  {
+    step: '01',
+    title: 'Upload or Select Template',
+    desc: 'Choose from hundreds of viral memes or upload your own photo, screenshot, or graphic.',
+    icon: '🖼️',
+  },
+  {
+    step: '02',
+    title: 'Caption & Style in Seconds',
+    desc: 'Add bold top and bottom captions, adjust outlines, pick vibrant fonts, and zoom or reposition.',
+    icon: '✍️',
+  },
+  {
+    step: '03',
+    title: 'Send & Save in WhatsApp',
+    desc: 'Share straight into any chat or download as .WebP. Star the sticker to keep it forever in your tray.',
+    icon: '🚀',
+  },
+];
+
+const faqs = [
+  {
+    q: 'Can I send a single sticker to WhatsApp without creating a full pack?',
+    a: 'Yes! While WhatsApp requires 3 to 30 stickers to add an entire pack to your keyboard tray, you can share individual stickers directly into any WhatsApp chat as a 512x512 WebP. Once sent, anyone can tap the sticker and choose "Add to Favorites" to save it permanently.',
+  },
+  {
+    q: 'What is the required format for WhatsApp stickers?',
+    a: 'WhatsApp requires all stickers to be in WebP format, exactly 512×512 pixels, with an alpha channel for transparency. Static stickers must be under 100 KB, and animated stickers must be under 500 KB with continuous looping.',
+  },
+  {
+    q: 'Do I need to install an app to create stickers?',
+    a: 'No app download is needed. Mewmer runs completely in your web browser on mobile or desktop. You can create and export stickers instantly without installing anything.',
+  },
+  {
+    q: 'Are stickers created on Mewmer public or private?',
+    a: 'Stickers created anonymously without logging in are shared publicly to help the community discover new templates. When you log in with a free account, you can mark your sticker packs as private or public at any time.',
+  },
+];
+---
+
+<Layout
+  title="Mewmer — The Fast, Free WhatsApp Sticker & Meme Generator"
+  description="Create official 512x512 WebP WhatsApp stickers and memes online for free. Send single stickers directly to chats or discover trending sticker packs."
+>
+  <section class="relative pt-16 pb-24 overflow-hidden">
+    <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-brand-600/20 via-brand-900/5 to-transparent pointer-events-none"></div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <div class="text-center max-w-3xl mx-auto">
+        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand-500/10 border border-brand-500/25 text-brand-300 text-xs font-semibold mb-6 shadow-sm">
+          <span>✨</span>
+          <span>Fast, Free & WhatsApp Compliant</span>
+        </div>
+
+        <h1 class="text-4xl sm:text-6xl lg:text-7xl font-display font-extrabold text-white tracking-tight leading-[1.1]">
+          Turn Any Meme or Photo Into a <span class="bg-gradient-to-r from-brand-400 via-meme-cyan to-whatsapp bg-clip-text text-transparent">WhatsApp Sticker</span>
+        </h1>
+
+        <p class="mt-6 text-base sm:text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed">
+          The instant web studio for stickers and memes. Generate official 512×512 WebP stickers, share directly into chats, or explore thousands of community packs.
+        </p>
+
+        <div class="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <a
+            href="/create"
+            class="w-full sm:w-auto px-8 py-4 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 text-white font-bold text-base shadow-xl shadow-brand-500/30 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
+          >
+            <span>🎨</span>
+            <span>Open Sticker Studio — It's Free</span>
+          </a>
+          <a
+            href="#explore"
+            class="w-full sm:w-auto px-8 py-4 rounded-xl bg-dark-card hover:bg-slate-800 border border-dark-border text-slate-200 font-semibold text-base transition-colors flex items-center justify-center gap-2"
+          >
+            <span>📦</span>
+            <span>Browse Packs</span>
+          </a>
+        </div>
+
+        <div class="mt-12 flex flex-wrap items-center justify-center gap-6 sm:gap-10 text-xs text-dark-muted font-medium">
+          <div class="flex items-center gap-2">
+            <span class="text-emerald-400">✓</span>
+            <span>No watermark</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-emerald-400">✓</span>
+            <span>512×512 WebP format</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-emerald-400">✓</span>
+            <span>Direct WhatsApp chat share</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-emerald-400">✓</span>
+            <span>No sign-up required</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-16 max-w-4xl mx-auto">
+        <div class="relative rounded-2xl p-2 bg-gradient-to-b from-brand-500/30 via-dark-border to-transparent shadow-2xl">
+          <div class="bg-dark-card rounded-xl p-6 sm:p-8 border border-dark-border/80">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-8">
+              <div class="flex-1 space-y-4">
+                <span class="px-2.5 py-1 rounded-md bg-whatsapp/20 text-whatsapp border border-whatsapp/30 text-xs font-bold uppercase tracking-wider">
+                  Live Preview Demo
+                </span>
+                <h3 class="text-2xl font-bold font-display text-white">
+                  Crafted for WhatsApp Conversations
+                </h3>
+                <p class="text-sm text-slate-300 leading-relaxed">
+                  Every sticker generated is optimized for clarity, transparent background rendering, and lightweight file size so your chats never lag.
+                </p>
+                <div class="pt-2">
+                  <a
+                    href="/create"
+                    class="inline-flex items-center gap-2 text-sm font-semibold text-brand-400 hover:text-brand-300 transition-colors"
+                  >
+                    <span>Launch Studio to customize your own</span>
+                    <span>→</span>
+                  </a>
+                </div>
+              </div>
+
+              <div class="w-full md:w-72 aspect-square rounded-2xl bg-dark-bg border border-dark-border p-3 flex flex-col items-center justify-center relative overflow-hidden shadow-inner">
+                <img
+                  src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=400&auto=format&fit=crop&q=80"
+                  alt="Sticker demo preview"
+                  class="w-full h-full object-cover rounded-xl"
+                />
+                <div class="absolute inset-x-0 bottom-4 text-center px-2">
+                  <span class="font-impact text-xl sm:text-2xl text-white uppercase drop-shadow-[0_2px_2px_rgba(0,0,0,0.9)] tracking-wide">
+                    ME AT 3 AM
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="py-20 border-y border-dark-border bg-dark-card/30">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-2xl mx-auto mb-16">
+        <h2 class="text-xs font-mono font-bold text-brand-400 uppercase tracking-widest mb-2">Simplicity First</h2>
+        <h3 class="text-3xl sm:text-4xl font-display font-extrabold text-white">How It Works in 3 Simple Steps</h3>
+        <p class="text-sm text-slate-400 mt-2">Start sending custom stickers to friends in under 30 seconds</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {steps.map((s) => (
+          <div class="bg-dark-bg border border-dark-border rounded-2xl p-8 relative group hover:border-brand-500/40 transition-colors">
+            <span class="text-4xl mb-6 block">{s.icon}</span>
+            <span class="text-xs font-mono font-bold text-brand-400 uppercase tracking-widest">{s.step}</span>
+            <h4 class="text-xl font-bold text-white mt-2 mb-3">{s.title}</h4>
+            <p class="text-sm text-slate-400 leading-relaxed">{s.desc}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="py-24">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-2xl mx-auto mb-16">
+        <h2 class="text-xs font-mono font-bold text-brand-400 uppercase tracking-widest mb-2">Built For Creators</h2>
+        <h3 class="text-3xl sm:text-4xl font-display font-extrabold text-white">Why Mewmer is Different</h3>
+        <p class="text-sm text-slate-400 mt-2">Engineered for speed, privacy, and frictionless WhatsApp sharing</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {features.map((f) => (
+          <div class="bg-dark-card border border-dark-border rounded-2xl p-7 hover:border-brand-500/30 hover:shadow-lg transition-all">
+            <div class="w-12 h-12 rounded-xl bg-dark-bg border border-dark-border flex items-center justify-center text-2xl mb-5">
+              {f.icon}
+            </div>
+            <h4 class="text-lg font-bold text-white mb-2">{f.title}</h4>
+            <p class="text-sm text-slate-400 leading-relaxed">{f.desc}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section id="explore" class="py-20 border-t border-dark-border bg-dark-card/20">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-12">
+        <div>
+          <h2 class="text-xs font-mono font-bold text-brand-400 uppercase tracking-widest mb-2">Community</h2>
+          <h3 class="text-3xl font-display font-extrabold text-white">Trending Sticker Packs</h3>
+          <p class="text-sm text-slate-400 mt-1">Discover popular public packs ready to save or customize</p>
+        </div>
+        <a
+          href="/create"
+          class="text-sm font-semibold text-brand-400 hover:text-brand-300 transition-colors inline-flex items-center gap-1.5"
+        >
+          <span>Create Your Own Pack</span>
+          <span>→</span>
+        </a>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        {featuredPacks.map((pack) => (
+          <div class="group bg-dark-card border border-dark-border rounded-2xl p-6 hover:border-brand-500/40 hover:shadow-xl hover:shadow-brand-500/10 transition-all duration-300">
+            <div class="aspect-square rounded-xl overflow-hidden bg-dark-bg border border-dark-border relative flex items-center justify-center p-4">
+              <img
+                src={pack.preview}
+                alt={pack.title}
+                class="w-full h-full object-cover rounded-lg group-hover:scale-105 transition-transform duration-300"
+                loading="lazy"
+              />
+              <span class="absolute top-3 right-3 px-2 py-0.5 rounded bg-brand-600/90 text-white font-bold text-[10px] uppercase tracking-wider">
+                {pack.tag}
+              </span>
+            </div>
+
+            <div class="mt-5 flex items-center justify-between">
+              <div>
+                <h4 class="text-lg font-bold text-white group-hover:text-brand-300 transition-colors">
+                  {pack.title}
+                </h4>
+                <p class="text-xs text-dark-muted mt-0.5">By {pack.publisher} • {pack.stickersCount} stickers</p>
+              </div>
+              <span class="text-xs font-mono text-slate-400 bg-dark-bg px-2.5 py-1 rounded border border-dark-border">
+                {pack.downloads}
+              </span>
+            </div>
+
+            <div class="mt-5 pt-5 border-t border-dark-border flex items-center gap-3">
+              <a
+                href="/create"
+                class="flex-1 py-2.5 rounded-xl bg-whatsapp/15 hover:bg-whatsapp/25 text-whatsapp border border-whatsapp/30 font-semibold text-xs flex items-center justify-center gap-2 transition-colors"
+              >
+                <span>💬</span>
+                <span>Open in Studio</span>
+              </a>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="py-20 border-t border-dark-border">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-12">
+        <h2 class="text-xs font-mono font-bold text-brand-400 uppercase tracking-widest mb-2">Got Questions?</h2>
+        <h3 class="text-3xl font-display font-extrabold text-white">Frequently Asked Questions</h3>
+      </div>
+
+      <div class="space-y-4">
+        {faqs.map((faq) => (
+          <div class="bg-dark-card border border-dark-border rounded-xl p-6">
+            <h4 class="text-base font-bold text-white">{faq.q}</h4>
+            <p class="text-sm text-slate-400 mt-2 leading-relaxed">{faq.a}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="py-20 border-t border-dark-border bg-gradient-to-b from-transparent to-brand-900/10">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <h3 class="text-3xl sm:text-5xl font-display font-extrabold text-white tracking-tight">
+        Ready to Create Your Stickers?
+      </h3>
+      <p class="mt-4 text-base text-slate-300 max-w-xl mx-auto">
+        Join creators making and sharing thousands of WhatsApp stickers every day. Free forever with zero watermark.
+      </p>
+      <div class="mt-8 flex justify-center">
+        <a
+          href="/create"
+          class="px-8 py-4 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 text-white font-bold text-base shadow-xl shadow-brand-500/25 transition-all hover:scale-[1.02] active:scale-[0.98]"
+        >
+          Get Started Now — It's Free
+        </a>
+      </div>
+    </div>
+  </section>
+</Layout>

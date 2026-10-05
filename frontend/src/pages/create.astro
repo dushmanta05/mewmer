@@ -1,0 +1,20 @@
+---
+import Layout from '../layouts/Layout.astro';
+import StickerEditor from '../components/StickerEditor.svelte';
+---
+
+<Layout
+  title="Sticker Studio — Create WhatsApp Stickers Online | Mewmer"
+  description="Generate custom 512x512 WebP WhatsApp stickers from any image or meme. Zero latency, instant export, and direct chat sharing."
+>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div class="mb-8">
+      <h1 class="text-3xl font-display font-extrabold text-white">Sticker Studio</h1>
+      <p class="text-sm text-slate-400 mt-1">
+        Design custom stickers, format automatically to WhatsApp's 512×512 WebP standard, and export with 1 click.
+      </p>
+    </div>
+
+    <StickerEditor client:load />
+  </div>
+</Layout>

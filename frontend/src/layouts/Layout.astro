@@ -1,0 +1,121 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+  type?: string;
+}
+
+const {
+  title = 'Mewmer | WhatsApp Sticker & Meme Generator',
+  description = 'Create, customize, and share WhatsApp stickers and memes instantly. Generate 512x512 WebP sticker packs or export single stickers straight to WhatsApp.',
+  image = '/og-banner.png',
+  type = 'website',
+} = Astro.props;
+
+const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://mewmer.com');
+---
+
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="canonical" href={canonicalURL} />
+    <meta name="generator" content={Astro.generator} />
+
+    <!-- SEO Meta Tags -->
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="robots" content="index, follow" />
+
+    <!-- Open Graph / Facebook / WhatsApp -->
+    <meta property="og:type" content={type} />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={image} />
+
+    <!-- Twitter Cards -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={image} />
+
+    <!-- Google Fonts Preconnect -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@600;700;800&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="flex flex-col min-h-screen bg-dark-bg text-slate-100">
+    <!-- Navbar -->
+    <header class="sticky top-0 z-50 backdrop-blur-md bg-dark-bg/85 border-b border-dark-border">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        <!-- Logo -->
+        <a href="/" class="flex items-center gap-3 group">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-meme-cyan flex items-center justify-center shadow-lg shadow-brand-500/20 group-hover:scale-105 transition-transform duration-200">
+            <span class="text-xl">🐱</span>
+          </div>
+          <div>
+            <span class="text-xl font-display font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-100 to-brand-300 bg-clip-text text-transparent">
+              Mewmer
+            </span>
+            <span class="hidden sm:inline-block ml-2 text-[10px] font-semibold tracking-wider uppercase px-1.5 py-0.5 rounded bg-brand-500/20 text-brand-300 border border-brand-500/30">
+              Stickers
+            </span>
+          </div>
+        </a>
+
+        <!-- Navigation Links -->
+        <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-slate-300">
+          <a href="/" class="hover:text-brand-400 transition-colors">Explore Packs</a>
+          <a href="/create" class="hover:text-brand-400 transition-colors">Sticker Studio</a>
+          <a href="/popular" class="hover:text-brand-400 transition-colors">Trending</a>
+        </nav>
+
+        <!-- CTA Actions -->
+        <div class="flex items-center gap-3">
+          <a
+            href="/create"
+            class="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 text-white shadow-md shadow-brand-500/25 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+          >
+            <span>✨</span>
+            <span>Create Sticker</span>
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow">
+      <slot />
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-dark-border bg-dark-bg/60 py-12 mt-20">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+          <div class="flex items-center gap-3">
+            <span class="text-2xl">🐱</span>
+            <span class="text-lg font-bold font-display text-white">Mewmer</span>
+            <span class="text-xs text-dark-muted">Create. Caption. Chaos.</span>
+          </div>
+          <div class="flex flex-wrap gap-6 text-xs text-dark-muted">
+            <a href="/privacy" class="hover:text-slate-300 transition-colors">Privacy Policy</a>
+            <a href="/terms" class="hover:text-slate-300 transition-colors">Terms of Service</a>
+            <a href="https://github.com/dushmanta05" target="_blank" rel="noopener" class="hover:text-slate-300 transition-colors">GitHub</a>
+          </div>
+          <div class="text-xs text-dark-muted">
+            © {new Date().getFullYear()} Mewmer. All rights reserved.
+          </div>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>
