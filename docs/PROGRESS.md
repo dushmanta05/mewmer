@@ -40,7 +40,7 @@ This document tracks all completed milestones, current system status, mobile tes
 - Updated `index.astro` to dynamically load public packs from `GET /api/v1/packs` with seamless fallback.
 - Built `Layout.astro` and landing page `index.astro` with 3-step WhatsApp sharing walkthrough, feature highlights, and SEO tags.
 - Built dedicated `/studio` page (renamed from `/create` with 301 redirect).
-- Overhauled landing page (`index.astro`) and navbar (`Layout.astro`): Clean `🐱` brand without background box, streamlined navbar with direct `Open Studio` action, updated hero copy to universal Image/GIF Meme & Caption Studio, refreshed 3-step walkthrough, and upgraded FAQ section into widened (`max-w-5xl`), interactive collapsible accordions (`<details>` / `<summary>`).
+- Overhauled landing page (`index.astro`) and navbar (`Layout.astro`): Clean `🐱` brand without background box, streamlined navbar with direct `Open Studio` action, updated hero copy to universal Image/GIF Meme & Caption Studio, refreshed 3-step walkthrough, streamlined hero highlights to three translucent glassy pill badges, and upgraded FAQ section into widened (`max-w-5xl`), interactive collapsible accordions (`<details>` / `<summary>`).
 - Configured Astro dev server with `host: true` on port `3031` for seamless mobile hotspot access.
 - Added `check` script to `frontend/package.json` (`pnpm check` and `pnpm build` passing with 0 errors).
 
