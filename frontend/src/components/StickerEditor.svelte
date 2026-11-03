@@ -1082,7 +1082,7 @@
       <button
         type="button"
         onclick={() => activeTab = 'crop'}
-        class="flex-1 py-2 px-2 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1.5 whitespace-nowrap {activeTab === 'crop' ? 'bg-brand-500/20 text-brand-300 border border-brand-500/30' : 'text-slate-400 hover:text-white'}"
+        class="flex-1 py-2 px-2 text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5 whitespace-nowrap outline-none focus:outline-none focus-visible:outline-none select-none border {activeTab === 'crop' ? 'bg-brand-500/20 text-brand-300 border-brand-500/30' : 'text-slate-400 hover:text-white border-transparent'}"
       >
         <Crop class="w-3.5 h-3.5 shrink-0" />
         <span>Crop</span>
@@ -1091,7 +1091,7 @@
       <button
         type="button"
         onclick={() => activeTab = 'text'}
-        class="flex-1 py-2 px-2 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1.5 whitespace-nowrap {activeTab === 'text' ? 'bg-brand-500/20 text-brand-300 border border-brand-500/30' : 'text-slate-400 hover:text-white'}"
+        class="flex-1 py-2 px-2 text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5 whitespace-nowrap outline-none focus:outline-none focus-visible:outline-none select-none border {activeTab === 'text' ? 'bg-brand-500/20 text-brand-300 border-brand-500/30' : 'text-slate-400 hover:text-white border-transparent'}"
       >
         <Type class="w-3.5 h-3.5 shrink-0" />
         <span>Captions ({textLayers.length})</span>
@@ -1100,7 +1100,7 @@
       <button
         type="button"
         onclick={() => activeTab = 'export'}
-        class="flex-1 py-2 px-2 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1.5 whitespace-nowrap {activeTab === 'export' ? 'bg-brand-500/20 text-brand-300 border border-brand-500/30' : 'text-slate-400 hover:text-white'}"
+        class="flex-1 py-2 px-2 text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5 whitespace-nowrap outline-none focus:outline-none focus-visible:outline-none select-none border {activeTab === 'export' ? 'bg-brand-500/20 text-brand-300 border-brand-500/30' : 'text-slate-400 hover:text-white border-transparent'}"
       >
         <Download class="w-3.5 h-3.5 shrink-0" />
         <span>Export</span>
