@@ -20,7 +20,13 @@ This document tracks all completed milestones, current system status, mobile tes
 ### 2. Frontend Modernization (`frontend/`)
 - Setup Astro 5 and Svelte 5 with Tailwind CSS and Obsidian Dark design system.
 - Built `QuickSticker.svelte`: Instant hero-section single-sticker generator with template presets, custom file uploads, and Web Share API integration.
-- Built `StickerEditor.svelte`: 512×512 interactive canvas with real-time text dragging, fonts, stroke outlines, zoom, direct pointer pan, 16px WhatsApp safe margin guide overlay, toggleable `mewmer.com` brand watermark pill, transparent/blur padding options, instant WebP export, and "Publish to Sticker Pack" modal connected to Go backend API.
+- Transformed web studio into a full responsive Image Resizer, Cropper & Caption Studio (`StickerEditor.svelte`):
+  - Preserves natural dimensions of uploaded images without forced 512×512 square squishing.
+  - Aspect ratio presets: `Original (Free)`, `1:1 (Square)`, `4:3 (Standard)`, `16:9 (Widescreen)`, `9:16 (Story/Reel)`, and `3:4 (Portrait)`.
+  - Custom pixel dimension resizing inputs with aspect ratio lock toggle (`🔒 Locked Aspect`).
+  - Dynamic multi-layer text system: Add unlimited captions, drag to position anywhere on canvas, scale slider, and 360-degree rotation (`-180°` to `180°`) with 0° reset.
+  - Multi-format exports: Export as **WebP**, **JPG / JPEG**, or **PNG** with adjustable compression quality slider.
+  - Full responsive layout: Mobile-first layout with canvas pinned on top and tabbed control palette underneath (`Crop & Ratio`, `Captions`, `Export`), tablet dual-column workspace, and desktop 12-column studio.
 - Built `PackViewer.svelte` and `/packs/[id].astro`: Dynamic sticker pack viewer featuring full pack inspection, individual sticker downloading, single-sticker WhatsApp chat share, and native mobile app deep links (`mewmer://pack/:id`).
 - Wired Vite proxy in `astro.config.mjs` forwarding `/api/*` and `/uploads/*` to Go backend (`http://localhost:3030`).
 - Updated `index.astro` to dynamically load public packs from `GET /api/v1/packs` with seamless fallback.
