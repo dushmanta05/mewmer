@@ -1,69 +1,41 @@
 ---
 import Layout from '../layouts/Layout.astro';
 
-interface PackItem {
+interface MemeTemplate {
   id: string;
   title: string;
-  publisher: string;
-  stickersCount: number;
   preview: string;
-  downloads: string;
-  isAnimated: boolean;
+  category: string;
+  ratio: string;
   tag: string;
 }
 
-const fallbackPacks: PackItem[] = [
+const popularTemplates: MemeTemplate[] = [
   {
-    id: 'cats-chaotic',
-    title: 'Chaotic Felines Vol. 1',
-    publisher: 'Mewmer Originals',
-    stickersCount: 12,
-    preview: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=400&auto=format&fit=crop&q=80',
-    downloads: '14.2k',
-    isAnimated: false,
+    id: 'landscape-cat',
+    title: 'Staring Cat',
+    preview: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=600&auto=format&fit=crop&q=80',
+    category: 'Reaction Meme',
+    ratio: '4:3 Standard',
+    tag: 'Classic',
+  },
+  {
+    id: 'square-doge',
+    title: 'Good Doge',
+    preview: 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=600&auto=format&fit=crop&q=80',
+    category: 'Wholesome Doge',
+    ratio: '1:1 Square',
     tag: 'Trending',
   },
   {
-    id: 'doge-reactions',
-    title: 'Good Boi Express',
-    publisher: 'DogeLover',
-    stickersCount: 8,
-    preview: 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=400&auto=format&fit=crop&q=80',
-    downloads: '9.8k',
-    isAnimated: false,
-    tag: 'Popular',
-  },
-  {
-    id: 'office-dev-chaos',
-    title: 'Junior Dev Survived',
-    publisher: 'Mewmer Community',
-    stickersCount: 15,
-    preview: 'https://images.unsplash.com/photo-1573865526739-10659fec78a5?w=400&auto=format&fit=crop&q=80',
-    downloads: '22.1k',
-    isAnimated: true,
+    id: 'animated-cat',
+    title: 'Typing Cat (GIF)',
+    preview: 'https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif',
+    category: 'Developer Humor',
+    ratio: 'Looping GIF',
     tag: 'Animated',
-  }
+  },
 ];
-
-let featuredPacks: PackItem[] = fallbackPacks;
-try {
-  const res = await fetch('http://localhost:3030/api/v1/packs');
-  if (res.ok) {
-    const data = await res.json();
-    if (data.packs && data.packs.length > 0) {
-      featuredPacks = data.packs.map((p: any) => ({
-        id: p.id,
-        title: p.title,
-        publisher: p.publisher,
-        stickersCount: p.stickers ? p.stickers.length : 1,
-        preview: p.trayImageUrl,
-        downloads: `${p.downloadsCount || 1}k`,
-        isAnimated: p.isAnimated,
-        tag: p.isAnimated ? 'Animated' : 'Community',
-      }));
-    }
-  }
-} catch {}
 
 const features = [
   {
@@ -286,60 +258,55 @@ const faqs = [
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-12">
         <div>
-          <h2 class="text-xs font-mono font-bold text-brand-400 uppercase tracking-widest mb-2">Community</h2>
-          <h3 class="text-3xl font-display font-extrabold text-white">Trending Packs & Templates</h3>
-          <p class="text-sm text-slate-400 mt-1">Discover popular templates ready to customize in the studio</p>
+          <h2 class="text-xs font-mono font-bold text-brand-400 uppercase tracking-widest mb-2">Templates</h2>
+          <h3 class="text-3xl font-display font-extrabold text-white">Popular Meme Templates</h3>
+          <p class="text-sm text-slate-400 mt-1">Jumpstart your memes with preloaded formats in the studio</p>
         </div>
         <a
           href="/studio"
           class="text-sm font-semibold text-brand-400 hover:text-brand-300 transition-colors inline-flex items-center gap-1.5"
         >
-          <span>Open Full Studio</span>
+          <span>Open Blank Studio</span>
           <span>→</span>
         </a>
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-        {featuredPacks.map((pack) => (
-          <div class="group bg-dark-card border border-dark-border rounded-2xl p-6 hover:border-brand-500/40 hover:shadow-xl hover:shadow-brand-500/10 transition-all duration-300">
-            <div class="aspect-square rounded-xl overflow-hidden bg-dark-bg border border-dark-border relative flex items-center justify-center p-4">
-              <img
-                src={pack.preview}
-                alt={pack.title}
-                class="w-full h-full object-cover rounded-lg group-hover:scale-105 transition-transform duration-300"
-                loading="lazy"
-              />
-              <span class="absolute top-3 right-3 px-2 py-0.5 rounded bg-brand-600/90 text-white font-bold text-[10px] uppercase tracking-wider">
-                {pack.tag}
-              </span>
-            </div>
-
-            <div class="mt-5 flex items-center justify-between">
-              <div>
-                <h4 class="text-lg font-bold text-white group-hover:text-brand-300 transition-colors">
-                  {pack.title}
-                </h4>
-                <p class="text-xs text-dark-muted mt-0.5">By {pack.publisher} • {pack.stickersCount} stickers</p>
+        {popularTemplates.map((template) => (
+          <div class="group bg-dark-card border border-dark-border rounded-2xl p-6 hover:border-brand-500/40 hover:shadow-xl hover:shadow-brand-500/10 transition-all duration-300 flex flex-col justify-between">
+            <div>
+              <div class="aspect-square rounded-xl overflow-hidden bg-dark-bg border border-dark-border relative flex items-center justify-center p-2">
+                <img
+                  src={template.preview}
+                  alt={template.title}
+                  class="w-full h-full object-cover rounded-lg group-hover:scale-105 transition-transform duration-300"
+                  loading="lazy"
+                />
+                <span class="absolute top-3 right-3 px-2 py-0.5 rounded bg-brand-600/90 text-white font-bold text-[10px] uppercase tracking-wider">
+                  {template.tag}
+                </span>
               </div>
-              <span class="text-xs font-mono text-slate-400 bg-dark-bg px-2.5 py-1 rounded border border-dark-border">
-                {pack.downloads}
-              </span>
+
+              <div class="mt-5 flex items-center justify-between">
+                <div>
+                  <h4 class="text-lg font-bold text-white group-hover:text-brand-300 transition-colors">
+                    {template.title}
+                  </h4>
+                  <p class="text-xs text-dark-muted mt-0.5">{template.category}</p>
+                </div>
+                <span class="text-xs font-mono text-brand-300 bg-brand-500/15 border border-brand-500/30 px-2 py-0.5 rounded">
+                  {template.ratio}
+                </span>
+              </div>
             </div>
 
-            <div class="mt-5 pt-5 border-t border-dark-border flex items-center gap-3">
-              <a
-                href={`/packs/${pack.id}`}
-                class="flex-1 py-2.5 rounded-xl bg-brand-500/20 hover:bg-brand-500/30 text-brand-300 border border-brand-500/40 font-semibold text-xs flex items-center justify-center gap-2 transition-colors"
-              >
-                <span>📦</span>
-                <span>View Pack</span>
-              </a>
+            <div class="mt-5 pt-5 border-t border-dark-border">
               <a
                 href="/studio"
-                class="py-2.5 px-3.5 rounded-xl bg-dark-bg hover:bg-dark-border text-slate-300 font-semibold text-xs flex items-center justify-center transition-colors"
-                title="Open in Studio"
+                class="w-full py-2.5 rounded-xl bg-brand-500/20 hover:bg-brand-500/30 text-brand-300 border border-brand-500/40 font-semibold text-xs flex items-center justify-center gap-2 transition-colors"
               >
-                <span>✨</span>
+                <span>🎨</span>
+                <span>Customize in Studio</span>
               </a>
             </div>
           </div>
