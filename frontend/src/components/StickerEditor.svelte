@@ -1,7 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
 
-  // State variables
   let canvas: HTMLCanvasElement;
   let imageSource = $state<string | null>(null);
   let topText = $state('WHEN CODE WORKS');
@@ -17,7 +16,6 @@
   let isExporting = $state(false);
   let exportSuccessMsg = $state('');
 
-  // Sample templates to kickstart immediately
   const sampleTemplates = [
     { name: 'Cat Smile', url: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=512&auto=format&fit=crop&q=80' },
     { name: 'Surprised Dog', url: 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=512&auto=format&fit=crop&q=80' },
@@ -31,11 +29,9 @@
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Clear 512x512 canvas with transparent background
     ctx.clearRect(0, 0, 512, 512);
 
     if (loadedImg && loadedImg.complete) {
-      // Calculate aspect ratio fit
       const iw = loadedImg.width;
       const ih = loadedImg.height;
       const aspect = iw / ih;
@@ -58,7 +54,6 @@
       ctx.drawImage(loadedImg, dx, dy, dw, dh);
     }
 
-    // Render captions
     ctx.textAlign = 'center';
     ctx.font = `900 ${fontSize}px ${fontFamily}, Impact, sans-serif`;
     ctx.fillStyle = textColor;
@@ -66,13 +61,11 @@
     ctx.lineWidth = strokeWidth;
     ctx.lineJoin = 'round';
 
-    // Top text
     if (topText.trim()) {
       ctx.strokeText(topText.toUpperCase(), 256, fontSize + 20);
       ctx.fillText(topText.toUpperCase(), 256, fontSize + 20);
     }
 
-    // Bottom text
     if (bottomText.trim()) {
       ctx.strokeText(bottomText.toUpperCase(), 256, 512 - 25);
       ctx.fillText(bottomText.toUpperCase(), 256, 512 - 25);
@@ -104,9 +97,7 @@
     reader.readAsDataURL(file);
   }
 
-  // Effect to re-render whenever state changes
   $effect(() => {
-    // depend on reactive variables
     const _ = [topText, bottomText, fontSize, textColor, strokeColor, strokeWidth, fontFamily, imageScale, imageOffsetX, imageOffsetY];
     renderCanvas();
   });
@@ -149,7 +140,7 @@
         new ClipboardItem({ 'image/png': blob })
       ]);
       showNotice('Sticker copied to clipboard! Paste directly into WhatsApp Web.');
-    } catch (err) {
+    } catch {
       showNotice('Copy failed. Try downloading the WebP instead.');
     }
   }
@@ -170,12 +161,11 @@
         });
         showNotice('Sticker shared! In WhatsApp chat, tap "Add to Favorites" to keep it forever.');
       } else {
-        // Fallback for desktop: download and inform
         await downloadSticker();
         showNotice('Downloaded WebP sticker! Drag it directly into any WhatsApp chat.');
       }
-    } catch (err) {
-      console.error(err);
+    } catch {
+      await downloadSticker();
     } finally {
       isExporting = false;
     }
@@ -190,10 +180,8 @@
 </script>
 
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-  <!-- Left Side: Interactive 512x512 Canvas Preview -->
   <div class="lg:col-span-6 flex flex-col items-center">
     <div class="w-full max-w-[512px] bg-dark-card border border-dark-border rounded-2xl p-4 shadow-2xl">
-      <!-- Checkerboard transparency background container -->
       <div
         class="relative w-full aspect-square rounded-xl overflow-hidden border border-dark-border/80 flex items-center justify-center"
         style="background-image: linear-gradient(45deg, #111827 25%, transparent 25%), linear-gradient(-45deg, #111827 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #111827 75%), linear-gradient(-45deg, transparent 75%, #111827 75%); background-size: 20px 20px; background-position: 0 0, 0 10px, 10px -10px, -10px 0px; background-color: #0B0F17;"
@@ -210,7 +198,6 @@
         </span>
       </div>
 
-      <!-- Action Buttons -->
       <div class="mt-4 flex flex-col gap-2.5">
         <button
           onclick={shareToWhatsApp}
@@ -239,7 +226,6 @@
         </div>
       </div>
 
-      <!-- Live Notification Banner -->
       {#if exportSuccessMsg}
         <div class="mt-3 p-3 rounded-xl bg-brand-500/20 border border-brand-500/40 text-brand-200 text-xs text-center animate-fade-in">
           {exportSuccessMsg}
@@ -248,7 +234,6 @@
     </div>
   </div>
 
-  <!-- Right Side: Customization Controls -->
   <div class="lg:col-span-6 bg-dark-card border border-dark-border rounded-2xl p-6 shadow-xl space-y-6">
     <div>
       <h3 class="text-lg font-bold text-white flex items-center gap-2">
@@ -260,7 +245,6 @@
       </p>
     </div>
 
-    <!-- Image Upload & Preset selector -->
     <div class="space-y-3">
       <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider">
         Choose Image / GIF
@@ -272,7 +256,6 @@
         </label>
       </div>
 
-      <!-- Quick sample presets -->
       <div class="flex items-center gap-2 pt-1">
         <span class="text-xs text-dark-muted">Or try:</span>
         {#each sampleTemplates as template}
@@ -287,7 +270,6 @@
       </div>
     </div>
 
-    <!-- Text Captions -->
     <div class="space-y-4 pt-2 border-t border-dark-border">
       <div>
         <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
@@ -314,7 +296,6 @@
       </div>
     </div>
 
-    <!-- Typography & Styling Adjustments -->
     <div class="grid grid-cols-2 gap-4 pt-2 border-t border-dark-border">
       <div>
         <label class="block text-xs font-semibold text-slate-300 mb-1.5">Font Size ({fontSize}px)</label>
