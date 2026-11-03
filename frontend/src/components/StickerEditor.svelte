@@ -20,6 +20,7 @@
   type AspectRatio = 'free' | '1:1' | '4:3' | '16:9' | '9:16' | '3:4' | 'custom';
   type ExportFormat = 'webp' | 'jpeg' | 'png';
   type ActiveTab = 'crop' | 'text' | 'export';
+  type InteractionMode = 'none' | 'move-layer' | 'rotate-layer' | 'scale-layer' | 'pan-image';
 
   let canvas = $state<HTMLCanvasElement | null>(null);
   let imageSource = $state<string | null>(null);
@@ -85,8 +86,13 @@
   let isExporting = $state(false);
   let exportNotice = $state('');
 
-  let isDraggingLayer = false;
-  let dragLayerId: string | null = null;
+  let interactionMode = $state<InteractionMode>('none');
+  let panStartX = 0;
+  let panStartY = 0;
+  let panStartCropX = 0;
+  let panStartCropY = 0;
+  let startScaleDist = 1;
+  let startLayerScale = 1;
 
   const sampleTemplates = [
     { name: 'Landscape Cat', url: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=1200&auto=format&fit=crop&q=80', isGif: false },
@@ -155,6 +161,50 @@
         ctx.lineWidth = Math.max(1.5, 2 * scaleFactor);
         ctx.setLineDash([6 * scaleFactor, 4 * scaleFactor]);
         ctx.strokeRect(-boxW / 2, -boxH / 2, boxW, boxH);
+        ctx.setLineDash([]);
+
+        const stemLen = 26 * scaleFactor;
+        const handleR = 13 * scaleFactor;
+        const rotY = -boxH / 2 - stemLen;
+
+        ctx.beginPath();
+        ctx.moveTo(0, -boxH / 2);
+        ctx.lineTo(0, rotY);
+        ctx.strokeStyle = '#8B5CF6';
+        ctx.lineWidth = 1.5 * scaleFactor;
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(0, rotY, handleR, 0, Math.PI * 2);
+        ctx.fillStyle = '#8B5CF6';
+        ctx.fill();
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 1.5 * scaleFactor;
+        ctx.stroke();
+
+        ctx.font = `${Math.round(11 * scaleFactor)}px system-ui, sans-serif`;
+        ctx.fillStyle = '#FFFFFF';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('🔄', 0, rotY);
+
+        const scaleHandleX = boxW / 2;
+        const scaleHandleY = boxH / 2;
+        const scaleHandleR = 12 * scaleFactor;
+
+        ctx.beginPath();
+        ctx.arc(scaleHandleX, scaleHandleY, scaleHandleR, 0, Math.PI * 2);
+        ctx.fillStyle = '#8B5CF6';
+        ctx.fill();
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 1.5 * scaleFactor;
+        ctx.stroke();
+
+        ctx.font = `${Math.round(10 * scaleFactor)}px system-ui, sans-serif`;
+        ctx.fillStyle = '#FFFFFF';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('⤡', scaleHandleX, scaleHandleY);
       }
 
       ctx.restore();
@@ -352,14 +402,63 @@
   function onCanvasPointerDown(e: PointerEvent) {
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
-    const clickXPercent = ((e.clientX - rect.left) / rect.width) * 100;
-    const clickYPercent = ((e.clientY - rect.top) / rect.height) * 100;
+    const canvasX = ((e.clientX - rect.left) / rect.width) * canvas.width;
+    const canvasY = ((e.clientY - rect.top) / rect.height) * canvas.height;
+    const scaleFactor = canvas.width / 600;
+
+    if (selectedLayer) {
+      const posX = (selectedLayer.x / 100) * canvas.width;
+      const posY = (selectedLayer.y / 100) * canvas.height;
+      const dx = canvasX - posX;
+      const dy = canvasY - posY;
+      const rad = (-selectedLayer.rotation * Math.PI) / 180;
+      const localX = dx * Math.cos(rad) - dy * Math.sin(rad);
+      const localY = dx * Math.sin(rad) + dy * Math.cos(rad);
+
+      const actualFontSize = Math.max(12, Math.round(selectedLayer.fontSize * selectedLayer.scale * scaleFactor));
+      const ctx = canvas.getContext('2d');
+      const textToDraw = selectedLayer.useCaps ? selectedLayer.text.toUpperCase() : selectedLayer.text;
+      let textW = 100 * scaleFactor;
+      if (ctx) {
+        ctx.font = `900 ${actualFontSize}px ${selectedLayer.fontFamily}, Impact, sans-serif`;
+        textW = ctx.measureText(textToDraw).width;
+      }
+      const pad = 12 * scaleFactor;
+      const boxW = textW + pad * 2;
+      const boxH = actualFontSize + pad;
+
+      const stemLen = 26 * scaleFactor;
+      const handleR = 14 * scaleFactor;
+      const rotHandleDist = Math.hypot(localX - 0, localY - (-boxH / 2 - stemLen));
+      if (rotHandleDist <= handleR * 1.6) {
+        interactionMode = 'rotate-layer';
+        (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+        return;
+      }
+
+      const scaleHandleDist = Math.hypot(localX - boxW / 2, localY - boxH / 2);
+      if (scaleHandleDist <= handleR * 1.6) {
+        interactionMode = 'scale-layer';
+        startScaleDist = Math.hypot(dx, dy);
+        startLayerScale = selectedLayer.scale;
+        (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+        return;
+      }
+
+      if (Math.abs(localX) <= boxW / 2 && Math.abs(localY) <= boxH / 2) {
+        interactionMode = 'move-layer';
+        (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+        return;
+      }
+    }
 
     let hitLayer: TextLayer | null = null;
     for (let i = textLayers.length - 1; i >= 0; i--) {
       const l = textLayers[i];
-      const dist = Math.hypot(l.x - clickXPercent, l.y - clickYPercent);
-      if (dist < 18) {
+      const posX = (l.x / 100) * canvas.width;
+      const posY = (l.y / 100) * canvas.height;
+      const dist = Math.hypot(canvasX - posX, canvasY - posY);
+      if (dist < 36 * scaleFactor) {
         hitLayer = l;
         break;
       }
@@ -367,35 +466,65 @@
 
     if (hitLayer) {
       selectedLayerId = hitLayer.id;
-      isDraggingLayer = true;
-      dragLayerId = hitLayer.id;
+      interactionMode = 'move-layer';
       (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
       renderCanvas();
-    } else {
-      selectedLayerId = null;
-      renderCanvas();
+      return;
     }
-  }
 
-  function onCanvasPointerMove(e: PointerEvent) {
-    if (!isDraggingLayer || !dragLayerId || !canvas) return;
-    const rect = canvas.getBoundingClientRect();
-    const xPercent = Math.max(2, Math.min(98, ((e.clientX - rect.left) / rect.width) * 100));
-    const yPercent = Math.max(2, Math.min(98, ((e.clientY - rect.top) / rect.height) * 100));
-
-    textLayers = textLayers.map((l) => {
-      if (l.id === dragLayerId) {
-        return { ...l, x: Math.round(xPercent * 10) / 10, y: Math.round(yPercent * 10) / 10 };
-      }
-      return l;
-    });
+    interactionMode = 'pan-image';
+    panStartX = e.clientX;
+    panStartY = e.clientY;
+    panStartCropX = cropX;
+    panStartCropY = cropY;
+    selectedLayerId = null;
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     renderCanvas();
   }
 
+  function onCanvasPointerMove(e: PointerEvent) {
+    if (interactionMode === 'none' || !canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const canvasX = ((e.clientX - rect.left) / rect.width) * canvas.width;
+    const canvasY = ((e.clientY - rect.top) / rect.height) * canvas.height;
+
+    if (interactionMode === 'rotate-layer' && selectedLayer) {
+      const posX = (selectedLayer.x / 100) * canvas.width;
+      const posY = (selectedLayer.y / 100) * canvas.height;
+      const dx = canvasX - posX;
+      const dy = canvasY - posY;
+      const angleRad = Math.atan2(dy, dx);
+      const angleDeg = Math.round((angleRad * 180) / Math.PI) + 90;
+      selectedLayer.rotation = ((angleDeg + 180) % 360) - 180;
+      renderCanvas();
+    } else if (interactionMode === 'scale-layer' && selectedLayer) {
+      const posX = (selectedLayer.x / 100) * canvas.width;
+      const posY = (selectedLayer.y / 100) * canvas.height;
+      const currentDist = Math.hypot(canvasX - posX, canvasY - posY);
+      const newScale = Math.max(0.3, Math.min(3.5, (currentDist / Math.max(1, startScaleDist)) * startLayerScale));
+      selectedLayer.scale = Math.round(newScale * 100) / 100;
+      renderCanvas();
+    } else if (interactionMode === 'move-layer' && selectedLayer) {
+      const xPercent = Math.max(2, Math.min(98, (canvasX / canvas.width) * 100));
+      const yPercent = Math.max(2, Math.min(98, (canvasY / canvas.height) * 100));
+      selectedLayer.x = Math.round(xPercent * 10) / 10;
+      selectedLayer.y = Math.round(yPercent * 10) / 10;
+      renderCanvas();
+    } else if (interactionMode === 'pan-image') {
+      if (cropW < imgNaturalWidth || cropH < imgNaturalHeight) {
+        const scale = cropW / rect.width;
+        const deltaX = (e.clientX - panStartX) * scale;
+        const deltaY = (e.clientY - panStartY) * scale;
+        cropX = Math.max(0, Math.min(imgNaturalWidth - cropW, panStartCropX - deltaX));
+        cropY = Math.max(0, Math.min(imgNaturalHeight - cropH, panStartCropY - deltaY));
+        renderCanvas();
+      }
+    }
+  }
+
   function onCanvasPointerUp(e: PointerEvent) {
-    if (isDraggingLayer) {
-      isDraggingLayer = false;
-      dragLayerId = null;
+    if (interactionMode !== 'none') {
+      interactionMode = 'none';
       try {
         (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
       } catch {}
@@ -708,7 +837,7 @@
 
           <canvas
             bind:this={canvas}
-            class="relative z-10 w-full h-full object-contain cursor-move touch-none select-none"
+            class="relative z-10 w-full h-full object-contain touch-none select-none {interactionMode === 'pan-image' ? 'cursor-grabbing' : (cropW < imgNaturalWidth || cropH < imgNaturalHeight ? 'cursor-grab' : 'cursor-default')}"
             onpointerdown={onCanvasPointerDown}
             onpointermove={onCanvasPointerMove}
             onpointerup={onCanvasPointerUp}
@@ -722,7 +851,11 @@
 
         {#if selectedLayer}
           <span class="absolute top-3 right-3 px-2 py-1 text-[11px] font-sans font-medium rounded-md bg-brand-500/20 backdrop-blur border border-brand-500/40 text-brand-300">
-            Drag to position text
+            🔄 Drag top handle to rotate • ⤡ Drag corner to resize
+          </span>
+        {:else if cropW < imgNaturalWidth || cropH < imgNaturalHeight}
+          <span class="absolute top-3 right-3 px-2 py-1 text-[11px] font-sans font-medium rounded-md bg-dark-bg/85 backdrop-blur border border-dark-border text-slate-400">
+            🖐️ Drag image to adjust framing
           </span>
         {/if}
       </div>

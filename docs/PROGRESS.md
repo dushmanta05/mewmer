@@ -24,7 +24,8 @@ This document tracks all completed milestones, current system status, mobile tes
   - Preserves natural dimensions of uploaded images without forced 512×512 square squishing.
   - Aspect ratio presets: `Original (Free)`, `1:1 (Square)`, `4:3 (Standard)`, `16:9 (Widescreen)`, `9:16 (Story/Reel)`, and `3:4 (Portrait)`.
   - Custom pixel dimension resizing inputs with aspect ratio lock toggle (`🔒 Locked Aspect`).
-  - Dynamic multi-layer text system: Add unlimited captions, drag to position anywhere on canvas, scale slider, and 360-degree rotation (`-180°` to `180°`) with 0° reset.
+  - Dynamic multi-layer text system: Add unlimited captions, drag to position anywhere on canvas, circular 🔄 rotate handle for direct angle rotation, corner ⤡ scale handle for direct expansion, scale/rotation sliders with 0° reset.
+  - Direct canvas gesture framing: Drag to pan/scroll images smoothly inside any chosen aspect ratio crop frame.
   - Multi-format exports: Export as **WebP**, **JPG / JPEG**, or **PNG** with adjustable compression quality slider.
   - Subtle `mewmer.com` watermark: Low-opacity text-only watermark with soft drop shadow (no background box), optional glassy pill toggle, and position presets.
   - Animated GIF cropping: Real-time animated GIF playback within cropped aspect ratio viewport on web, with backend worker pool FFmpeg cropping pipeline (`crop=w:h:x:y,scale=outW:outH`) and mobile frame-by-frame crop boundary clamping.
