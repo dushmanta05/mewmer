@@ -20,7 +20,78 @@
   type AspectRatio = 'free' | '1:1' | '4:3' | '16:9' | '9:16' | '3:4' | 'custom';
   type ExportFormat = 'webp' | 'jpeg' | 'png';
   type ActiveTab = 'crop' | 'text' | 'export';
-  type InteractionMode = 'none' | 'move-layer' | 'rotate-layer' | 'scale-layer' | 'pan-image';
+  type InteractionMode = 'none' | 'move-layer' | 'rotate-layer' | 'scale-layer' | 'pan-image' | 'move-watermark';
+
+  interface FontOption {
+    id: string;
+    name: string;
+    family: string;
+    preview: string;
+    category: string;
+    description: string;
+  }
+
+  const fontOptions: FontOption[] = [
+    {
+      id: 'Impact',
+      name: 'Impact',
+      family: 'Impact, "Arial Black", sans-serif',
+      preview: 'Aa',
+      category: 'CLASSIC MEME',
+      description: 'Bold high-contrast meme headline',
+    },
+    {
+      id: 'Bebas Neue',
+      name: 'Bebas Neue',
+      family: '"Bebas Neue", Impact, sans-serif',
+      preview: 'Aa',
+      category: 'POSTER',
+      description: 'Tall condensed display headline',
+    },
+    {
+      id: 'Poppins',
+      name: 'Poppins',
+      family: 'Poppins, system-ui, sans-serif',
+      preview: 'Aa',
+      category: 'GEOMETRIC',
+      description: 'Modern geometric display',
+    },
+    {
+      id: 'Inter',
+      name: 'Inter',
+      family: 'Inter, system-ui, sans-serif',
+      preview: 'Aa',
+      category: 'CLEAN SANS',
+      description: 'Clean minimal sans-serif',
+    },
+    {
+      id: 'Caveat',
+      name: 'Caveat',
+      family: 'Caveat, cursive',
+      preview: 'Aa',
+      category: 'HANDWRITTEN',
+      description: 'Playful organic handwritten script',
+    },
+  ];
+
+  const watermarkPresets = [
+    { label: 'Bottom Right', x: 86, y: 94 },
+    { label: 'Bottom Left', x: 14, y: 94 },
+    { label: 'Top Right', x: 86, y: 6 },
+    { label: 'Top Left', x: 14, y: 6 },
+    { label: 'Bottom Center', x: 50, y: 94 },
+    { label: 'Top Center', x: 50, y: 6 },
+  ];
+
+  const watermarkColors = [
+    '#FFFFFF',
+    '#000000',
+    '#F59E0B',
+    '#06B6D4',
+    '#8B5CF6',
+    '#25D366',
+    '#F43F5E',
+  ];
 
   let canvas = $state<HTMLCanvasElement | null>(null);
   let imageSource = $state<string | null>(null);
@@ -40,10 +111,14 @@
   let outputHeight = $state(600);
   let lockOutputAspect = $state(true);
 
-  let showWatermark = $state(true);
+  let watermarkX = $state(86);
+  let watermarkY = $state(94);
+  let watermarkColor = $state('#FFFFFF');
   let watermarkStyle = $state<'text-only' | 'glassy'>('text-only');
-  let watermarkPosition = $state<'bottom-right' | 'bottom-left' | 'top-right'>('bottom-right');
-  let watermarkOpacity = $state(0.55);
+  let watermarkOpacity = $state(0.6);
+  let isWatermarkHovered = $state(false);
+
+  let isFontDropdownOpen = $state(false);
 
   let textLayers = $state<TextLayer[]>([
     {
@@ -100,6 +175,82 @@
     { name: 'Animated Cat (GIF)', url: 'https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif', isGif: true },
   ];
 
+  function getFontFamily(id: string): string {
+    const opt = fontOptions.find((f) => f.id === id || f.name === id);
+    return opt ? opt.family : `${id}, Impact, sans-serif`;
+  }
+
+  function drawWatermark(
+    ctx: CanvasRenderingContext2D,
+    targetWidth: number,
+    targetHeight: number,
+    isPreview = false
+  ) {
+    ctx.save();
+    const scaleRef = targetWidth / 600;
+    const fontSize = Math.max(11, Math.round(13 * scaleRef));
+    ctx.font = `700 ${fontSize}px Inter, system-ui, sans-serif`;
+
+    const text = 'mewmer.com';
+    const metrics = ctx.measureText(text);
+    const padX = 8 * scaleRef;
+    const padY = 4 * scaleRef;
+    const w = metrics.width + (watermarkStyle === 'glassy' ? padX * 2 : 0);
+    const h = fontSize + (watermarkStyle === 'glassy' ? padY * 2 : 0);
+    const margin = 8 * scaleRef;
+
+    const rawX = (watermarkX / 100) * targetWidth;
+    const rawY = (watermarkY / 100) * targetHeight;
+
+    let bx = rawX - w / 2;
+    let by = rawY - h / 2;
+
+    bx = Math.max(margin, Math.min(targetWidth - w - margin, bx));
+    by = Math.max(margin, Math.min(targetHeight - h - margin, by));
+
+    if (watermarkStyle === 'glassy') {
+      ctx.fillStyle = `rgba(11, 15, 23, ${watermarkOpacity * 0.55})`;
+      ctx.strokeStyle = `rgba(255, 255, 255, ${watermarkOpacity * 0.25})`;
+      ctx.lineWidth = Math.max(1, 1.2 * scaleRef);
+      ctx.beginPath();
+      if (ctx.roundRect) {
+        ctx.roundRect(bx, by, w, h, 6 * scaleRef);
+      } else {
+        ctx.rect(bx, by, w, h);
+      }
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.globalAlpha = watermarkOpacity;
+      ctx.fillStyle = watermarkColor;
+      ctx.fillText(text, bx + w / 2, by + h / 2);
+    } else {
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+      ctx.shadowBlur = 4 * scaleRef;
+      ctx.shadowOffsetX = 1 * scaleRef;
+      ctx.shadowOffsetY = 1 * scaleRef;
+
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+      ctx.globalAlpha = watermarkOpacity;
+      ctx.fillStyle = watermarkColor;
+      ctx.fillText(text, bx, by);
+    }
+
+    if (isPreview && (interactionMode === 'move-watermark' || isWatermarkHovered)) {
+      ctx.shadowColor = 'transparent';
+      ctx.strokeStyle = '#8B5CF6';
+      ctx.lineWidth = Math.max(1, 1.5 * scaleRef);
+      ctx.setLineDash([4 * scaleRef, 3 * scaleRef]);
+      ctx.strokeRect(bx - 3 * scaleRef, by - 3 * scaleRef, w + 6 * scaleRef, h + 6 * scaleRef);
+      ctx.setLineDash([]);
+    }
+
+    ctx.restore();
+  }
+
   function renderCanvas() {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -135,7 +286,7 @@
       ctx.rotate((layer.rotation * Math.PI) / 180);
 
       const actualFontSize = Math.max(12, Math.round(layer.fontSize * layer.scale * scaleFactor));
-      ctx.font = `900 ${actualFontSize}px ${layer.fontFamily}, Impact, sans-serif`;
+      ctx.font = `900 ${actualFontSize}px ${getFontFamily(layer.fontFamily)}`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
 
@@ -210,61 +361,7 @@
       ctx.restore();
     }
 
-    if (showWatermark) {
-      ctx.save();
-      const scaleRef = canvas.width / 600;
-      const fontSize = Math.max(11, Math.round(13 * scaleRef));
-      ctx.font = `600 ${fontSize}px Inter, system-ui, sans-serif`;
-
-      const text = 'mewmer.com';
-      const metrics = ctx.measureText(text);
-      const padX = 8 * scaleRef;
-      const padY = 4 * scaleRef;
-      const w = metrics.width + (watermarkStyle === 'glassy' ? padX * 2 : 0);
-      const h = fontSize + (watermarkStyle === 'glassy' ? padY * 2 : 0);
-      const margin = 14 * scaleRef;
-
-      let bx = canvas.width - margin - w;
-      let by = canvas.height - margin - h;
-      if (watermarkPosition === 'bottom-left') {
-        bx = margin;
-        by = canvas.height - margin - h;
-      } else if (watermarkPosition === 'top-right') {
-        bx = canvas.width - margin - w;
-        by = margin;
-      }
-
-      if (watermarkStyle === 'glassy') {
-        ctx.fillStyle = `rgba(11, 15, 23, ${watermarkOpacity * 0.4})`;
-        ctx.strokeStyle = `rgba(255, 255, 255, ${watermarkOpacity * 0.22})`;
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        if (ctx.roundRect) {
-          ctx.roundRect(bx, by, w, h, 6 * scaleRef);
-        } else {
-          ctx.rect(bx, by, w, h);
-        }
-        ctx.fill();
-        ctx.stroke();
-
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillStyle = `rgba(255, 255, 255, ${watermarkOpacity})`;
-        ctx.fillText(text, bx + w / 2, by + h / 2);
-      } else {
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.75)';
-        ctx.shadowBlur = 4 * scaleRef;
-        ctx.shadowOffsetX = 1 * scaleRef;
-        ctx.shadowOffsetY = 1 * scaleRef;
-
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'top';
-        ctx.fillStyle = `rgba(255, 255, 255, ${watermarkOpacity})`;
-        ctx.fillText(text, bx, by);
-      }
-
-      ctx.restore();
-    }
+    drawWatermark(ctx, canvas.width, canvas.height, true);
   }
 
   function applyAspectRatio(ratio: AspectRatio) {
@@ -420,7 +517,7 @@
       const textToDraw = selectedLayer.useCaps ? selectedLayer.text.toUpperCase() : selectedLayer.text;
       let textW = 100 * scaleFactor;
       if (ctx) {
-        ctx.font = `900 ${actualFontSize}px ${selectedLayer.fontFamily}, Impact, sans-serif`;
+        ctx.font = `900 ${actualFontSize}px ${getFontFamily(selectedLayer.fontFamily)}`;
         textW = ctx.measureText(textToDraw).width;
       }
       const pad = 12 * scaleFactor;
@@ -450,6 +547,36 @@
         (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
         return;
       }
+    }
+
+    const wmScaleRef = canvas.width / 600;
+    const wmFontSize = Math.max(11, Math.round(13 * wmScaleRef));
+    const wmText = 'mewmer.com';
+    const ctx = canvas.getContext('2d');
+    let wmW = 76 * wmScaleRef;
+    if (ctx) {
+      ctx.font = `700 ${wmFontSize}px Inter, system-ui, sans-serif`;
+      wmW = ctx.measureText(wmText).width + (watermarkStyle === 'glassy' ? 16 * wmScaleRef : 0);
+    }
+    const wmH = wmFontSize + (watermarkStyle === 'glassy' ? 8 * wmScaleRef : 0);
+    const wmMargin = 8 * wmScaleRef;
+    const wmRawX = (watermarkX / 100) * canvas.width;
+    const wmRawY = (watermarkY / 100) * canvas.height;
+    const wmBx = Math.max(wmMargin, Math.min(canvas.width - wmW - wmMargin, wmRawX - wmW / 2));
+    const wmBy = Math.max(wmMargin, Math.min(canvas.height - wmH - wmMargin, wmRawY - wmH / 2));
+    const wmHitPad = 12 * wmScaleRef;
+
+    if (
+      canvasX >= wmBx - wmHitPad &&
+      canvasX <= wmBx + wmW + wmHitPad &&
+      canvasY >= wmBy - wmHitPad &&
+      canvasY <= wmBy + wmH + wmHitPad
+    ) {
+      interactionMode = 'move-watermark';
+      selectedLayerId = null;
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+      renderCanvas();
+      return;
     }
 
     let hitLayer: TextLayer | null = null;
@@ -483,10 +610,41 @@
   }
 
   function onCanvasPointerMove(e: PointerEvent) {
-    if (interactionMode === 'none' || !canvas) return;
+    if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
     const canvasX = ((e.clientX - rect.left) / rect.width) * canvas.width;
     const canvasY = ((e.clientY - rect.top) / rect.height) * canvas.height;
+
+    if (interactionMode === 'none') {
+      const wmScaleRef = canvas.width / 600;
+      const wmFontSize = Math.max(11, Math.round(13 * wmScaleRef));
+      const wmText = 'mewmer.com';
+      const ctx = canvas.getContext('2d');
+      let wmW = 76 * wmScaleRef;
+      if (ctx) {
+        ctx.font = `700 ${wmFontSize}px Inter, system-ui, sans-serif`;
+        wmW = ctx.measureText(wmText).width + (watermarkStyle === 'glassy' ? 16 * wmScaleRef : 0);
+      }
+      const wmH = wmFontSize + (watermarkStyle === 'glassy' ? 8 * wmScaleRef : 0);
+      const wmMargin = 8 * wmScaleRef;
+      const wmRawX = (watermarkX / 100) * canvas.width;
+      const wmRawY = (watermarkY / 100) * canvas.height;
+      const wmBx = Math.max(wmMargin, Math.min(canvas.width - wmW - wmMargin, wmRawX - wmW / 2));
+      const wmBy = Math.max(wmMargin, Math.min(canvas.height - wmH - wmMargin, wmRawY - wmH / 2));
+      const wmHitPad = 6 * wmScaleRef;
+
+      const hovered = (
+        canvasX >= wmBx - wmHitPad &&
+        canvasX <= wmBx + wmW + wmHitPad &&
+        canvasY >= wmBy - wmHitPad &&
+        canvasY <= wmBy + wmH + wmHitPad
+      );
+      if (hovered !== isWatermarkHovered) {
+        isWatermarkHovered = hovered;
+        renderCanvas();
+      }
+      return;
+    }
 
     if (interactionMode === 'rotate-layer' && selectedLayer) {
       const posX = (selectedLayer.x / 100) * canvas.width;
@@ -510,6 +668,12 @@
       selectedLayer.x = Math.round(xPercent * 10) / 10;
       selectedLayer.y = Math.round(yPercent * 10) / 10;
       renderCanvas();
+    } else if (interactionMode === 'move-watermark') {
+      const xPercent = Math.max(4, Math.min(96, (canvasX / canvas.width) * 100));
+      const yPercent = Math.max(4, Math.min(96, (canvasY / canvas.height) * 100));
+      watermarkX = Math.round(xPercent * 10) / 10;
+      watermarkY = Math.round(yPercent * 10) / 10;
+      renderCanvas();
     } else if (interactionMode === 'pan-image') {
       if (cropW < imgNaturalWidth || cropH < imgNaturalHeight) {
         const scale = cropW / rect.width;
@@ -525,6 +689,7 @@
   function onCanvasPointerUp(e: PointerEvent) {
     if (interactionMode !== 'none') {
       interactionMode = 'none';
+      renderCanvas();
       try {
         (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
       } catch {}
@@ -561,7 +726,7 @@
       ctx.rotate((layer.rotation * Math.PI) / 180);
 
       const actualFontSize = Math.max(12, Math.round(layer.fontSize * layer.scale * scaleFactor));
-      ctx.font = `900 ${actualFontSize}px ${layer.fontFamily}, Impact, sans-serif`;
+      ctx.font = `900 ${actualFontSize}px ${getFontFamily(layer.fontFamily)}`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
 
@@ -579,61 +744,7 @@
       ctx.restore();
     }
 
-    if (showWatermark) {
-      ctx.save();
-      const scaleRef = offscreen.width / 600;
-      const fontSize = Math.max(11, Math.round(13 * scaleRef));
-      ctx.font = `600 ${fontSize}px Inter, system-ui, sans-serif`;
-
-      const text = 'mewmer.com';
-      const metrics = ctx.measureText(text);
-      const padX = 8 * scaleRef;
-      const padY = 4 * scaleRef;
-      const w = metrics.width + (watermarkStyle === 'glassy' ? padX * 2 : 0);
-      const h = fontSize + (watermarkStyle === 'glassy' ? padY * 2 : 0);
-      const margin = 14 * scaleRef;
-
-      let bx = offscreen.width - margin - w;
-      let by = offscreen.height - margin - h;
-      if (watermarkPosition === 'bottom-left') {
-        bx = margin;
-        by = offscreen.height - margin - h;
-      } else if (watermarkPosition === 'top-right') {
-        bx = offscreen.width - margin - w;
-        by = margin;
-      }
-
-      if (watermarkStyle === 'glassy') {
-        ctx.fillStyle = `rgba(11, 15, 23, ${watermarkOpacity * 0.4})`;
-        ctx.strokeStyle = `rgba(255, 255, 255, ${watermarkOpacity * 0.22})`;
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        if (ctx.roundRect) {
-          ctx.roundRect(bx, by, w, h, 6 * scaleRef);
-        } else {
-          ctx.rect(bx, by, w, h);
-        }
-        ctx.fill();
-        ctx.stroke();
-
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillStyle = `rgba(255, 255, 255, ${watermarkOpacity})`;
-        ctx.fillText(text, bx + w / 2, by + h / 2);
-      } else {
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.75)';
-        ctx.shadowBlur = 4 * scaleRef;
-        ctx.shadowOffsetX = 1 * scaleRef;
-        ctx.shadowOffsetY = 1 * scaleRef;
-
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'top';
-        ctx.fillStyle = `rgba(255, 255, 255, ${watermarkOpacity})`;
-        ctx.fillText(text, bx, by);
-      }
-
-      ctx.restore();
-    }
+    drawWatermark(ctx, offscreen.width, offscreen.height, false);
 
     let mimeType = 'image/webp';
     if (exportFormat === 'jpeg') mimeType = 'image/jpeg';
@@ -716,7 +827,7 @@
         ctx.translate(posX, posY);
         ctx.rotate((layer.rotation * Math.PI) / 180);
         const actualFontSize = Math.max(12, Math.round(layer.fontSize * layer.scale * scaleFactor));
-        ctx.font = `900 ${actualFontSize}px ${layer.fontFamily}, Impact, sans-serif`;
+        ctx.font = `900 ${actualFontSize}px ${getFontFamily(layer.fontFamily)}`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         const textToDraw = layer.useCaps ? layer.text.toUpperCase() : layer.text;
@@ -731,61 +842,7 @@
         ctx.restore();
       }
 
-      if (showWatermark) {
-        ctx.save();
-        const scaleRef = offscreen.width / 600;
-        const fontSize = Math.max(11, Math.round(13 * scaleRef));
-        ctx.font = `600 ${fontSize}px Inter, system-ui, sans-serif`;
-
-        const text = 'mewmer.com';
-        const metrics = ctx.measureText(text);
-        const padX = 8 * scaleRef;
-        const padY = 4 * scaleRef;
-        const w = metrics.width + (watermarkStyle === 'glassy' ? padX * 2 : 0);
-        const h = fontSize + (watermarkStyle === 'glassy' ? padY * 2 : 0);
-        const margin = 14 * scaleRef;
-
-        let bx = offscreen.width - margin - w;
-        let by = offscreen.height - margin - h;
-        if (watermarkPosition === 'bottom-left') {
-          bx = margin;
-          by = offscreen.height - margin - h;
-        } else if (watermarkPosition === 'top-right') {
-          bx = offscreen.width - margin - w;
-          by = margin;
-        }
-
-        if (watermarkStyle === 'glassy') {
-          ctx.fillStyle = `rgba(11, 15, 23, ${watermarkOpacity * 0.4})`;
-          ctx.strokeStyle = `rgba(255, 255, 255, ${watermarkOpacity * 0.22})`;
-          ctx.lineWidth = 1;
-          ctx.beginPath();
-          if (ctx.roundRect) {
-            ctx.roundRect(bx, by, w, h, 6 * scaleRef);
-          } else {
-            ctx.rect(bx, by, w, h);
-          }
-          ctx.fill();
-          ctx.stroke();
-
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillStyle = `rgba(255, 255, 255, ${watermarkOpacity})`;
-          ctx.fillText(text, bx + w / 2, by + h / 2);
-        } else {
-          ctx.shadowColor = 'rgba(0, 0, 0, 0.75)';
-          ctx.shadowBlur = 4 * scaleRef;
-          ctx.shadowOffsetX = 1 * scaleRef;
-          ctx.shadowOffsetY = 1 * scaleRef;
-
-          ctx.textAlign = 'left';
-          ctx.textBaseline = 'top';
-          ctx.fillStyle = `rgba(255, 255, 255, ${watermarkOpacity})`;
-          ctx.fillText(text, bx, by);
-        }
-
-        ctx.restore();
-      }
+      drawWatermark(ctx, offscreen.width, offscreen.height, false);
 
       const blob = await new Promise<Blob | null>((resolve) =>
         offscreen.toBlob((b) => resolve(b), 'image/png')
@@ -810,9 +867,33 @@
 
   onMount(() => {
     loadImage(sampleTemplates[0].url, sampleTemplates[0].isGif);
+
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (isFontDropdownOpen && target && !target.closest('#font-dropdown-container')) {
+        isFontDropdownOpen = false;
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isFontDropdownOpen) {
+        isFontDropdownOpen = false;
+      }
+    };
+
+    window.addEventListener('click', handleClickOutside);
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('click', handleClickOutside);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   });
 
   let selectedLayer = $derived(textLayers.find((l) => l.id === selectedLayerId));
+  let currentFontOption = $derived(
+    fontOptions.find((f) => f.id === selectedLayer?.fontFamily || f.name === selectedLayer?.fontFamily) || fontOptions[0]
+  );
 </script>
 
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
@@ -837,7 +918,7 @@
 
           <canvas
             bind:this={canvas}
-            class="relative z-10 w-full h-full object-contain touch-none select-none {interactionMode === 'pan-image' ? 'cursor-grabbing' : (cropW < imgNaturalWidth || cropH < imgNaturalHeight ? 'cursor-grab' : 'cursor-default')}"
+            class="relative z-10 w-full h-full object-contain touch-none select-none {interactionMode === 'move-watermark' ? 'cursor-grabbing' : (isWatermarkHovered ? 'cursor-grab' : (interactionMode === 'pan-image' ? 'cursor-grabbing' : (cropW < imgNaturalWidth || cropH < imgNaturalHeight ? 'cursor-grab' : 'cursor-default')))}"
             onpointerdown={onCanvasPointerDown}
             onpointermove={onCanvasPointerMove}
             onpointerup={onCanvasPointerUp}
@@ -849,7 +930,15 @@
           {outputWidth} × {outputHeight} px {isAnimatedGif ? '• 🎬 GIF' : ''}
         </span>
 
-        {#if selectedLayer}
+        {#if interactionMode === 'move-watermark'}
+          <span class="absolute top-3 right-3 px-2 py-1 text-[11px] font-sans font-medium rounded-md bg-brand-500/30 backdrop-blur border border-brand-500/60 text-brand-200">
+            🏷️ Dragging watermark within cropped area
+          </span>
+        {:else if isWatermarkHovered}
+          <span class="absolute top-3 right-3 px-2 py-1 text-[11px] font-sans font-medium rounded-md bg-brand-500/20 backdrop-blur border border-brand-500/40 text-brand-300">
+            🏷️ Tap & drag watermark to reposition
+          </span>
+        {:else if selectedLayer}
           <span class="absolute top-3 right-3 px-2 py-1 text-[11px] font-sans font-medium rounded-md bg-brand-500/20 backdrop-blur border border-brand-500/40 text-brand-300">
             🔄 Drag top handle to rotate • ⤡ Drag corner to resize
           </span>
@@ -1120,19 +1209,81 @@
               />
             </div>
 
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <span class="block text-xs font-semibold text-slate-300 mb-1">Font</span>
-                <select
-                  bind:value={selectedLayer.fontFamily}
-                  onchange={() => renderCanvas()}
-                  class="w-full px-2.5 py-2 rounded-xl bg-dark-card border border-dark-border text-xs text-white focus:outline-none"
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div class="relative" id="font-dropdown-container">
+                <span class="block text-xs font-semibold text-slate-300 mb-1">Font Family</span>
+                <button
+                  type="button"
+                  onclick={() => isFontDropdownOpen = !isFontDropdownOpen}
+                  class="w-full px-3 py-2 rounded-xl bg-dark-card border border-dark-border hover:border-brand-500/50 focus:border-brand-500 focus:outline-none flex items-center justify-between text-left transition-all shadow-sm"
                 >
-                  <option value="Impact">Impact (Meme)</option>
-                  <option value="Inter">Inter (Clean)</option>
-                  <option value="Poppins">Poppins (Modern)</option>
-                  <option value="Caveat">Caveat (Handwritten)</option>
-                </select>
+                  <div class="flex items-center gap-2 min-w-0">
+                    <span
+                      class="w-6 h-6 rounded-md bg-brand-500/20 border border-brand-500/40 flex items-center justify-center text-xs font-bold text-brand-300 shrink-0"
+                      style="font-family: {currentFontOption.family};"
+                    >
+                      Aa
+                    </span>
+                    <div class="truncate">
+                      <span class="text-xs font-bold text-white block truncate" style="font-family: {currentFontOption.family};">
+                        {currentFontOption.name}
+                      </span>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-1.5 shrink-0">
+                    <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-dark-bg border border-dark-border text-slate-400">
+                      {currentFontOption.category}
+                    </span>
+                    <span class="text-xs text-slate-400 transition-transform duration-200 {isFontDropdownOpen ? 'rotate-180 text-brand-300' : ''}">
+                      ▾
+                    </span>
+                  </div>
+                </button>
+
+                {#if isFontDropdownOpen}
+                  <div
+                    class="absolute left-0 right-0 top-full mt-1.5 z-50 bg-dark-card border border-dark-border/90 rounded-2xl shadow-2xl p-1.5 backdrop-blur-xl animate-fade-in space-y-1"
+                  >
+                    {#each fontOptions as opt}
+                      <button
+                        type="button"
+                        onclick={() => {
+                          if (selectedLayer) {
+                            selectedLayer.fontFamily = opt.id;
+                            isFontDropdownOpen = false;
+                            renderCanvas();
+                          }
+                        }}
+                        class="w-full p-2 rounded-xl flex items-center justify-between gap-2.5 text-left transition-all {selectedLayer.fontFamily === opt.id || selectedLayer.fontFamily === opt.name ? 'bg-brand-500/20 border border-brand-500/40 text-brand-200' : 'hover:bg-dark-bg/80 text-slate-300 border border-transparent'}"
+                      >
+                        <div class="flex items-center gap-2.5 min-w-0">
+                          <span
+                            class="w-8 h-8 rounded-lg bg-dark-bg border border-dark-border flex items-center justify-center text-sm font-bold text-slate-200 shrink-0"
+                            style="font-family: {opt.family};"
+                          >
+                            {opt.preview}
+                          </span>
+                          <div class="min-w-0">
+                            <div class="flex items-center gap-1.5">
+                              <span class="text-xs font-bold text-white truncate" style="font-family: {opt.family}; font-size: 13px;">
+                                {opt.name}
+                              </span>
+                              <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-dark-bg border border-dark-border text-slate-400">
+                                {opt.category}
+                              </span>
+                            </div>
+                            <span class="text-[10px] text-dark-muted truncate block">
+                              {opt.description}
+                            </span>
+                          </div>
+                        </div>
+                        {#if selectedLayer.fontFamily === opt.id || selectedLayer.fontFamily === opt.name}
+                          <span class="text-brand-400 text-xs font-bold shrink-0">✓</span>
+                        {/if}
+                      </button>
+                    {/each}
+                  </div>
+                {/if}
               </div>
 
               <div>
@@ -1143,7 +1294,7 @@
                   max="90"
                   bind:value={selectedLayer.fontSize}
                   oninput={() => renderCanvas()}
-                  class="w-full accent-brand-500"
+                  class="w-full accent-brand-500 mt-2"
                 />
               </div>
             </div>
@@ -1292,74 +1443,92 @@
               <span>🏷️</span>
               <span>mewmer.com Watermark</span>
             </span>
-            <button
-              type="button"
-              onclick={() => { showWatermark = !showWatermark; renderCanvas(); }}
-              class="text-xs font-medium px-2 py-0.5 rounded border transition-colors {showWatermark ? 'bg-brand-500/20 border-brand-500/40 text-brand-300' : 'bg-dark-bg border-dark-border text-slate-500'}"
-            >
-              {showWatermark ? 'Enabled' : 'Disabled'}
-            </button>
+            <span class="text-[11px] font-medium px-2 py-0.5 rounded border bg-brand-500/15 border-brand-500/35 text-brand-300 flex items-center gap-1">
+              <span>🔒</span>
+              <span>Movable Watermark</span>
+            </span>
           </div>
 
-          {#if showWatermark}
-            <div class="space-y-2.5">
-              <div class="flex items-center gap-2">
-                <span class="text-xs text-dark-muted shrink-0">Style:</span>
-                <button
-                  type="button"
-                  onclick={() => { watermarkStyle = 'text-only'; renderCanvas(); }}
-                  class="text-xs px-2.5 py-1 rounded-lg border transition-colors {watermarkStyle === 'text-only' ? 'bg-brand-500/20 border-brand-500 text-brand-200' : 'bg-dark-bg border-dark-border text-slate-400'}"
-                >
-                  Text Only (No background)
-                </button>
-                <button
-                  type="button"
-                  onclick={() => { watermarkStyle = 'glassy'; renderCanvas(); }}
-                  class="text-xs px-2.5 py-1 rounded-lg border transition-colors {watermarkStyle === 'glassy' ? 'bg-brand-500/20 border-brand-500 text-brand-200' : 'bg-dark-bg border-dark-border text-slate-400'}"
-                >
-                  Glassy Pill
-                </button>
+          <div class="space-y-3 bg-dark-bg p-3.5 rounded-xl border border-dark-border">
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="text-xs text-slate-300 font-medium">Position Presets</span>
+                <span class="text-[10px] text-brand-300 font-mono">({watermarkX}%, {watermarkY}%)</span>
+              </div>
+              <div class="grid grid-cols-3 gap-1.5">
+                {#each watermarkPresets as preset}
+                  <button
+                    type="button"
+                    onclick={() => { watermarkX = preset.x; watermarkY = preset.y; renderCanvas(); }}
+                    class="py-1.5 px-2 rounded-lg border text-[11px] font-medium transition-colors text-center {(Math.abs(watermarkX - preset.x) < 4 && Math.abs(watermarkY - preset.y) < 4) ? 'bg-brand-500/25 border-brand-500 text-brand-200' : 'bg-dark-card border-dark-border text-slate-400 hover:text-white'}"
+                  >
+                    {preset.label}
+                  </button>
+                {/each}
+              </div>
+              <p class="text-[10px] text-dark-muted mt-1.5">
+                💡 Tip: You can drag the watermark on the preview canvas to position it anywhere within the crop frame.
+              </p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 pt-2 border-t border-dark-border/60">
+              <div>
+                <span class="block text-xs text-slate-300 font-medium mb-1.5">Watermark Color</span>
+                <div class="flex items-center gap-2">
+                  <input
+                    type="color"
+                    bind:value={watermarkColor}
+                    oninput={() => renderCanvas()}
+                    class="w-7 h-7 rounded-lg cursor-pointer bg-transparent border-0"
+                  />
+                  <div class="flex items-center gap-1">
+                    {#each watermarkColors as color}
+                      <button
+                        type="button"
+                        onclick={() => { watermarkColor = color; renderCanvas(); }}
+                        class="w-4 h-4 rounded-full border border-dark-border transition-transform hover:scale-125 {watermarkColor === color ? 'ring-2 ring-brand-400 scale-110' : ''}"
+                        style="background-color: {color};"
+                        aria-label={color}
+                      ></button>
+                    {/each}
+                  </div>
+                </div>
               </div>
 
-              <div class="flex items-center gap-2">
-                <span class="text-xs text-dark-muted shrink-0">Position:</span>
-                <button
-                  type="button"
-                  onclick={() => { watermarkPosition = 'bottom-right'; renderCanvas(); }}
-                  class="text-xs px-2 py-1 rounded-lg border transition-colors {watermarkPosition === 'bottom-right' ? 'bg-brand-500/20 border-brand-500 text-brand-200' : 'bg-dark-bg border-dark-border text-slate-400'}"
-                >
-                  Bottom Right
-                </button>
-                <button
-                  type="button"
-                  onclick={() => { watermarkPosition = 'bottom-left'; renderCanvas(); }}
-                  class="text-xs px-2 py-1 rounded-lg border transition-colors {watermarkPosition === 'bottom-left' ? 'bg-brand-500/20 border-brand-500 text-brand-200' : 'bg-dark-bg border-dark-border text-slate-400'}"
-                >
-                  Bottom Left
-                </button>
-                <button
-                  type="button"
-                  onclick={() => { watermarkPosition = 'top-right'; renderCanvas(); }}
-                  class="text-xs px-2 py-1 rounded-lg border transition-colors {watermarkPosition === 'top-right' ? 'bg-brand-500/20 border-brand-500 text-brand-200' : 'bg-dark-bg border-dark-border text-slate-400'}"
-                >
-                  Top Right
-                </button>
-              </div>
-
-              <div class="flex items-center justify-between pt-1">
-                <span class="text-xs text-dark-muted">Opacity ({Math.round(watermarkOpacity * 100)}%)</span>
-                <input
-                  type="range"
-                  min="0.25"
-                  max="0.85"
-                  step="0.05"
-                  bind:value={watermarkOpacity}
-                  oninput={() => renderCanvas()}
-                  class="w-36 accent-brand-500"
-                />
+              <div>
+                <span class="block text-xs text-slate-300 font-medium mb-1.5">Style</span>
+                <div class="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onclick={() => { watermarkStyle = 'text-only'; renderCanvas(); }}
+                    class="flex-1 py-1 px-1.5 rounded-lg border text-[11px] font-medium transition-colors {watermarkStyle === 'text-only' ? 'bg-brand-500/20 border-brand-500 text-brand-200' : 'bg-dark-card border-dark-border text-slate-400'}"
+                  >
+                    Text Only
+                  </button>
+                  <button
+                    type="button"
+                    onclick={() => { watermarkStyle = 'glassy'; renderCanvas(); }}
+                    class="flex-1 py-1 px-1.5 rounded-lg border text-[11px] font-medium transition-colors {watermarkStyle === 'glassy' ? 'bg-brand-500/20 border-brand-500 text-brand-200' : 'bg-dark-card border-dark-border text-slate-400'}"
+                  >
+                    Glassy Pill
+                  </button>
+                </div>
               </div>
             </div>
-          {/if}
+
+            <div class="flex items-center justify-between pt-1 border-t border-dark-border/60">
+              <span class="text-xs text-slate-300 font-medium">Opacity ({Math.round(watermarkOpacity * 100)}%)</span>
+              <input
+                type="range"
+                min="0.2"
+                max="1.0"
+                step="0.05"
+                bind:value={watermarkOpacity}
+                oninput={() => renderCanvas()}
+                class="w-36 accent-brand-500"
+              />
+            </div>
+          </div>
         </div>
 
         <div class="p-3 rounded-xl bg-dark-bg border border-dark-border space-y-2">
