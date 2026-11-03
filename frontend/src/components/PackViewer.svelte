@@ -192,7 +192,7 @@
           </button>
 
           <a
-            href="/create"
+            href="/studio"
             class="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-400 text-white font-semibold text-xs flex items-center justify-center gap-2 transition-colors shadow-lg shadow-brand-500/25"
           >
             <span>✨</span>

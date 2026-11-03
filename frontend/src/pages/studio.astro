@@ -1,0 +1,20 @@
+---
+import Layout from '../layouts/Layout.astro';
+import StickerEditor from '../components/StickerEditor.svelte';
+---
+
+<Layout
+  title="Meme & Caption Studio — Crop, Resize & Add Captions Online | Mewmer"
+  description="Crop images and animated GIFs to 1:1, 4:3, 16:9, or custom pixel dimensions. Add rotating multi-layer text captions and export as high-quality WebP, JPG, or PNG."
+>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+    <div class="mb-6 sm:mb-8">
+      <h1 class="text-2xl sm:text-3xl font-display font-extrabold text-white">Meme & Caption Studio</h1>
+      <p class="text-xs sm:text-sm text-slate-400 mt-1">
+        Crop photos or animated GIFs to any aspect ratio, add movable rotating captions, and export in WebP, JPG, or PNG format.
+      </p>
+    </div>
+
+    <StickerEditor client:load />
+  </div>
+</Layout>

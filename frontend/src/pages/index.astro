@@ -68,80 +68,84 @@ try {
 const features = [
   {
     icon: '⚡',
-    title: 'Zero Latency Studio',
-    desc: 'Render stickers locally in your browser with real-time 60 FPS preview. No loading spinners or server delays.',
-  },
-  {
-    icon: '💬',
-    title: 'Single-Sticker Chat Share',
-    desc: 'Send single stickers directly into any WhatsApp chat. Recipients can tap ⭐ "Add to Favorites" to keep them instantly.',
-  },
-  {
-    icon: '📐',
-    title: 'Official 512×512 WebP Spec',
-    desc: 'Automatically formatted, cropped, and compressed to comply with WhatsApp official transparency and size requirements.',
+    title: 'Zero Server Lag',
+    desc: 'Render memes and cropped images 100% locally in your browser using HTML5 Canvas. Instant 60 FPS feedback with zero wait time.',
   },
   {
     icon: '🎬',
-    title: 'GIF & Video Stickers',
-    desc: 'Convert short videos and animated GIFs into WhatsApp-ready looping animated WebP stickers with custom framerates.',
+    title: 'Animated GIF Cropping',
+    desc: 'Upload looping animated GIFs, preview crops in real time, and convert them smoothly with dedicated worker pool processing.',
   },
   {
-    icon: '📦',
-    title: 'Full Sticker Packs',
-    desc: 'Bundle 3 to 30 stickers into a published pack that anyone can discover, import, and install to their sticker tray.',
+    icon: '📐',
+    title: 'Aspect Ratios & Custom Pixels',
+    desc: 'Crop to 1:1, 4:3, 16:9, or 9:16 reels, or dial in custom pixel widths and heights with step buttons and aspect locking.',
   },
   {
-    icon: '🚫',
-    title: '100% Free & No Watermarks',
-    desc: 'No forced watermarks, no account required to generate, and no hidden subscriptions. Your stickers belong to you.',
+    icon: '✍️',
+    title: 'Multi-Layer Captions',
+    desc: 'Add unlimited caption layers. Rotate 360° with direct vector handles, scale dynamically, and position anywhere on canvas.',
+  },
+  {
+    icon: '🔤',
+    title: 'Curated Typography',
+    desc: 'Choose from classic bold Impact meme headlines, Bebas Neue poster font, modern Poppins, Inter, and expressive Caveat script.',
+  },
+  {
+    icon: '💾',
+    title: 'Lossless & Multi-Format Export',
+    desc: 'Export high-resolution WebP, JPG, or transparent PNG with adjustable compression quality, or copy directly to clipboard.',
   },
 ];
 
 const steps = [
   {
     step: '01',
-    title: 'Upload or Select Template',
-    desc: 'Choose from hundreds of viral memes or upload your own photo, screenshot, or graphic.',
+    title: 'Upload Photo or Animated GIF',
+    desc: 'Drop in any picture, viral meme, or looping GIF. Mewmer supports all image formats with no forced square squishing.',
     icon: '🖼️',
   },
   {
     step: '02',
-    title: 'Caption & Style in Seconds',
-    desc: 'Add bold top and bottom captions, adjust outlines, pick vibrant fonts, and zoom or reposition.',
+    title: 'Crop, Resize & Add Captions',
+    desc: 'Pick standard ratios like 1:1, 16:9, or custom pixel sizes. Add unlimited text layers with 360° rotation and stylish fonts.',
     icon: '✍️',
   },
   {
     step: '03',
-    title: 'Send & Save in WhatsApp',
-    desc: 'Share straight into any chat or download as .WebP. Star the sticker to keep it forever in your tray.',
+    title: 'Export WebP, JPG or PNG',
+    desc: 'Download crystal-clear high-res memes or copy straight to clipboard for instant social media and chat sharing.',
     icon: '🚀',
   },
 ];
 
 const faqs = [
   {
-    q: 'Can I send a single sticker to WhatsApp without creating a full pack?',
-    a: 'Yes! While WhatsApp requires 3 to 30 stickers to add an entire pack to your keyboard tray, you can share individual stickers directly into any WhatsApp chat as a 512x512 WebP. Once sent, anyone can tap the sticker and choose "Add to Favorites" to save it permanently.',
+    q: 'Can I crop and caption both static images and animated GIFs?',
+    a: 'Yes. You can upload standard photos (JPG, PNG, WebP) or animated GIFs. Static memes generate 100% in your browser with zero latency. Animated GIFs feature a real-time looping preview and are processed cleanly through our background media worker pool.',
   },
   {
-    q: 'What is the required format for WhatsApp stickers?',
-    a: 'WhatsApp requires all stickers to be in WebP format, exactly 512×512 pixels, with an alpha channel for transparency. Static stickers must be under 100 KB, and animated stickers must be under 500 KB with continuous looping.',
+    q: 'Can I resize images to specific custom pixel dimensions?',
+    a: 'Yes. In the Crop & Ratio tab, you can choose preset ratios like 1:1, 4:3, 16:9, and 9:16, or enter custom pixel Width and Height with stepper controls and optional aspect ratio locking.',
   },
   {
-    q: 'Do I need to install an app to create stickers?',
-    a: 'No app download is needed. Mewmer runs completely in your web browser on mobile or desktop. You can create and export stickers instantly without installing anything.',
+    q: 'Can I add multiple text captions and rotate them?',
+    a: 'Yes. You can add unlimited caption layers. Each caption has direct on-canvas handles for rotation and proportional scaling, as well as font selection, text colors, stroke outlines, and size sliders.',
   },
   {
-    q: 'Are stickers created on Mewmer public or private?',
-    a: 'Stickers created anonymously without logging in are shared publicly to help the community discover new templates. When you log in with a free account, you can mark your sticker packs as private or public at any time.',
+    q: 'What formats can I export my memes and stickers in?',
+    a: 'You can export in WebP, JPG, or PNG formats with adjustable compression quality, or copy directly to your clipboard for instant pasting into chats and social apps.',
+  },
+  {
+    q: 'Do I need an account or software installation to use Mewmer?',
+    a: 'No account, sign-up, or software installation is required. Mewmer runs entirely in modern web browsers on mobile, tablet, and desktop devices.',
   },
 ];
 ---
 
 <Layout
-  title="Mewmer — The Fast, Free WhatsApp Sticker & Meme Generator"
-  description="Create official 512x512 WebP WhatsApp stickers and memes online for free. Send single stickers directly to chats or discover trending sticker packs."
+  title="Mewmer — Crop, Resize & Caption Any Image or GIF Online"
+  description="The instant browser studio to crop, resize, and caption photos and animated GIFs into viral memes. Free forever with high-res WebP, JPG, and PNG exports."
 >
   <section class="relative pt-16 pb-24 overflow-hidden">
     <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-brand-600/20 via-brand-900/5 to-transparent pointer-events-none"></div>
@@ -150,50 +154,43 @@ const faqs = [
       <div class="text-center max-w-3xl mx-auto">
         <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand-500/10 border border-brand-500/25 text-brand-300 text-xs font-semibold mb-6 shadow-sm">
           <span>✨</span>
-          <span>Fast, Free & WhatsApp Compliant</span>
+          <span>100% Client-Side • Free & Instant</span>
         </div>
 
         <h1 class="text-4xl sm:text-6xl lg:text-7xl font-display font-extrabold text-white tracking-tight leading-[1.1]">
-          Turn Any Meme or Photo Into a <span class="bg-gradient-to-r from-brand-400 via-meme-cyan to-whatsapp bg-clip-text text-transparent">WhatsApp Sticker</span>
+          Create, Crop & Caption <span class="bg-gradient-to-r from-brand-400 via-meme-cyan to-whatsapp bg-clip-text text-transparent">Any Image or GIF</span> Into a Meme
         </h1>
 
         <p class="mt-6 text-base sm:text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed">
-          The instant web studio for stickers and memes. Generate official 512×512 WebP stickers, share directly into chats, or explore thousands of community packs.
+          The ultra-fast web studio to crop, resize, and add multi-layer rotating captions to photos and animated GIFs. Export in high-res WebP, JPG, or PNG in seconds.
         </p>
 
         <div class="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
           <a
-            href="/create"
+            href="/studio"
             class="w-full sm:w-auto px-8 py-4 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 text-white font-bold text-base shadow-xl shadow-brand-500/30 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
           >
             <span>🎨</span>
-            <span>Open Sticker Studio — It's Free</span>
-          </a>
-          <a
-            href="#explore"
-            class="w-full sm:w-auto px-8 py-4 rounded-xl bg-dark-card hover:bg-slate-800 border border-dark-border text-slate-200 font-semibold text-base transition-colors flex items-center justify-center gap-2"
-          >
-            <span>📦</span>
-            <span>Browse Packs</span>
+            <span>Open Meme & Caption Studio — It's Free</span>
           </a>
         </div>
 
         <div class="mt-12 flex flex-wrap items-center justify-center gap-6 sm:gap-10 text-xs text-dark-muted font-medium">
           <div class="flex items-center gap-2">
             <span class="text-emerald-400">✓</span>
-            <span>No watermark</span>
+            <span>Any aspect ratio (1:1, 4:3, 16:9, 9:16)</span>
           </div>
           <div class="flex items-center gap-2">
             <span class="text-emerald-400">✓</span>
-            <span>512×512 WebP format</span>
+            <span>Multi-layer rotating captions</span>
           </div>
           <div class="flex items-center gap-2">
             <span class="text-emerald-400">✓</span>
-            <span>Direct WhatsApp chat share</span>
+            <span>Animated GIF & photo cropping</span>
           </div>
           <div class="flex items-center gap-2">
             <span class="text-emerald-400">✓</span>
-            <span>No sign-up required</span>
+            <span>High-res WebP, JPG & PNG</span>
           </div>
         </div>
       </div>
@@ -203,18 +200,18 @@ const faqs = [
           <div class="bg-dark-card rounded-xl p-6 sm:p-8 border border-dark-border/80">
             <div class="flex flex-col md:flex-row items-center justify-between gap-8">
               <div class="flex-1 space-y-4">
-                <span class="px-2.5 py-1 rounded-md bg-whatsapp/20 text-whatsapp border border-whatsapp/30 text-xs font-bold uppercase tracking-wider">
-                  Live Preview Demo
+                <span class="px-2.5 py-1 rounded-md bg-brand-500/20 text-brand-300 border border-brand-500/30 text-xs font-bold uppercase tracking-wider">
+                  Live Studio Demo
                 </span>
                 <h3 class="text-2xl font-bold font-display text-white">
-                  Crafted for WhatsApp Conversations
+                  Instant Browser-Based Meme Studio
                 </h3>
                 <p class="text-sm text-slate-300 leading-relaxed">
-                  Every sticker generated is optimized for clarity, transparent background rendering, and lightweight file size so your chats never lag.
+                  Crop photos or animated GIFs to any dimension, rotate bold meme captions with live handles, fine-tune custom typography, and export lightweight lossless graphics ready for social media and chats.
                 </p>
                 <div class="pt-2">
                   <a
-                    href="/create"
+                    href="/studio"
                     class="inline-flex items-center gap-2 text-sm font-semibold text-brand-400 hover:text-brand-300 transition-colors"
                   >
                     <span>Launch Studio to customize your own</span>
@@ -226,7 +223,7 @@ const faqs = [
               <div class="w-full md:w-72 aspect-square rounded-2xl bg-dark-bg border border-dark-border p-3 flex flex-col items-center justify-center relative overflow-hidden shadow-inner">
                 <img
                   src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=400&auto=format&fit=crop&q=80"
-                  alt="Sticker demo preview"
+                  alt="Meme demo preview"
                   class="w-full h-full object-cover rounded-xl"
                 />
                 <div class="absolute inset-x-0 bottom-4 text-center px-2">
@@ -247,7 +244,7 @@ const faqs = [
       <div class="text-center max-w-2xl mx-auto mb-16">
         <h2 class="text-xs font-mono font-bold text-brand-400 uppercase tracking-widest mb-2">Simplicity First</h2>
         <h3 class="text-3xl sm:text-4xl font-display font-extrabold text-white">How It Works in 3 Simple Steps</h3>
-        <p class="text-sm text-slate-400 mt-2">Start sending custom stickers to friends in under 30 seconds</p>
+        <p class="text-sm text-slate-400 mt-2">Start creating and exporting custom memes in under 30 seconds</p>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -268,7 +265,7 @@ const faqs = [
       <div class="text-center max-w-2xl mx-auto mb-16">
         <h2 class="text-xs font-mono font-bold text-brand-400 uppercase tracking-widest mb-2">Built For Creators</h2>
         <h3 class="text-3xl sm:text-4xl font-display font-extrabold text-white">Why Mewmer is Different</h3>
-        <p class="text-sm text-slate-400 mt-2">Engineered for speed, privacy, and frictionless WhatsApp sharing</p>
+        <p class="text-sm text-slate-400 mt-2">Engineered for speed, privacy, and frictionless graphic creation</p>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -285,19 +282,19 @@ const faqs = [
     </div>
   </section>
 
-  <section id="explore" class="py-20 border-t border-dark-border bg-dark-card/20">
+  <section class="py-20 border-t border-dark-border bg-dark-card/20">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-12">
         <div>
           <h2 class="text-xs font-mono font-bold text-brand-400 uppercase tracking-widest mb-2">Community</h2>
-          <h3 class="text-3xl font-display font-extrabold text-white">Trending Sticker Packs</h3>
-          <p class="text-sm text-slate-400 mt-1">Discover popular public packs ready to save or customize</p>
+          <h3 class="text-3xl font-display font-extrabold text-white">Trending Packs & Templates</h3>
+          <p class="text-sm text-slate-400 mt-1">Discover popular templates ready to customize in the studio</p>
         </div>
         <a
-          href="/create"
+          href="/studio"
           class="text-sm font-semibold text-brand-400 hover:text-brand-300 transition-colors inline-flex items-center gap-1.5"
         >
-          <span>Create Your Own Pack</span>
+          <span>Open Full Studio</span>
           <span>→</span>
         </a>
       </div>
@@ -338,7 +335,7 @@ const faqs = [
                 <span>View Pack</span>
               </a>
               <a
-                href="/create"
+                href="/studio"
                 class="py-2.5 px-3.5 rounded-xl bg-dark-bg hover:bg-dark-border text-slate-300 font-semibold text-xs flex items-center justify-center transition-colors"
                 title="Open in Studio"
               >
@@ -352,18 +349,21 @@ const faqs = [
   </section>
 
   <section class="py-20 border-t border-dark-border">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="text-center mb-12">
         <h2 class="text-xs font-mono font-bold text-brand-400 uppercase tracking-widest mb-2">Got Questions?</h2>
         <h3 class="text-3xl font-display font-extrabold text-white">Frequently Asked Questions</h3>
       </div>
 
-      <div class="space-y-4">
+      <div class="space-y-3">
         {faqs.map((faq) => (
-          <div class="bg-dark-card border border-dark-border rounded-xl p-6">
-            <h4 class="text-base font-bold text-white">{faq.q}</h4>
-            <p class="text-sm text-slate-400 mt-2 leading-relaxed">{faq.a}</p>
-          </div>
+          <details class="group bg-dark-card border border-dark-border rounded-xl p-5 hover:border-brand-500/40 transition-colors">
+            <summary class="flex items-center justify-between cursor-pointer list-none text-base font-bold text-white select-none">
+              <span>{faq.q}</span>
+              <span class="text-brand-400 text-lg transition-transform duration-200 group-open:rotate-180">▾</span>
+            </summary>
+            <p class="text-sm text-slate-300 mt-3 leading-relaxed border-t border-dark-border/40 pt-3">{faq.a}</p>
+          </details>
         ))}
       </div>
     </div>
@@ -372,17 +372,17 @@ const faqs = [
   <section class="py-20 border-t border-dark-border bg-gradient-to-b from-transparent to-brand-900/10">
     <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
       <h3 class="text-3xl sm:text-5xl font-display font-extrabold text-white tracking-tight">
-        Ready to Create Your Stickers?
+        Ready to Create Your Memes?
       </h3>
       <p class="mt-4 text-base text-slate-300 max-w-xl mx-auto">
-        Join creators making and sharing thousands of WhatsApp stickers every day. Free forever with zero watermark.
+        Crop, resize, and caption photos or animated GIFs in seconds. Free forever in your browser.
       </p>
       <div class="mt-8 flex justify-center">
         <a
-          href="/create"
+          href="/studio"
           class="px-8 py-4 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 text-white font-bold text-base shadow-xl shadow-brand-500/25 transition-all hover:scale-[1.02] active:scale-[0.98]"
         >
-          Get Started Now — It's Free
+          Open Studio Now — It's Free
         </a>
       </div>
     </div>

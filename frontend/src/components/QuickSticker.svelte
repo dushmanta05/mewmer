@@ -185,7 +185,7 @@
       <div>
         <div class="flex items-center justify-between">
           <span class="text-xs font-bold uppercase tracking-wider text-brand-400">⚡ Quick Sticker Maker</span>
-          <a href="/create" class="text-xs text-slate-400 hover:text-white transition-colors underline decoration-dark-border underline-offset-4">
+          <a href="/studio" class="text-xs text-slate-400 hover:text-white transition-colors underline decoration-dark-border underline-offset-4">
             Open Advanced Studio →
           </a>
         </div>
