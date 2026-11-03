@@ -27,6 +27,9 @@
   let imgNaturalWidth = $state(800);
   let imgNaturalHeight = $state(600);
 
+  let isAnimatedGif = $state(false);
+  let currentGifFile = $state<File | null>(null);
+
   let aspectRatio = $state<AspectRatio>('free');
   let cropX = $state(0);
   let cropY = $state(0);
@@ -35,6 +38,11 @@
   let outputWidth = $state(800);
   let outputHeight = $state(600);
   let lockOutputAspect = $state(true);
+
+  let showWatermark = $state(true);
+  let watermarkStyle = $state<'text-only' | 'glassy'>('text-only');
+  let watermarkPosition = $state<'bottom-right' | 'bottom-left' | 'top-right'>('bottom-right');
+  let watermarkOpacity = $state(0.55);
 
   let textLayers = $state<TextLayer[]>([
     {
@@ -81,9 +89,9 @@
   let dragLayerId: string | null = null;
 
   const sampleTemplates = [
-    { name: 'Landscape Cat', url: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=1200&auto=format&fit=crop&q=80' },
-    { name: 'Square Doge', url: 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=800&auto=format&fit=crop&q=80' },
-    { name: 'Portrait Kitten', url: 'https://images.unsplash.com/photo-1573865526739-10659fec78a5?w=800&auto=format&fit=crop&q=80' }
+    { name: 'Landscape Cat', url: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=1200&auto=format&fit=crop&q=80', isGif: false },
+    { name: 'Square Doge', url: 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=800&auto=format&fit=crop&q=80', isGif: false },
+    { name: 'Animated Cat (GIF)', url: 'https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif', isGif: true },
   ];
 
   function renderCanvas() {
@@ -96,7 +104,7 @@
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    if (loadedImg && loadedImg.complete) {
+    if (!isAnimatedGif && loadedImg && loadedImg.complete) {
       ctx.drawImage(
         loadedImg,
         cropX,
@@ -147,6 +155,62 @@
         ctx.lineWidth = Math.max(1.5, 2 * scaleFactor);
         ctx.setLineDash([6 * scaleFactor, 4 * scaleFactor]);
         ctx.strokeRect(-boxW / 2, -boxH / 2, boxW, boxH);
+      }
+
+      ctx.restore();
+    }
+
+    if (showWatermark) {
+      ctx.save();
+      const scaleRef = canvas.width / 600;
+      const fontSize = Math.max(11, Math.round(13 * scaleRef));
+      ctx.font = `600 ${fontSize}px Inter, system-ui, sans-serif`;
+
+      const text = 'mewmer.com';
+      const metrics = ctx.measureText(text);
+      const padX = 8 * scaleRef;
+      const padY = 4 * scaleRef;
+      const w = metrics.width + (watermarkStyle === 'glassy' ? padX * 2 : 0);
+      const h = fontSize + (watermarkStyle === 'glassy' ? padY * 2 : 0);
+      const margin = 14 * scaleRef;
+
+      let bx = canvas.width - margin - w;
+      let by = canvas.height - margin - h;
+      if (watermarkPosition === 'bottom-left') {
+        bx = margin;
+        by = canvas.height - margin - h;
+      } else if (watermarkPosition === 'top-right') {
+        bx = canvas.width - margin - w;
+        by = margin;
+      }
+
+      if (watermarkStyle === 'glassy') {
+        ctx.fillStyle = `rgba(11, 15, 23, ${watermarkOpacity * 0.4})`;
+        ctx.strokeStyle = `rgba(255, 255, 255, ${watermarkOpacity * 0.22})`;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        if (ctx.roundRect) {
+          ctx.roundRect(bx, by, w, h, 6 * scaleRef);
+        } else {
+          ctx.rect(bx, by, w, h);
+        }
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = `rgba(255, 255, 255, ${watermarkOpacity})`;
+        ctx.fillText(text, bx + w / 2, by + h / 2);
+      } else {
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.75)';
+        ctx.shadowBlur = 4 * scaleRef;
+        ctx.shadowOffsetX = 1 * scaleRef;
+        ctx.shadowOffsetY = 1 * scaleRef;
+
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+        ctx.fillStyle = `rgba(255, 255, 255, ${watermarkOpacity})`;
+        ctx.fillText(text, bx, by);
       }
 
       ctx.restore();
@@ -241,20 +305,21 @@
     renderCanvas();
   }
 
-  function loadImage(src: string) {
+  function loadImage(src: string, isGif = false) {
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.onload = () => {
       loadedImg = img;
       imageSource = src;
-      imgNaturalWidth = img.naturalWidth;
-      imgNaturalHeight = img.naturalHeight;
+      isAnimatedGif = isGif;
+      imgNaturalWidth = img.naturalWidth || 800;
+      imgNaturalHeight = img.naturalHeight || 600;
       cropX = 0;
       cropY = 0;
-      cropW = img.naturalWidth;
-      cropH = img.naturalHeight;
-      outputWidth = img.naturalWidth;
-      outputHeight = img.naturalHeight;
+      cropW = imgNaturalWidth;
+      cropH = imgNaturalHeight;
+      outputWidth = imgNaturalWidth;
+      outputHeight = imgNaturalHeight;
       aspectRatio = 'free';
       renderCanvas();
     };
@@ -266,10 +331,19 @@
     const file = target.files?.[0];
     if (!file) return;
 
+    const isGif = file.type === 'image/gif' || file.name.toLowerCase().endsWith('.gif');
+    if (isGif) {
+      currentGifFile = file;
+      isAnimatedGif = true;
+    } else {
+      currentGifFile = null;
+      isAnimatedGif = false;
+    }
+
     const reader = new FileReader();
     reader.onload = (event) => {
       if (event.target?.result) {
-        loadImage(event.target.result as string);
+        loadImage(event.target.result as string, isGif);
       }
     };
     reader.readAsDataURL(file);
@@ -376,6 +450,62 @@
       ctx.restore();
     }
 
+    if (showWatermark) {
+      ctx.save();
+      const scaleRef = offscreen.width / 600;
+      const fontSize = Math.max(11, Math.round(13 * scaleRef));
+      ctx.font = `600 ${fontSize}px Inter, system-ui, sans-serif`;
+
+      const text = 'mewmer.com';
+      const metrics = ctx.measureText(text);
+      const padX = 8 * scaleRef;
+      const padY = 4 * scaleRef;
+      const w = metrics.width + (watermarkStyle === 'glassy' ? padX * 2 : 0);
+      const h = fontSize + (watermarkStyle === 'glassy' ? padY * 2 : 0);
+      const margin = 14 * scaleRef;
+
+      let bx = offscreen.width - margin - w;
+      let by = offscreen.height - margin - h;
+      if (watermarkPosition === 'bottom-left') {
+        bx = margin;
+        by = offscreen.height - margin - h;
+      } else if (watermarkPosition === 'top-right') {
+        bx = offscreen.width - margin - w;
+        by = margin;
+      }
+
+      if (watermarkStyle === 'glassy') {
+        ctx.fillStyle = `rgba(11, 15, 23, ${watermarkOpacity * 0.4})`;
+        ctx.strokeStyle = `rgba(255, 255, 255, ${watermarkOpacity * 0.22})`;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        if (ctx.roundRect) {
+          ctx.roundRect(bx, by, w, h, 6 * scaleRef);
+        } else {
+          ctx.rect(bx, by, w, h);
+        }
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = `rgba(255, 255, 255, ${watermarkOpacity})`;
+        ctx.fillText(text, bx + w / 2, by + h / 2);
+      } else {
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.75)';
+        ctx.shadowBlur = 4 * scaleRef;
+        ctx.shadowOffsetX = 1 * scaleRef;
+        ctx.shadowOffsetY = 1 * scaleRef;
+
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+        ctx.fillStyle = `rgba(255, 255, 255, ${watermarkOpacity})`;
+        ctx.fillText(text, bx, by);
+      }
+
+      ctx.restore();
+    }
+
     let mimeType = 'image/webp';
     if (exportFormat === 'jpeg') mimeType = 'image/jpeg';
     else if (exportFormat === 'png') mimeType = 'image/png';
@@ -392,6 +522,35 @@
   async function downloadImage() {
     isExporting = true;
     try {
+      if (isAnimatedGif && exportFormat === 'webp' && currentGifFile) {
+        showNotice('Processing animated GIF crop via worker pool...');
+        const formData = new FormData();
+        formData.append('media', currentGifFile);
+        formData.append('cropX', Math.round(cropX).toString());
+        formData.append('cropY', Math.round(cropY).toString());
+        formData.append('cropW', Math.round(cropW).toString());
+        formData.append('cropH', Math.round(cropH).toString());
+        formData.append('outW', Math.round(outputWidth).toString());
+        formData.append('outH', Math.round(outputHeight).toString());
+
+        const res = await fetch('/api/v1/stickers/process-animated', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!res.ok) {
+          throw new Error('Server conversion failed');
+        }
+
+        const data = await res.json();
+        const a = document.createElement('a');
+        a.href = data.imageUrl;
+        a.download = `mewmer_animated_${outputWidth}x${outputHeight}_${Date.now()}.webp`;
+        a.click();
+        showNotice(`Downloaded cropped animated WebP!`);
+        return;
+      }
+
       const blob = await getExportBlob();
       if (!blob) throw new Error('Export failed');
 
@@ -443,6 +602,62 @@
         ctx.restore();
       }
 
+      if (showWatermark) {
+        ctx.save();
+        const scaleRef = offscreen.width / 600;
+        const fontSize = Math.max(11, Math.round(13 * scaleRef));
+        ctx.font = `600 ${fontSize}px Inter, system-ui, sans-serif`;
+
+        const text = 'mewmer.com';
+        const metrics = ctx.measureText(text);
+        const padX = 8 * scaleRef;
+        const padY = 4 * scaleRef;
+        const w = metrics.width + (watermarkStyle === 'glassy' ? padX * 2 : 0);
+        const h = fontSize + (watermarkStyle === 'glassy' ? padY * 2 : 0);
+        const margin = 14 * scaleRef;
+
+        let bx = offscreen.width - margin - w;
+        let by = offscreen.height - margin - h;
+        if (watermarkPosition === 'bottom-left') {
+          bx = margin;
+          by = offscreen.height - margin - h;
+        } else if (watermarkPosition === 'top-right') {
+          bx = offscreen.width - margin - w;
+          by = margin;
+        }
+
+        if (watermarkStyle === 'glassy') {
+          ctx.fillStyle = `rgba(11, 15, 23, ${watermarkOpacity * 0.4})`;
+          ctx.strokeStyle = `rgba(255, 255, 255, ${watermarkOpacity * 0.22})`;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          if (ctx.roundRect) {
+            ctx.roundRect(bx, by, w, h, 6 * scaleRef);
+          } else {
+            ctx.rect(bx, by, w, h);
+          }
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillStyle = `rgba(255, 255, 255, ${watermarkOpacity})`;
+          ctx.fillText(text, bx + w / 2, by + h / 2);
+        } else {
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.75)';
+          ctx.shadowBlur = 4 * scaleRef;
+          ctx.shadowOffsetX = 1 * scaleRef;
+          ctx.shadowOffsetY = 1 * scaleRef;
+
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'top';
+          ctx.fillStyle = `rgba(255, 255, 255, ${watermarkOpacity})`;
+          ctx.fillText(text, bx, by);
+        }
+
+        ctx.restore();
+      }
+
       const blob = await new Promise<Blob | null>((resolve) =>
         offscreen.toBlob((b) => resolve(b), 'image/png')
       );
@@ -465,7 +680,7 @@
   }
 
   onMount(() => {
-    loadImage(sampleTemplates[0].url);
+    loadImage(sampleTemplates[0].url, sampleTemplates[0].isGif);
   });
 
   let selectedLayer = $derived(textLayers.find((l) => l.id === selectedLayerId));
@@ -478,17 +693,31 @@
         class="relative w-full max-h-[58vh] sm:max-h-[64vh] rounded-xl overflow-hidden border border-dark-border/80 flex items-center justify-center bg-dark-bg p-2 select-none"
         style="background-image: linear-gradient(45deg, #111827 25%, transparent 25%), linear-gradient(-45deg, #111827 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #111827 75%), linear-gradient(-45deg, transparent 75%, #111827 75%); background-size: 20px 20px; background-position: 0 0, 0 10px, 10px -10px, -10px 0px; background-color: #0B0F17;"
       >
-        <canvas
-          bind:this={canvas}
-          class="max-w-full max-h-[54vh] sm:max-h-[60vh] object-contain cursor-move touch-none select-none rounded shadow"
-          onpointerdown={onCanvasPointerDown}
-          onpointermove={onCanvasPointerMove}
-          onpointerup={onCanvasPointerUp}
-          onpointercancel={onCanvasPointerUp}
-        ></canvas>
+        <div
+          class="relative max-w-full max-h-[54vh] sm:max-h-[60vh] flex items-center justify-center overflow-hidden rounded shadow"
+          style="aspect-ratio: {cropW} / {cropH}; width: 100%;"
+        >
+          {#if isAnimatedGif && imageSource}
+            <img
+              src={imageSource}
+              alt="Animated GIF Preview"
+              class="absolute inset-0 w-full h-full object-cover pointer-events-none"
+              style="object-position: {((cropX + cropW / 2) / Math.max(1, imgNaturalWidth)) * 100}% {((cropY + cropH / 2) / Math.max(1, imgNaturalHeight)) * 100}%;"
+            />
+          {/if}
+
+          <canvas
+            bind:this={canvas}
+            class="relative z-10 w-full h-full object-contain cursor-move touch-none select-none"
+            onpointerdown={onCanvasPointerDown}
+            onpointermove={onCanvasPointerMove}
+            onpointerup={onCanvasPointerUp}
+            onpointercancel={onCanvasPointerUp}
+          ></canvas>
+        </div>
 
         <span class="absolute top-3 left-3 px-2 py-1 text-[11px] font-mono font-medium rounded-md bg-dark-bg/85 backdrop-blur border border-dark-border text-slate-300">
-          {outputWidth} × {outputHeight} px
+          {outputWidth} × {outputHeight} px {isAnimatedGif ? '• 🎬 GIF' : ''}
         </span>
 
         {#if selectedLayer}
@@ -515,8 +744,13 @@
           disabled={isExporting}
           class="w-full sm:flex-1 py-3 px-4 rounded-xl bg-brand-500 hover:bg-brand-400 active:scale-[0.99] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-brand-500/25 transition-all"
         >
-          <span>💾</span>
-          <span>Download {exportFormat.toUpperCase()} ({outputWidth} × {outputHeight})</span>
+          {#if isExporting}
+            <span class="animate-spin">⏳</span>
+            <span>Processing...</span>
+          {:else}
+            <span>💾</span>
+            <span>Download {exportFormat.toUpperCase()} ({outputWidth} × {outputHeight})</span>
+          {/if}
         </button>
 
         <button
@@ -672,21 +906,21 @@
 
         <div class="space-y-2 pt-3 border-t border-dark-border">
           <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider">
-            Change Image
+            Change Image or GIF
           </label>
           <div class="flex items-center gap-2">
             <label class="flex-1 cursor-pointer py-2.5 px-3 rounded-xl border border-dashed border-brand-500/40 hover:border-brand-500 bg-brand-500/5 hover:bg-brand-500/10 text-center text-xs font-medium text-brand-300 transition-colors">
-              <span>📁 Upload from Device</span>
-              <input type="file" accept="image/*" class="hidden" onchange={handleFileUpload} />
+              <span>📁 Upload Photo or GIF</span>
+              <input type="file" accept="image/*,.gif" class="hidden" onchange={handleFileUpload} />
             </label>
           </div>
 
-          <div class="flex items-center gap-2 pt-1">
+          <div class="flex items-center gap-2 pt-1 flex-wrap">
             <span class="text-xs text-dark-muted">Or try:</span>
             {#each sampleTemplates as template}
               <button
                 type="button"
-                onclick={() => loadImage(template.url)}
+                onclick={() => loadImage(template.url, template.isGif)}
                 class="text-xs px-2.5 py-1 rounded-lg bg-dark-bg border border-dark-border text-slate-300 hover:text-white hover:border-brand-500 transition-colors"
               >
                 {template.name}
@@ -883,7 +1117,7 @@
               onclick={() => exportFormat = 'webp'}
               class="py-2.5 px-3 rounded-xl border text-xs font-bold transition-all {exportFormat === 'webp' ? 'bg-brand-500/20 border-brand-500 text-brand-200' : 'bg-dark-bg border-dark-border text-slate-400 hover:text-white'}"
             >
-              WebP
+              WebP {isAnimatedGif ? '(Animated)' : ''}
             </button>
             <button
               type="button"
@@ -919,6 +1153,82 @@
           </div>
         {/if}
 
+        <div class="pt-3 border-t border-dark-border space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+              <span>🏷️</span>
+              <span>mewmer.com Watermark</span>
+            </span>
+            <button
+              type="button"
+              onclick={() => { showWatermark = !showWatermark; renderCanvas(); }}
+              class="text-xs font-medium px-2 py-0.5 rounded border transition-colors {showWatermark ? 'bg-brand-500/20 border-brand-500/40 text-brand-300' : 'bg-dark-bg border-dark-border text-slate-500'}"
+            >
+              {showWatermark ? 'Enabled' : 'Disabled'}
+            </button>
+          </div>
+
+          {#if showWatermark}
+            <div class="space-y-2.5">
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-dark-muted shrink-0">Style:</span>
+                <button
+                  type="button"
+                  onclick={() => { watermarkStyle = 'text-only'; renderCanvas(); }}
+                  class="text-xs px-2.5 py-1 rounded-lg border transition-colors {watermarkStyle === 'text-only' ? 'bg-brand-500/20 border-brand-500 text-brand-200' : 'bg-dark-bg border-dark-border text-slate-400'}"
+                >
+                  Text Only (No background)
+                </button>
+                <button
+                  type="button"
+                  onclick={() => { watermarkStyle = 'glassy'; renderCanvas(); }}
+                  class="text-xs px-2.5 py-1 rounded-lg border transition-colors {watermarkStyle === 'glassy' ? 'bg-brand-500/20 border-brand-500 text-brand-200' : 'bg-dark-bg border-dark-border text-slate-400'}"
+                >
+                  Glassy Pill
+                </button>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-dark-muted shrink-0">Position:</span>
+                <button
+                  type="button"
+                  onclick={() => { watermarkPosition = 'bottom-right'; renderCanvas(); }}
+                  class="text-xs px-2 py-1 rounded-lg border transition-colors {watermarkPosition === 'bottom-right' ? 'bg-brand-500/20 border-brand-500 text-brand-200' : 'bg-dark-bg border-dark-border text-slate-400'}"
+                >
+                  Bottom Right
+                </button>
+                <button
+                  type="button"
+                  onclick={() => { watermarkPosition = 'bottom-left'; renderCanvas(); }}
+                  class="text-xs px-2 py-1 rounded-lg border transition-colors {watermarkPosition === 'bottom-left' ? 'bg-brand-500/20 border-brand-500 text-brand-200' : 'bg-dark-bg border-dark-border text-slate-400'}"
+                >
+                  Bottom Left
+                </button>
+                <button
+                  type="button"
+                  onclick={() => { watermarkPosition = 'top-right'; renderCanvas(); }}
+                  class="text-xs px-2 py-1 rounded-lg border transition-colors {watermarkPosition === 'top-right' ? 'bg-brand-500/20 border-brand-500 text-brand-200' : 'bg-dark-bg border-dark-border text-slate-400'}"
+                >
+                  Top Right
+                </button>
+              </div>
+
+              <div class="flex items-center justify-between pt-1">
+                <span class="text-xs text-dark-muted">Opacity ({Math.round(watermarkOpacity * 100)}%)</span>
+                <input
+                  type="range"
+                  min="0.25"
+                  max="0.85"
+                  step="0.05"
+                  bind:value={watermarkOpacity}
+                  oninput={() => renderCanvas()}
+                  class="w-36 accent-brand-500"
+                />
+              </div>
+            </div>
+          {/if}
+        </div>
+
         <div class="p-3 rounded-xl bg-dark-bg border border-dark-border space-y-2">
           <div class="flex items-center justify-between text-xs">
             <span class="text-dark-muted">Resolution:</span>
@@ -926,7 +1236,9 @@
           </div>
           <div class="flex items-center justify-between text-xs">
             <span class="text-dark-muted">Format:</span>
-            <span class="font-mono font-bold text-brand-300">{exportFormat.toUpperCase()}</span>
+            <span class="font-mono font-bold text-brand-300">
+              {exportFormat.toUpperCase()} {isAnimatedGif && exportFormat === 'webp' ? '(Looping Animated)' : ''}
+            </span>
           </div>
           <div class="flex items-center justify-between text-xs">
             <span class="text-dark-muted">Captions included:</span>
@@ -940,8 +1252,13 @@
             disabled={isExporting}
             class="w-full py-3 px-4 rounded-xl bg-brand-500 hover:bg-brand-400 active:scale-[0.99] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-brand-500/25 transition-all"
           >
-            <span>💾</span>
-            <span>Download {exportFormat.toUpperCase()}</span>
+            {#if isExporting}
+              <span class="animate-spin">⏳</span>
+              <span>Processing...</span>
+            {:else}
+              <span>💾</span>
+              <span>Download {exportFormat.toUpperCase()}</span>
+            {/if}
           </button>
 
           <button

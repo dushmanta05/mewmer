@@ -26,6 +26,8 @@ This document tracks all completed milestones, current system status, mobile tes
   - Custom pixel dimension resizing inputs with aspect ratio lock toggle (`🔒 Locked Aspect`).
   - Dynamic multi-layer text system: Add unlimited captions, drag to position anywhere on canvas, scale slider, and 360-degree rotation (`-180°` to `180°`) with 0° reset.
   - Multi-format exports: Export as **WebP**, **JPG / JPEG**, or **PNG** with adjustable compression quality slider.
+  - Subtle `mewmer.com` watermark: Low-opacity text-only watermark with soft drop shadow (no background box), optional glassy pill toggle, and position presets.
+  - Animated GIF cropping: Real-time animated GIF playback within cropped aspect ratio viewport on web, with backend worker pool FFmpeg cropping pipeline (`crop=w:h:x:y,scale=outW:outH`) and mobile frame-by-frame crop boundary clamping.
   - Full responsive layout: Mobile-first layout with canvas pinned on top and tabbed control palette underneath (`Crop & Ratio`, `Captions`, `Export`), tablet dual-column workspace, and desktop 12-column studio.
 - Built `PackViewer.svelte` and `/packs/[id].astro`: Dynamic sticker pack viewer featuring full pack inspection, individual sticker downloading, single-sticker WhatsApp chat share, and native mobile app deep links (`mewmer://pack/:id`).
 - Wired Vite proxy in `astro.config.mjs` forwarding `/api/*` and `/uploads/*` to Go backend (`http://localhost:3030`).

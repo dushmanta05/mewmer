@@ -45,7 +45,7 @@ func (wp *WorkerPool) worker(ctx context.Context, id int) {
 			return
 		case job := <-wp.jobsChan:
 			log.Printf("[Worker %d] Processing media %s -> %s", id, job.InputPath, job.OutputPath)
-			err := ConvertToWhatsAppWebP(ctx, job.InputPath, job.OutputPath, job.IsAnimated)
+			err := ProcessMedia(ctx, job)
 			if job.ErrChan != nil {
 				job.ErrChan <- err
 			}
@@ -58,22 +58,36 @@ func (wp *WorkerPool) worker(ctx context.Context, id int) {
 	}
 }
 
-// ConvertToWhatsAppWebP runs FFmpeg to produce strict 512x512 WhatsApp-compliant WebP files
-func ConvertToWhatsAppWebP(ctx context.Context, inputPath, outputPath string, isAnimated bool) error {
-	// Timeout after 30 seconds to prevent rogue files from hanging
+func ProcessMedia(ctx context.Context, job models.ProcessingJob) error {
 	ctxTimeout, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
+	var filter string
+	outW := job.OutW
+	outH := job.OutH
+	if outW <= 0 {
+		outW = job.CropW
+	}
+	if outH <= 0 {
+		outH = job.CropH
+	}
+
+	if job.CropW > 0 && job.CropH > 0 {
+		filter = fmt.Sprintf("crop=%d:%d:%d:%d,scale=%d:%d,fps=18", job.CropW, job.CropH, job.CropX, job.CropY, outW, outH)
+	} else if job.IsAnimated {
+		filter = "scale=512:512:force_original_aspect_ratio=decrease,pad=512:512:(ow-iw)/2:(oh-ih)/2:color=0x00000000,fps=18"
+	} else {
+		filter = "scale=512:512:force_original_aspect_ratio=decrease,pad=512:512:(ow-iw)/2:(oh-ih)/2:color=0x00000000"
+	}
+
 	var args []string
 
-	if isAnimated {
-		// WhatsApp Animated WebP rules:
-		// 512x512 padded to aspect ratio with transparency, <= 500KB, max 20fps, looped
+	if job.IsAnimated {
 		args = []string{
 			"-y",
-			"-i", inputPath,
-			"-t", "5", // Max 5 seconds
-			"-vf", "scale=512:512:force_original_aspect_ratio=decrease,pad=512:512:(ow-iw)/2:(oh-ih)/2:color=0x00000000,fps=18",
+			"-i", job.InputPath,
+			"-t", "6",
+			"-vf", filter,
 			"-vcodec", "libwebp",
 			"-lossless", "0",
 			"-compression_level", "4",
@@ -81,18 +95,17 @@ func ConvertToWhatsAppWebP(ctx context.Context, inputPath, outputPath string, is
 			"-loop", "0",
 			"-an",
 			"-vsync", "0",
-			outputPath,
+			job.OutputPath,
 		}
 	} else {
-		// Static image conversion
 		args = []string{
 			"-y",
-			"-i", inputPath,
-			"-vf", "scale=512:512:force_original_aspect_ratio=decrease,pad=512:512:(ow-iw)/2:(oh-ih)/2:color=0x00000000",
+			"-i", job.InputPath,
+			"-vf", filter,
 			"-vcodec", "libwebp",
 			"-lossless", "0",
 			"-q:v", "80",
-			outputPath,
+			job.OutputPath,
 		}
 	}
 
@@ -103,4 +116,12 @@ func ConvertToWhatsAppWebP(ctx context.Context, inputPath, outputPath string, is
 	}
 
 	return nil
+}
+
+func ConvertToWhatsAppWebP(ctx context.Context, inputPath, outputPath string, isAnimated bool) error {
+	return ProcessMedia(ctx, models.ProcessingJob{
+		InputPath:  inputPath,
+		OutputPath: outputPath,
+		IsAnimated: isAnimated,
+	})
 }

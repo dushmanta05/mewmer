@@ -42,5 +42,11 @@ type ProcessingJob struct {
 	InputPath  string
 	OutputPath string
 	IsAnimated bool
+	CropX      int
+	CropY      int
+	CropW      int
+	CropH      int
+	OutW       int
+	OutH       int
 	ErrChan    chan error
 }

@@ -125,13 +125,25 @@ func (h *Handler) ProcessAnimated(w http.ResponseWriter, r *http.Request) {
 	dst.Close()
 	defer os.Remove(inputPath) // Clean up temp input
 
-	// Enqueue job to worker pool
 	errChan := make(chan error, 1)
+	cropX, _ := strconv.Atoi(r.FormValue("cropX"))
+	cropY, _ := strconv.Atoi(r.FormValue("cropY"))
+	cropW, _ := strconv.Atoi(r.FormValue("cropW"))
+	cropH, _ := strconv.Atoi(r.FormValue("cropH"))
+	outW, _ := strconv.Atoi(r.FormValue("outW"))
+	outH, _ := strconv.Atoi(r.FormValue("outH"))
+
 	job := models.ProcessingJob{
 		ID:         tempID,
 		InputPath:  inputPath,
 		OutputPath: outputPath,
 		IsAnimated: true,
+		CropX:      cropX,
+		CropY:      cropY,
+		CropW:      cropW,
+		CropH:      cropH,
+		OutW:       outW,
+		OutH:       outH,
 		ErrChan:    errChan,
 	}
 

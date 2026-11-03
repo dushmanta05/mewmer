@@ -261,12 +261,42 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
     final double finalOffsetX = (512 - targetWidth) / 2 + (_imageOffset.dx * scaleFactor);
     final double finalOffsetY = (512 - targetHeight) / 2 + (_imageOffset.dy * scaleFactor);
 
-    img.compositeImage(
-      baseImage,
-      resizedFrame,
-      dstX: finalOffsetX.round(),
-      dstY: finalOffsetY.round(),
-    );
+    int destX = finalOffsetX.round();
+    int destY = finalOffsetY.round();
+    int srcX = 0;
+    int srcY = 0;
+    int srcW = targetWidth;
+    int srcH = targetHeight;
+
+    if (destX < 0) {
+      srcX = -destX;
+      srcW = (srcW - srcX).clamp(0, targetWidth);
+      destX = 0;
+    }
+    if (destY < 0) {
+      srcY = -destY;
+      srcH = (srcH - srcY).clamp(0, targetHeight);
+      destY = 0;
+    }
+    if (destX + srcW > 512) {
+      srcW = (512 - destX).clamp(0, targetWidth);
+    }
+    if (destY + srcH > 512) {
+      srcH = (512 - destY).clamp(0, targetHeight);
+    }
+
+    if (srcW > 0 && srcH > 0) {
+      img.compositeImage(
+        baseImage,
+        resizedFrame,
+        dstX: destX,
+        dstY: destY,
+        srcX: srcX,
+        srcY: srcY,
+        srcW: srcW,
+        srcH: srcH,
+      );
+    }
 
     img.compositeImage(baseImage, textOverlay);
 
