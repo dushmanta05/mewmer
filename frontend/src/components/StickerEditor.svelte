@@ -1,6 +1,25 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { Lock, Unlock, Plus, Minus, RotateCw, Maximize2, Move } from '@lucide/svelte';
+  import {
+    Lock,
+    Unlock,
+    Plus,
+    Minus,
+    RotateCw,
+    Maximize2,
+    Move,
+    Crop,
+    Type,
+    Download,
+    Copy,
+    Upload,
+    Film,
+    Tag,
+    Trash2,
+    Check,
+    Sparkles,
+    Info
+  } from '@lucide/svelte';
 
   interface TextLayer {
     id: string;
@@ -96,7 +115,7 @@
 
   let canvas = $state<HTMLCanvasElement | null>(null);
   let imageSource = $state<string | null>(null);
-  let loadedImg: HTMLImageElement | null = null;
+  let loadedImg = $state<HTMLImageElement | null>(null);
   let imgNaturalWidth = $state(800);
   let imgNaturalHeight = $state(600);
 
@@ -334,22 +353,26 @@
         ctx.lineWidth = 1.5 * scaleFactor;
         ctx.stroke();
 
-        const rotArcR = 5.2 * scaleFactor;
+        const rotArcR = 5.4 * scaleFactor;
         ctx.strokeStyle = '#FFFFFF';
+        ctx.fillStyle = '#FFFFFF';
         ctx.lineWidth = Math.max(1.4, 1.8 * scaleFactor);
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
         ctx.beginPath();
-        ctx.arc(0, rotY, rotArcR, -0.75 * Math.PI, 0.7 * Math.PI);
+        ctx.arc(0, rotY, rotArcR, -0.65 * Math.PI, 0.75 * Math.PI);
         ctx.stroke();
 
-        const arrowTipX = Math.cos(0.7 * Math.PI) * rotArcR;
-        const arrowTipY = rotY + Math.sin(0.7 * Math.PI) * rotArcR;
-        const arrowHeadLen = 3.2 * scaleFactor;
+        const tipAngle = 0.75 * Math.PI;
+        const tipX = Math.cos(tipAngle) * rotArcR;
+        const tipY = rotY + Math.sin(tipAngle) * rotArcR;
+        const headLen = 3.6 * scaleFactor;
+        const tangent = tipAngle + Math.PI / 2;
+
         ctx.beginPath();
-        ctx.moveTo(arrowTipX - arrowHeadLen, arrowTipY);
-        ctx.lineTo(arrowTipX, arrowTipY);
-        ctx.lineTo(arrowTipX, arrowTipY - arrowHeadLen);
+        ctx.moveTo(tipX + Math.cos(tangent - 2.4) * headLen, tipY + Math.sin(tangent - 2.4) * headLen);
+        ctx.lineTo(tipX, tipY);
+        ctx.lineTo(tipX + Math.cos(tangent + 2.4) * headLen, tipY + Math.sin(tangent + 2.4) * headLen);
         ctx.stroke();
 
         const scaleHandleX = boxW / 2;
@@ -964,29 +987,32 @@
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
   <div class="lg:col-span-7 flex flex-col items-center w-full">
     <div class="w-full bg-dark-card border border-dark-border rounded-2xl p-4 sm:p-5 shadow-2xl flex flex-col items-center">
-      <div class="w-full flex items-center justify-between pb-3 px-1 text-xs">
-        <div class="flex items-center gap-2">
+      <div class="w-full flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 px-1 text-xs">
+        <div class="flex items-center gap-2 flex-wrap">
           <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-dark-bg border border-dark-border text-slate-200 font-mono text-[11px] font-semibold shadow-sm">
-            <span class="text-brand-400 font-bold">📐</span>
+            <Crop class="w-3.5 h-3.5 text-brand-400" />
             <span>{outputWidth} × {outputHeight} px</span>
             {#if isAnimatedGif}
-              <span class="text-brand-300 font-bold ml-1">• 🎬 GIF</span>
+              <span class="text-brand-300 font-bold ml-1 inline-flex items-center gap-1">
+                <Film class="w-3 h-3 text-brand-300" />
+                <span>GIF</span>
+              </span>
             {/if}
           </span>
-          <span class="text-[11px] text-dark-muted hidden sm:inline font-mono">
+          <span class="text-[11px] text-dark-muted font-mono">
             {aspectRatio === 'free' ? 'Original' : aspectRatio.toUpperCase()}
           </span>
         </div>
 
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 flex-wrap">
           {#if interactionMode === 'move-watermark'}
             <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-brand-500/25 border border-brand-500/40 text-brand-200 text-[11px] font-medium animate-pulse">
-              <span>🏷️</span>
+              <Tag class="w-3 h-3 text-brand-300" />
               <span>Moving Watermark</span>
             </span>
           {:else if isWatermarkHovered}
             <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-brand-500/15 border border-brand-500/30 text-brand-300 text-[11px] font-medium">
-              <span>🏷️</span>
+              <Tag class="w-3 h-3 text-brand-300" />
               <span>Drag to move</span>
             </span>
           {:else if selectedLayer}
@@ -1034,7 +1060,7 @@
         </div>
       </div>
 
-      <div class="w-full mt-4 flex items-center justify-between text-xs text-dark-muted px-1">
+      <div class="w-full mt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 text-xs text-dark-muted px-1">
         <span class="flex items-center gap-1.5">
           <span>Source:</span>
           <strong class="text-slate-300 font-mono">{imgNaturalWidth} × {imgNaturalHeight} px</strong>
@@ -1047,24 +1073,26 @@
 
       <div class="w-full mt-4 flex flex-col sm:flex-row items-center gap-2.5">
         <button
+          type="button"
           onclick={downloadImage}
           disabled={isExporting}
           class="w-full sm:flex-1 py-3 px-4 rounded-xl bg-brand-500 hover:bg-brand-400 active:scale-[0.99] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-brand-500/25 transition-all"
         >
           {#if isExporting}
-            <span class="animate-spin">⏳</span>
+            <span class="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>
             <span>Processing...</span>
           {:else}
-            <span>💾</span>
-            <span>Download {exportFormat.toUpperCase()} ({outputWidth} × {outputHeight})</span>
+            <Download class="w-4 h-4 text-white shrink-0" />
+            <span class="truncate">Download {exportFormat.toUpperCase()} ({outputWidth} × {outputHeight})</span>
           {/if}
         </button>
 
         <button
+          type="button"
           onclick={copyToClipboard}
-          class="w-full sm:w-auto py-3 px-4 rounded-xl bg-dark-border hover:bg-slate-700 text-slate-200 font-semibold text-xs flex items-center justify-center gap-2 transition-colors"
+          class="w-full sm:w-auto py-3 px-4 rounded-xl bg-dark-border hover:bg-slate-700 text-slate-200 font-semibold text-xs flex items-center justify-center gap-2 transition-colors shrink-0"
         >
-          <span>📋</span>
+          <Copy class="w-3.5 h-3.5 text-slate-300 shrink-0" />
           <span>Copy Image</span>
         </button>
       </div>
@@ -1077,11 +1105,11 @@
     </div>
   </div>
 
-  <div class="lg:col-span-5 bg-dark-card border border-dark-border rounded-2xl p-5 sm:p-6 shadow-xl space-y-6 w-full">
+  <div class="lg:col-span-5 bg-dark-card border border-dark-border rounded-2xl p-4 sm:p-6 shadow-xl space-y-5 sm:space-y-6 w-full">
     <div class="flex items-center justify-between border-b border-dark-border pb-4">
       <div>
-        <h3 class="text-lg font-bold text-white flex items-center gap-2">
-          <span>🖼️</span>
+        <h3 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+          <Sparkles class="w-4 h-4 text-brand-400 shrink-0" />
           <span>Image & Caption Studio</span>
         </h3>
         <p class="text-xs text-dark-muted mt-0.5">
@@ -1094,27 +1122,27 @@
       <button
         type="button"
         onclick={() => activeTab = 'crop'}
-        class="flex-1 py-2 text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5 {activeTab === 'crop' ? 'bg-brand-500/20 text-brand-300 border border-brand-500/30' : 'text-slate-400 hover:text-white'}"
+        class="flex-1 py-2 px-2 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1.5 whitespace-nowrap {activeTab === 'crop' ? 'bg-brand-500/20 text-brand-300 border border-brand-500/30' : 'text-slate-400 hover:text-white'}"
       >
-        <span>📐</span>
+        <Crop class="w-3.5 h-3.5 shrink-0" />
         <span>Crop & Ratio</span>
       </button>
 
       <button
         type="button"
         onclick={() => activeTab = 'text'}
-        class="flex-1 py-2 text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5 {activeTab === 'text' ? 'bg-brand-500/20 text-brand-300 border border-brand-500/30' : 'text-slate-400 hover:text-white'}"
+        class="flex-1 py-2 px-2 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1.5 whitespace-nowrap {activeTab === 'text' ? 'bg-brand-500/20 text-brand-300 border border-brand-500/30' : 'text-slate-400 hover:text-white'}"
       >
-        <span>✍️</span>
+        <Type class="w-3.5 h-3.5 shrink-0" />
         <span>Captions ({textLayers.length})</span>
       </button>
 
       <button
         type="button"
         onclick={() => activeTab = 'export'}
-        class="flex-1 py-2 text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5 {activeTab === 'export' ? 'bg-brand-500/20 text-brand-300 border border-brand-500/30' : 'text-slate-400 hover:text-white'}"
+        class="flex-1 py-2 px-2 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1.5 whitespace-nowrap {activeTab === 'export' ? 'bg-brand-500/20 text-brand-300 border border-brand-500/30' : 'text-slate-400 hover:text-white'}"
       >
-        <span>⚙️</span>
+        <Download class="w-3.5 h-3.5 shrink-0" />
         <span>Export</span>
       </button>
     </div>
@@ -1122,49 +1150,49 @@
     {#if activeTab === 'crop'}
       <div class="space-y-5 animate-fade-in">
         <div class="space-y-2">
-          <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider">
+          <span class="block text-xs font-semibold text-slate-300 uppercase tracking-wider">
             Aspect Ratio Presets
-          </label>
-          <div class="grid grid-cols-3 gap-2">
+          </span>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
             <button
               type="button"
               onclick={() => applyAspectRatio('free')}
-              class="py-2 px-2.5 rounded-xl border text-xs font-semibold transition-all {aspectRatio === 'free' ? 'bg-brand-500/20 border-brand-500 text-brand-200 shadow-sm' : 'bg-dark-bg border-dark-border text-slate-400 hover:text-white'}"
+              class="py-2.5 px-3 rounded-xl border text-xs font-semibold transition-all {aspectRatio === 'free' ? 'bg-brand-500/20 border-brand-500 text-brand-200 shadow-sm' : 'bg-dark-bg border-dark-border text-slate-400 hover:text-white'}"
             >
               Original
             </button>
             <button
               type="button"
               onclick={() => applyAspectRatio('1:1')}
-              class="py-2 px-2.5 rounded-xl border text-xs font-semibold transition-all {aspectRatio === '1:1' ? 'bg-brand-500/20 border-brand-500 text-brand-200 shadow-sm' : 'bg-dark-bg border-dark-border text-slate-400 hover:text-white'}"
+              class="py-2.5 px-3 rounded-xl border text-xs font-semibold transition-all {aspectRatio === '1:1' ? 'bg-brand-500/20 border-brand-500 text-brand-200 shadow-sm' : 'bg-dark-bg border-dark-border text-slate-400 hover:text-white'}"
             >
               1:1 Square
             </button>
             <button
               type="button"
               onclick={() => applyAspectRatio('4:3')}
-              class="py-2 px-2.5 rounded-xl border text-xs font-semibold transition-all {aspectRatio === '4:3' ? 'bg-brand-500/20 border-brand-500 text-brand-200 shadow-sm' : 'bg-dark-bg border-dark-border text-slate-400 hover:text-white'}"
+              class="py-2.5 px-3 rounded-xl border text-xs font-semibold transition-all {aspectRatio === '4:3' ? 'bg-brand-500/20 border-brand-500 text-brand-200 shadow-sm' : 'bg-dark-bg border-dark-border text-slate-400 hover:text-white'}"
             >
               4:3 Standard
             </button>
             <button
               type="button"
               onclick={() => applyAspectRatio('16:9')}
-              class="py-2 px-2.5 rounded-xl border text-xs font-semibold transition-all {aspectRatio === '16:9' ? 'bg-brand-500/20 border-brand-500 text-brand-200 shadow-sm' : 'bg-dark-bg border-dark-border text-slate-400 hover:text-white'}"
+              class="py-2.5 px-3 rounded-xl border text-xs font-semibold transition-all {aspectRatio === '16:9' ? 'bg-brand-500/20 border-brand-500 text-brand-200 shadow-sm' : 'bg-dark-bg border-dark-border text-slate-400 hover:text-white'}"
             >
               16:9 Widescreen
             </button>
             <button
               type="button"
               onclick={() => applyAspectRatio('9:16')}
-              class="py-2 px-2.5 rounded-xl border text-xs font-semibold transition-all {aspectRatio === '9:16' ? 'bg-brand-500/20 border-brand-500 text-brand-200 shadow-sm' : 'bg-dark-bg border-dark-border text-slate-400 hover:text-white'}"
+              class="py-2.5 px-3 rounded-xl border text-xs font-semibold transition-all {aspectRatio === '9:16' ? 'bg-brand-500/20 border-brand-500 text-brand-200 shadow-sm' : 'bg-dark-bg border-dark-border text-slate-400 hover:text-white'}"
             >
-              9:16 Story / Reel
+              9:16 Story
             </button>
             <button
               type="button"
               onclick={() => applyAspectRatio('3:4')}
-              class="py-2 px-2.5 rounded-xl border text-xs font-semibold transition-all {aspectRatio === '3:4' ? 'bg-brand-500/20 border-brand-500 text-brand-200 shadow-sm' : 'bg-dark-bg border-dark-border text-slate-400 hover:text-white'}"
+              class="py-2.5 px-3 rounded-xl border text-xs font-semibold transition-all {aspectRatio === '3:4' ? 'bg-brand-500/20 border-brand-500 text-brand-200 shadow-sm' : 'bg-dark-bg border-dark-border text-slate-400 hover:text-white'}"
             >
               3:4 Portrait
             </button>
@@ -1173,9 +1201,9 @@
 
         <div class="space-y-3 pt-3 border-t border-dark-border">
           <div class="flex items-center justify-between">
-            <label class="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+            <span class="text-xs font-semibold text-slate-300 uppercase tracking-wider">
               Output Dimensions (Pixels)
-            </label>
+            </span>
             <button
               type="button"
               onclick={() => lockOutputAspect = !lockOutputAspect}
@@ -1281,12 +1309,13 @@
         </div>
 
         <div class="space-y-2 pt-3 border-t border-dark-border">
-          <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider">
+          <span class="block text-xs font-semibold text-slate-300 uppercase tracking-wider">
             Change Image or GIF
-          </label>
+          </span>
           <div class="flex items-center gap-2">
-            <label class="flex-1 cursor-pointer py-2.5 px-3 rounded-xl border border-dashed border-brand-500/40 hover:border-brand-500 bg-brand-500/5 hover:bg-brand-500/10 text-center text-xs font-medium text-brand-300 transition-colors">
-              <span>📁 Upload Photo or GIF</span>
+            <label class="flex-1 cursor-pointer py-2.5 px-3 rounded-xl border border-dashed border-brand-500/40 hover:border-brand-500 bg-brand-500/5 hover:bg-brand-500/10 text-center text-xs font-medium text-brand-300 transition-colors flex items-center justify-center gap-2">
+              <Upload class="w-3.5 h-3.5 text-brand-400 shrink-0" />
+              <span>Upload Photo or GIF</span>
               <input type="file" accept="image/*,.gif" class="hidden" onchange={handleFileUpload} />
             </label>
           </div>
@@ -1308,15 +1337,15 @@
     {:else if activeTab === 'text'}
       <div class="space-y-5 animate-fade-in">
         <div class="flex items-center justify-between">
-          <label class="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+          <span class="text-xs font-semibold text-slate-300 uppercase tracking-wider">
             Caption Layers ({textLayers.length})
-          </label>
+          </span>
           <button
             type="button"
             onclick={addTextLayer}
             class="px-3 py-1.5 rounded-xl bg-brand-500 hover:bg-brand-400 text-white font-semibold text-xs flex items-center gap-1.5 transition-colors shadow-sm"
           >
-            <span>+</span>
+            <Plus class="w-3.5 h-3.5" />
             <span>Add Caption</span>
           </button>
         </div>
@@ -1324,8 +1353,11 @@
         <div class="space-y-2 max-h-48 overflow-y-auto pr-1">
           {#each textLayers as layer, idx}
             <div
+              role="button"
+              tabindex="0"
               class="p-2.5 rounded-xl border transition-all flex items-center justify-between gap-3 cursor-pointer {selectedLayerId === layer.id ? 'bg-brand-500/10 border-brand-500' : 'bg-dark-bg border-dark-border hover:border-slate-600'}"
               onclick={() => { selectedLayerId = layer.id; renderCanvas(); }}
+              onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { selectedLayerId = layer.id; renderCanvas(); } }}
             >
               <div class="flex items-center gap-2 min-w-0">
                 <span class="text-xs font-mono font-bold text-dark-muted">{idx + 1}</span>
@@ -1341,10 +1373,10 @@
                 <button
                   type="button"
                   onclick={(e) => { e.stopPropagation(); removeTextLayer(layer.id); }}
-                  class="p-1 rounded hover:bg-rose-500/20 text-rose-400 text-xs transition-colors"
-                  title="Remove"
+                  class="p-1.5 rounded hover:bg-rose-500/20 text-rose-400 transition-colors"
+                  title="Remove layer"
                 >
-                  ✕
+                  <Trash2 class="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
@@ -1432,7 +1464,7 @@
                           </div>
                         </div>
                         {#if selectedLayer.fontFamily === opt.id || selectedLayer.fontFamily === opt.name}
-                          <span class="text-brand-400 text-xs font-bold shrink-0">✓</span>
+                          <Check class="w-3.5 h-3.5 text-brand-400 shrink-0" />
                         {/if}
                       </button>
                     {/each}
@@ -1546,9 +1578,9 @@
     {:else if activeTab === 'export'}
       <div class="space-y-5 animate-fade-in">
         <div class="space-y-2">
-          <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider">
+          <span class="block text-xs font-semibold text-slate-300 uppercase tracking-wider">
             Format
-          </label>
+          </span>
           <div class="grid grid-cols-3 gap-2">
             <button
               type="button"
@@ -1594,11 +1626,11 @@
         <div class="pt-3 border-t border-dark-border space-y-3">
           <div class="flex items-center justify-between">
             <span class="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-              <span>🏷️</span>
+              <Tag class="w-3.5 h-3.5 text-brand-400 shrink-0" />
               <span>mewmer.com Watermark</span>
             </span>
             <span class="text-[11px] font-medium px-2 py-0.5 rounded border bg-brand-500/15 border-brand-500/35 text-brand-300 flex items-center gap-1">
-              <span>🔒</span>
+              <Lock class="w-3 h-3 text-brand-300 shrink-0" />
               <span>Movable Watermark</span>
             </span>
           </div>
@@ -1620,8 +1652,9 @@
                   </button>
                 {/each}
               </div>
-              <p class="text-[10px] text-dark-muted mt-1.5">
-                💡 Tip: You can drag the watermark on the preview canvas to position it anywhere within the crop frame.
+              <p class="text-[10px] text-dark-muted mt-1.5 flex items-center gap-1">
+                <Info class="w-3 h-3 text-brand-400 shrink-0" />
+                <span>Drag the watermark on the preview canvas to position it anywhere within the crop frame.</span>
               </p>
             </div>
 
@@ -1709,10 +1742,10 @@
             class="w-full py-3 px-4 rounded-xl bg-brand-500 hover:bg-brand-400 active:scale-[0.99] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-brand-500/25 transition-all"
           >
             {#if isExporting}
-              <span class="animate-spin">⏳</span>
+              <span class="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>
               <span>Processing...</span>
             {:else}
-              <span>💾</span>
+              <Download class="w-4 h-4 text-white shrink-0" />
               <span>Download {exportFormat.toUpperCase()}</span>
             {/if}
           </button>
@@ -1721,7 +1754,7 @@
             onclick={copyToClipboard}
             class="w-full py-2.5 px-4 rounded-xl bg-dark-border hover:bg-slate-700 text-slate-200 font-semibold text-xs flex items-center justify-center gap-2 transition-colors"
           >
-            <span>📋</span>
+            <Copy class="w-3.5 h-3.5 text-slate-300 shrink-0" />
             <span>Copy Image to Clipboard</span>
           </button>
         </div>
