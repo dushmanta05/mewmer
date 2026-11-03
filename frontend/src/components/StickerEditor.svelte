@@ -428,14 +428,6 @@
     renderCanvas();
   }
 
-  const dimensionPresets = [
-    { label: '512×512', w: 512, h: 512 },
-    { label: '1080×1080', w: 1080, h: 1080 },
-    { label: '1200×630', w: 1200, h: 630 },
-    { label: '1920×1080', w: 1920, h: 1080 },
-    { label: '1080×1920', w: 1080, h: 1920 },
-  ];
-
   function onOutputWidthInput(e: Event) {
     const val = parseInt((e.target as HTMLInputElement).value, 10);
     if (isNaN(val) || val <= 0) return;
@@ -471,12 +463,6 @@
     if (lockOutputAspect && cropH > 0) {
       outputWidth = Math.max(32, Math.min(8192, Math.round((next * cropW) / cropH)));
     }
-    renderCanvas();
-  }
-
-  function setPresetDimensions(w: number, h: number) {
-    outputWidth = w;
-    outputHeight = h;
     renderCanvas();
   }
 
@@ -1241,30 +1227,6 @@
                   <Plus class="w-3.5 h-3.5" />
                 </button>
               </div>
-            </div>
-          </div>
-
-          <div class="space-y-1.5 pt-1">
-            <span class="block text-[10px] text-dark-muted font-medium uppercase tracking-wider">Quick Presets</span>
-            <div class="flex items-center gap-1.5 flex-wrap">
-              {#each dimensionPresets as p}
-                <button
-                  type="button"
-                  onclick={() => setPresetDimensions(p.w, p.h)}
-                  class="px-2.5 py-1 rounded-lg text-[10px] font-mono font-medium border transition-colors {outputWidth === p.w && outputHeight === p.h ? 'bg-brand-500/25 border-brand-500 text-brand-200' : 'bg-dark-bg border-dark-border text-slate-400 hover:text-white'}"
-                >
-                  {p.label}
-                </button>
-              {/each}
-              {#if loadedImg}
-                <button
-                  type="button"
-                  onclick={() => setPresetDimensions(imgNaturalWidth, imgNaturalHeight)}
-                  class="px-2.5 py-1 rounded-lg text-[10px] font-mono font-medium border bg-dark-bg border-dark-border text-slate-400 hover:text-white transition-colors"
-                >
-                  Original ({imgNaturalWidth}×{imgNaturalHeight})
-                </button>
-              {/if}
             </div>
           </div>
         </div>
