@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { Lock, Unlock, Plus, Minus, RotateCw, Maximize2, Move } from '@lucide/svelte';
 
   interface TextLayer {
     id: string;
@@ -333,11 +334,23 @@
         ctx.lineWidth = 1.5 * scaleFactor;
         ctx.stroke();
 
-        ctx.font = `${Math.round(11 * scaleFactor)}px system-ui, sans-serif`;
-        ctx.fillStyle = '#FFFFFF';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('🔄', 0, rotY);
+        const rotArcR = 5.2 * scaleFactor;
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = Math.max(1.4, 1.8 * scaleFactor);
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.beginPath();
+        ctx.arc(0, rotY, rotArcR, -0.75 * Math.PI, 0.7 * Math.PI);
+        ctx.stroke();
+
+        const arrowTipX = Math.cos(0.7 * Math.PI) * rotArcR;
+        const arrowTipY = rotY + Math.sin(0.7 * Math.PI) * rotArcR;
+        const arrowHeadLen = 3.2 * scaleFactor;
+        ctx.beginPath();
+        ctx.moveTo(arrowTipX - arrowHeadLen, arrowTipY);
+        ctx.lineTo(arrowTipX, arrowTipY);
+        ctx.lineTo(arrowTipX, arrowTipY - arrowHeadLen);
+        ctx.stroke();
 
         const scaleHandleX = boxW / 2;
         const scaleHandleY = boxH / 2;
@@ -351,11 +364,29 @@
         ctx.lineWidth = 1.5 * scaleFactor;
         ctx.stroke();
 
-        ctx.font = `${Math.round(10 * scaleFactor)}px system-ui, sans-serif`;
-        ctx.fillStyle = '#FFFFFF';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('⤡', scaleHandleX, scaleHandleY);
+        const scaleSpan = 4.8 * scaleFactor;
+        const scaleHead = 2.6 * scaleFactor;
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = Math.max(1.4, 1.8 * scaleFactor);
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        ctx.beginPath();
+        ctx.moveTo(scaleHandleX - scaleSpan, scaleHandleY - scaleSpan);
+        ctx.lineTo(scaleHandleX + scaleSpan, scaleHandleY + scaleSpan);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(scaleHandleX - scaleSpan + scaleHead, scaleHandleY - scaleSpan);
+        ctx.lineTo(scaleHandleX - scaleSpan, scaleHandleY - scaleSpan);
+        ctx.lineTo(scaleHandleX - scaleSpan, scaleHandleY - scaleSpan + scaleHead);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(scaleHandleX + scaleSpan - scaleHead, scaleHandleY + scaleSpan);
+        ctx.lineTo(scaleHandleX + scaleSpan, scaleHandleY + scaleSpan);
+        ctx.lineTo(scaleHandleX + scaleSpan, scaleHandleY + scaleSpan - scaleHead);
+        ctx.stroke();
       }
 
       ctx.restore();
@@ -403,6 +434,14 @@
     renderCanvas();
   }
 
+  const dimensionPresets = [
+    { label: '512×512', w: 512, h: 512 },
+    { label: '1080×1080', w: 1080, h: 1080 },
+    { label: '1200×630', w: 1200, h: 630 },
+    { label: '1920×1080', w: 1920, h: 1080 },
+    { label: '1080×1920', w: 1080, h: 1920 },
+  ];
+
   function onOutputWidthInput(e: Event) {
     const val = parseInt((e.target as HTMLInputElement).value, 10);
     if (isNaN(val) || val <= 0) return;
@@ -410,6 +449,7 @@
     if (lockOutputAspect && cropW > 0) {
       outputHeight = Math.round((val * cropH) / cropW);
     }
+    renderCanvas();
   }
 
   function onOutputHeightInput(e: Event) {
@@ -419,6 +459,31 @@
     if (lockOutputAspect && cropH > 0) {
       outputWidth = Math.round((val * cropW) / cropH);
     }
+    renderCanvas();
+  }
+
+  function stepWidth(delta: number) {
+    const next = Math.max(32, Math.min(8192, outputWidth + delta));
+    outputWidth = next;
+    if (lockOutputAspect && cropW > 0) {
+      outputHeight = Math.max(32, Math.min(8192, Math.round((next * cropH) / cropW)));
+    }
+    renderCanvas();
+  }
+
+  function stepHeight(delta: number) {
+    const next = Math.max(32, Math.min(8192, outputHeight + delta));
+    outputHeight = next;
+    if (lockOutputAspect && cropH > 0) {
+      outputWidth = Math.max(32, Math.min(8192, Math.round((next * cropW) / cropH)));
+    }
+    renderCanvas();
+  }
+
+  function setPresetDimensions(w: number, h: number) {
+    outputWidth = w;
+    outputHeight = h;
+    renderCanvas();
   }
 
   function addTextLayer() {
@@ -899,6 +964,48 @@
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
   <div class="lg:col-span-7 flex flex-col items-center w-full">
     <div class="w-full bg-dark-card border border-dark-border rounded-2xl p-4 sm:p-5 shadow-2xl flex flex-col items-center">
+      <div class="w-full flex items-center justify-between pb-3 px-1 text-xs">
+        <div class="flex items-center gap-2">
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-dark-bg border border-dark-border text-slate-200 font-mono text-[11px] font-semibold shadow-sm">
+            <span class="text-brand-400 font-bold">📐</span>
+            <span>{outputWidth} × {outputHeight} px</span>
+            {#if isAnimatedGif}
+              <span class="text-brand-300 font-bold ml-1">• 🎬 GIF</span>
+            {/if}
+          </span>
+          <span class="text-[11px] text-dark-muted hidden sm:inline font-mono">
+            {aspectRatio === 'free' ? 'Original' : aspectRatio.toUpperCase()}
+          </span>
+        </div>
+
+        <div class="flex items-center gap-2">
+          {#if interactionMode === 'move-watermark'}
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-brand-500/25 border border-brand-500/40 text-brand-200 text-[11px] font-medium animate-pulse">
+              <span>🏷️</span>
+              <span>Moving Watermark</span>
+            </span>
+          {:else if isWatermarkHovered}
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-brand-500/15 border border-brand-500/30 text-brand-300 text-[11px] font-medium">
+              <span>🏷️</span>
+              <span>Drag to move</span>
+            </span>
+          {:else if selectedLayer}
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-brand-500/20 border border-brand-500/40 text-brand-300 text-[11px] font-medium">
+              <RotateCw class="w-3 h-3 text-brand-300" />
+              <span>Rotate</span>
+              <span class="text-slate-500">•</span>
+              <Maximize2 class="w-3 h-3 text-brand-300" />
+              <span>Resize</span>
+            </span>
+          {:else if cropW < imgNaturalWidth || cropH < imgNaturalHeight}
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-dark-bg border border-dark-border text-slate-400 text-[11px]">
+              <Move class="w-3 h-3 text-slate-400" />
+              <span>Drag image to pan framing</span>
+            </span>
+          {/if}
+        </div>
+      </div>
+
       <div
         class="relative w-full max-h-[58vh] sm:max-h-[64vh] rounded-xl overflow-hidden border border-dark-border/80 flex items-center justify-center bg-dark-bg p-2 select-none"
         style="background-image: linear-gradient(45deg, #111827 25%, transparent 25%), linear-gradient(-45deg, #111827 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #111827 75%), linear-gradient(-45deg, transparent 75%, #111827 75%); background-size: 20px 20px; background-position: 0 0, 0 10px, 10px -10px, -10px 0px; background-color: #0B0F17;"
@@ -925,28 +1032,6 @@
             onpointercancel={onCanvasPointerUp}
           ></canvas>
         </div>
-
-        <span class="absolute top-3 left-3 px-2 py-1 text-[11px] font-mono font-medium rounded-md bg-dark-bg/85 backdrop-blur border border-dark-border text-slate-300">
-          {outputWidth} × {outputHeight} px {isAnimatedGif ? '• 🎬 GIF' : ''}
-        </span>
-
-        {#if interactionMode === 'move-watermark'}
-          <span class="absolute top-3 right-3 px-2 py-1 text-[11px] font-sans font-medium rounded-md bg-brand-500/30 backdrop-blur border border-brand-500/60 text-brand-200">
-            🏷️ Dragging watermark within cropped area
-          </span>
-        {:else if isWatermarkHovered}
-          <span class="absolute top-3 right-3 px-2 py-1 text-[11px] font-sans font-medium rounded-md bg-brand-500/20 backdrop-blur border border-brand-500/40 text-brand-300">
-            🏷️ Tap & drag watermark to reposition
-          </span>
-        {:else if selectedLayer}
-          <span class="absolute top-3 right-3 px-2 py-1 text-[11px] font-sans font-medium rounded-md bg-brand-500/20 backdrop-blur border border-brand-500/40 text-brand-300">
-            🔄 Drag top handle to rotate • ⤡ Drag corner to resize
-          </span>
-        {:else if cropW < imgNaturalWidth || cropH < imgNaturalHeight}
-          <span class="absolute top-3 right-3 px-2 py-1 text-[11px] font-sans font-medium rounded-md bg-dark-bg/85 backdrop-blur border border-dark-border text-slate-400">
-            🖐️ Drag image to adjust framing
-          </span>
-        {/if}
       </div>
 
       <div class="w-full mt-4 flex items-center justify-between text-xs text-dark-muted px-1">
@@ -1094,34 +1179,103 @@
             <button
               type="button"
               onclick={() => lockOutputAspect = !lockOutputAspect}
-              class="text-xs font-medium px-2 py-0.5 rounded border transition-colors {lockOutputAspect ? 'bg-brand-500/20 border-brand-500/40 text-brand-300' : 'bg-dark-bg border-dark-border text-slate-500'}"
+              class="text-xs font-medium px-2.5 py-1 rounded-lg border transition-all flex items-center gap-1.5 {lockOutputAspect ? 'bg-brand-500/20 border-brand-500/40 text-brand-300' : 'bg-dark-bg border-dark-border text-slate-400 hover:text-white'}"
             >
-              {lockOutputAspect ? '🔒 Locked Aspect' : '🔓 Free Resize'}
+              {#if lockOutputAspect}
+                <Lock class="w-3 h-3 text-brand-300" />
+                <span>Aspect Locked</span>
+              {:else}
+                <Unlock class="w-3 h-3 text-slate-400" />
+                <span>Free Resize</span>
+              {/if}
             </button>
           </div>
 
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <span class="block text-[11px] text-dark-muted mb-1">Width (px)</span>
-              <input
-                type="number"
-                min="32"
-                max="8192"
-                value={outputWidth}
-                oninput={onOutputWidthInput}
-                class="w-full px-3 py-2 rounded-xl bg-dark-bg border border-dark-border focus:border-brand-500 focus:outline-none text-sm text-white font-mono"
-              />
+              <span class="block text-[11px] text-dark-muted mb-1.5 font-medium">Width</span>
+              <div class="flex items-center rounded-xl bg-dark-bg border border-dark-border focus-within:border-brand-500 transition-colors shadow-sm">
+                <button
+                  type="button"
+                  onclick={() => stepWidth(-50)}
+                  class="px-2.5 py-2 text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors active:scale-90 shrink-0"
+                  title="Decrease 50px"
+                >
+                  <Minus class="w-3.5 h-3.5" />
+                </button>
+                <input
+                  type="number"
+                  min="32"
+                  max="8192"
+                  value={outputWidth}
+                  oninput={onOutputWidthInput}
+                  class="w-full py-2 bg-transparent text-xs sm:text-sm text-white font-mono font-bold text-center focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                />
+                <span class="text-[10px] text-dark-muted font-mono select-none pr-0.5">px</span>
+                <button
+                  type="button"
+                  onclick={() => stepWidth(50)}
+                  class="px-2.5 py-2 text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors active:scale-90 shrink-0"
+                  title="Increase 50px"
+                >
+                  <Plus class="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
+
             <div>
-              <span class="block text-[11px] text-dark-muted mb-1">Height (px)</span>
-              <input
-                type="number"
-                min="32"
-                max="8192"
-                value={outputHeight}
-                oninput={onOutputHeightInput}
-                class="w-full px-3 py-2 rounded-xl bg-dark-bg border border-dark-border focus:border-brand-500 focus:outline-none text-sm text-white font-mono"
-              />
+              <span class="block text-[11px] text-dark-muted mb-1.5 font-medium">Height</span>
+              <div class="flex items-center rounded-xl bg-dark-bg border border-dark-border focus-within:border-brand-500 transition-colors shadow-sm">
+                <button
+                  type="button"
+                  onclick={() => stepHeight(-50)}
+                  class="px-2.5 py-2 text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors active:scale-90 shrink-0"
+                  title="Decrease 50px"
+                >
+                  <Minus class="w-3.5 h-3.5" />
+                </button>
+                <input
+                  type="number"
+                  min="32"
+                  max="8192"
+                  value={outputHeight}
+                  oninput={onOutputHeightInput}
+                  class="w-full py-2 bg-transparent text-xs sm:text-sm text-white font-mono font-bold text-center focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                />
+                <span class="text-[10px] text-dark-muted font-mono select-none pr-0.5">px</span>
+                <button
+                  type="button"
+                  onclick={() => stepHeight(50)}
+                  class="px-2.5 py-2 text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors active:scale-90 shrink-0"
+                  title="Increase 50px"
+                >
+                  <Plus class="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="space-y-1.5 pt-1">
+            <span class="block text-[10px] text-dark-muted font-medium uppercase tracking-wider">Quick Presets</span>
+            <div class="flex items-center gap-1.5 flex-wrap">
+              {#each dimensionPresets as p}
+                <button
+                  type="button"
+                  onclick={() => setPresetDimensions(p.w, p.h)}
+                  class="px-2.5 py-1 rounded-lg text-[10px] font-mono font-medium border transition-colors {outputWidth === p.w && outputHeight === p.h ? 'bg-brand-500/25 border-brand-500 text-brand-200' : 'bg-dark-bg border-dark-border text-slate-400 hover:text-white'}"
+                >
+                  {p.label}
+                </button>
+              {/each}
+              {#if loadedImg}
+                <button
+                  type="button"
+                  onclick={() => setPresetDimensions(imgNaturalWidth, imgNaturalHeight)}
+                  class="px-2.5 py-1 rounded-lg text-[10px] font-mono font-medium border bg-dark-bg border-dark-border text-slate-400 hover:text-white transition-colors"
+                >
+                  Original ({imgNaturalWidth}×{imgNaturalHeight})
+                </button>
+              {/if}
             </div>
           </div>
         </div>
