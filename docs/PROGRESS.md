@@ -115,19 +115,35 @@ Then on the mobile device connected to the laptop's Wi-Fi hotspot, navigate in t
 
 ## Active & Upcoming Roadmap Tasks
 
-### Immediate (Phase 1 — Web & Editor):
-1. **Mobile Export Verification**: Test Web Share API single-sticker export to WhatsApp on mobile via `http://10.42.0.1:3031`.
-2. **Cloud Sync for Mobile App**:
-   - Allow Flutter app to fetch packs from `GET /api/v1/packs/:id` and inject them directly into WhatsApp tray.
-   - Deep link handling (`mewmer://pack/:id`).
+### Immediate (Phase 1 — Templates, Publishing & Database Architecture):
+1. **PostgreSQL Migration (`002_meme_templates_and_publishing.sql`)**:
+   - Add `role`, `avatar_url`, and `bio` to `users` table.
+   - Create `meme_templates` table with `slug`, `title`, clean uncaptioned `image_url`, `media_type`, `tags` (`CHECK cardinality >= 3`), `creator_id`, and `memes_count`.
+   - Create `memes` table with `template_id` FK, `creator_id` FK, `title`, `layers_data` (JSONB for multi-layer text), `image_url`, `tags` (`CHECK cardinality >= 3`), and views/shares counters.
+   - Setup GIN indexes on `tags` and trigram indexes on `title`.
+2. **Go Backend Endpoints (`server/`)**:
+   - `POST /api/v1/templates`: Authenticated upload of clean base templates with title and ≥ 3 tags.
+   - `GET /api/v1/templates`: List templates with search, tag filters, and sorting by popularity (`memes_count DESC`) or recency.
+   - `GET /api/v1/templates/:slug`: Template details + generated memes created under it.
+   - `POST /api/v1/memes`: Authenticated publishing of captioned memes under a template with caption summary, `layers_data` JSONB, and ≥ 3 tags; auto-increments parent template `memes_count`.
+   - `GET /api/v1/memes`: Community memes discovery feed.
+   - `GET /api/v1/memes/:slug`: Single meme page with creator attribution, parent template link, and share cards.
+3. **Studio Publishing & Ingestion Flow (`frontend/src/components/StickerEditor.svelte`)**:
+   - "Submit as Template" option when an uncaptioned image/GIF is loaded into Studio (requests title + ≥ 3 tags).
+   - "Publish to Community" action on meme export with title and ≥ 3 tags; automatically links to parent template when session started from a template.
+   - Keep client-side captioning and direct export 100% free for anonymous users without mandatory login.
+4. **Templates Catalog (`/templates`) & Meme Gallery**:
+   - Build `/templates` page listing meme templates ranked by popularity (`memes_count`) with tag chips and search.
+   - "Use this Template" CTA routing directly to `/studio?template=:slug`.
+   - Dedicated template detail page `/templates/[slug].astro` showing clean base and gallery of generated memes.
 
-### Mobile & Advanced (Phase 2):
-6. **Keyboard GIF Input in Flutter (`app/`)**:
+### Mobile & WhatsApp Stickers (Phase 2):
+5. **WhatsApp Sticker Packs (Isolated Domain)**:
+   - Ensure strict 512×512 square WebP constraints remain completely independent of the arbitrary aspect-ratio meme studio.
+   - Validate packs have 3 to 30 stickers + 96×96 tray icon before mobile WhatsApp injection.
+6. **Flutter Mobile App Cloud Sync (`app/`)**:
+   - Allow Flutter app to fetch packs from `GET /api/v1/packs/:id` and inject directly into WhatsApp tray via `whatsapp_stickers_injector`.
+   - Deep-link support (`mewmer://pack/:id` / `https://mewmer.com/p/:id`).
+7. **Keyboard GIF Input in Flutter (`app/`)**:
    - Implement `contentInsertionConfiguration` on `TextField` to receive GIFs from Gboard / Samsung Keyboard via Android Commit Content API.
-   - Copy incoming bytes immediately to local cache, insert as an editable layer on the 512×512 canvas, and preserve animation.
-7. **Cloud Sync for Mobile**:
-   - Allow Flutter app to fetch packs from `GET /api/v1/packs/:id` and inject them directly into WhatsApp.
-   - Deep-link support (`https://mewmer.com/p/:id`).
-8. **Auth & Roles**:
-   - Magic link / OAuth login for cloud saving.
-   - User roles (`user`, `staff`, `admin`) with staff badges and moderation reports.
+   - Preserve animation and place as editable layer on 512×512 canvas.
