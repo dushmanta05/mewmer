@@ -138,8 +138,11 @@ Then on the mobile device connected to the laptop's Wi-Fi hotspot, navigate in t
    - Dedicated template detail page `/templates/[slug].astro` showing clean base and gallery of generated memes.
 
 ### Mobile & WhatsApp Stickers (Phase 2):
-5. **WhatsApp Sticker Packs (Isolated Domain)**:
-   - Ensure strict 512×512 square WebP constraints remain completely independent of the arbitrary aspect-ratio meme studio.
+5. **WhatsApp Sticker Packs (Mobile Only — Not on Web)**:
+   - Stickers and sticker packs are strictly a native mobile feature (`app/` in Flutter) and are **not accessed or browsed on the web**.
+   - Removed web `/packs` routes from `frontend/` to keep web dedicated 100% to Meme Studio, Templates, and Community Memes.
+   - User ownership: Every sticker pack and sticker is strictly linked to an authenticated user (`user_id UUID NOT NULL REFERENCES users(id)`).
+   - Strict identity constraints: `email` and `username` must be unique (`UNIQUE NOT NULL`).
    - Validate packs have 3 to 30 stickers + 96×96 tray icon before mobile WhatsApp injection.
 6. **Flutter Mobile App Cloud Sync (`app/`)**:
    - Allow Flutter app to fetch packs from `GET /api/v1/packs/:id` and inject directly into WhatsApp tray via `whatsapp_stickers_injector`.

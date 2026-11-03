@@ -40,11 +40,12 @@ Mewmer (`mewmer.com`) is an open-source, privacy-first web and mobile platform f
   - Publishing requirements: Authenticated user, caption summary/title, and **at least 3 descriptive tags** (`cardinality(tags) >= 3`).
   - Stores rich multi-layer text coordinates, rotation, scaling, fonts, and colors in `layers_data` (JSONB) for future re-editing.
   - Permanent public URLs (`/memes/:slug`) with OpenGraph cards and creator attribution.
-- **WhatsApp Sticker Packs Domain (`sticker_packs` & `stickers`)**:
+- **WhatsApp Sticker Packs Domain (`sticker_packs` & `stickers`) — Mobile Only**:
   - Kept strictly distinct and isolated from arbitrary aspect-ratio community memes.
+  - **Platform Boundary**: Stickers and sticker packs are **strictly a native mobile feature (`app/`) and are NOT accessed or browsed on the web**. The web platform is exclusively focused on the Meme Studio, Templates, and Community Memes.
   - WhatsApp technical constraints strictly enforced: exactly 512×512 square WebP, static < 100 KB, animated < 500 KB.
   - Packs require 3 to 30 stickers + 96×96 tray icon for native keyboard drawer injection via Flutter mobile app (`app/`).
-  - Direct single-sticker WhatsApp sharing via Web Share API (`image/webp`) and clipboard.
+  - Every sticker pack and sticker is strictly owned by an authenticated user (`user_id UUID NOT NULL REFERENCES users(id)`).
 
 ### Phase 3: Moderation, Community Curation & Mobile Cloud Sync
 - Community reporting system (`reports` table) and staff moderation dashboard for reported memes and sticker packs.
@@ -211,7 +212,7 @@ CREATE TABLE memes (
   CONSTRAINT min_meme_tags CHECK (cardinality(tags) >= 3)
 );
 
--- 4. WhatsApp Sticker Packs Table (Isolated from Memes)
+-- 4. WhatsApp Sticker Packs Table (Mobile Only - Not accessible on Web)
 CREATE TABLE sticker_packs (
   id VARCHAR(64) PRIMARY KEY,
   title VARCHAR(100) NOT NULL,
@@ -220,16 +221,17 @@ CREATE TABLE sticker_packs (
   is_animated BOOLEAN DEFAULT FALSE,
   is_public BOOLEAN DEFAULT TRUE,
   visibility VARCHAR(20) NOT NULL DEFAULT 'public', -- private | unlisted | public
-  user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   downloads_count INTEGER DEFAULT 0,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   deleted_at TIMESTAMP WITH TIME ZONE
 );
 
--- 5. Individual WhatsApp Stickers Table (512x512 WebP)
+-- 5. Individual WhatsApp Stickers Table (512x512 WebP - Mobile Only)
 CREATE TABLE stickers (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  pack_id VARCHAR(64) REFERENCES sticker_packs(id) ON DELETE CASCADE,
+  pack_id VARCHAR(64) NOT NULL REFERENCES sticker_packs(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   image_url TEXT NOT NULL,
   emojis TEXT[] DEFAULT ARRAY['✨']::TEXT[],
   file_size INTEGER NOT NULL,
