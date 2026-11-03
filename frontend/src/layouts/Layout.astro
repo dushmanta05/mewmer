@@ -1,5 +1,7 @@
 ---
 import '../styles/global.css';
+import CatIcon from '../components/CatIcon.astro';
+import { Sparkles } from '@lucide/svelte';
 
 interface Props {
   title?: string;
@@ -58,7 +60,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://mewmer.c
     <header class="sticky top-0 z-50 backdrop-blur-md bg-dark-bg/85 border-b border-dark-border">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         <a href="/" class="flex items-center gap-2.5 group">
-          <span class="text-2xl group-hover:scale-110 transition-transform">🐱</span>
+          <CatIcon class="w-7 h-7 group-hover:scale-110 transition-transform" />
           <span class="text-xl font-display font-extrabold tracking-tight text-white group-hover:text-brand-300 transition-colors">
             Mewmer
           </span>
@@ -69,7 +71,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://mewmer.c
             href="/studio"
             class="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 text-white shadow-md shadow-brand-500/25 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
           >
-            <span>✨</span>
+            <Sparkles class="w-4 h-4 text-white" />
             <span>Open Studio</span>
           </a>
         </div>
@@ -82,12 +84,14 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://mewmer.c
     </main>
 
     <!-- Footer -->
-    <footer class="border-t border-dark-border bg-dark-bg/60 py-12 mt-20">
+    <footer class="border-t border-dark-border bg-dark-bg/60 py-8 mt-10">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex flex-col md:flex-row items-center justify-between gap-6">
-          <div class="flex items-center gap-3">
-            <span class="text-2xl">🐱</span>
-            <span class="text-lg font-bold font-display text-white">Mewmer</span>
+          <div class="flex flex-col items-center md:items-start gap-1 text-center md:text-left">
+            <div class="flex items-center gap-2">
+              <CatIcon class="w-6 h-6" />
+              <span class="text-lg font-bold font-display text-white">Mewmer</span>
+            </div>
             <span class="text-xs text-dark-muted">Create. Caption. Chaos.</span>
           </div>
           <div class="flex flex-wrap gap-6 text-xs text-dark-muted">
