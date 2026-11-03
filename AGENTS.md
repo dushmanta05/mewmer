@@ -106,23 +106,21 @@ grep -rn "/\*" frontend/src/ || echo "No block comments found"
 
 ## 6. Git & Commits
 
-- Commit meaningful changes only, one distinct change per commit.
-- Use Conventional Commits: `type(scope): subject` or `type: subject`, with `feat`, `fix`, `perf`, `refactor`, `docs`, `style`, `test` or `chore`.
-- Keep the subject concise and all lowercase, with no trailing period.
-- No description: the subject line is the whole message.
-- No `Co-Authored-By` line, for Claude or anyone else, and no other attribution or trailer.
-- Always run the build/type check (`pnpm check && pnpm build` and backend build) and verify clean output before committing.
-- Build the commit on its own before committing (stage it, verify, commit).
+- **Commit Often with Meaningful Changes**: Never accumulate large, monolithic batches of changes. Commit each distinct, verified, and functional change as soon as it is completed and passes verification checks. Frequent, atomic commits ensure a granular history, straightforward rollbacks, and safe progress tracking.
+- **One Distinct Change Per Commit**: Keep each commit focused on a single logical change or feature component.
+- **Conventional Commits**: Format commit messages as `type(scope): subject` or `type: subject`, using `feat`, `fix`, `perf`, `refactor`, `docs`, `style`, `test`, or `chore`.
+- **Concise Subject Line**: Keep the subject concise, in all lowercase, and without a trailing period.
+- **No Body or Attribution**: The subject line is the complete commit message. Never add a commit description, `Co-Authored-By` line, or any AI/assistant trailer.
+- **Pre-Commit Verification**: Run the relevant build/type check (`pnpm check && pnpm build` for frontend, `go vet && go build` for backend, `flutter analyze` for mobile) and ensure clean output before committing. Every commit in history must build cleanly.
 
 ---
 
 ## 7. Session Workflow & Progress Tracking
 
-1. **Start of Session**: Read `docs/PROGRESS.md` and `docs/PROJECT.md` to understand active state and next tasks.
+1. **Start of Session**: Read `docs/PROGRESS.md` and `docs/PROJECT.md` to understand active state and immediate next tasks.
 2. **Implementation**: Work on one distinct task or component at a time, strictly adhering to the no-comments rule.
-3. **Mandatory Verification**: Run frontend checks (`pnpm check && pnpm build`) and backend checks (`go vet ./... && go build`). Verify no unwanted comments exist.
-4. **End of Task / Session**: Update `docs/PROGRESS.md` with completed items and next steps.
-5. **Commit**: Commit verified changes with a concise conventional commit subject.
+3. **Mandatory Verification**: Run frontend checks (`pnpm check && pnpm build`), backend checks (`go vet ./... && go build`), or mobile checks (`flutter analyze`). Verify zero unwanted code comments exist.
+4. **Immediate Commit**: Update `docs/PROGRESS.md` and commit the verified change immediately before moving to the next task—commit often, don't wait for session end.
 
 ---
 
@@ -135,8 +133,7 @@ mewmer/
 │   └── pubspec.yaml
 ├── docs/                # Project documentation and live tracking
 │   ├── PROJECT.md       # Architecture specification, WhatsApp constraints & database schema
-│   ├── PROGRESS.md      # Live roadmap, milestone status & completed tasks
-│   └── SPEC.md          # Feature discussion & build specification
+│   └── PROGRESS.md      # Live roadmap, milestone status & completed tasks
 ├── frontend/            # Astro 5 + Svelte 5 + Tailwind web app
 │   ├── src/
 │   │   ├── components/  # Svelte 5 islands (QuickSticker, StickerEditor)
