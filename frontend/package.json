@@ -26,5 +26,8 @@
       "esbuild",
       "sharp"
     ]
+  },
+  "devDependencies": {
+    "lucide-astro": "^0.556.0"
   }
 }

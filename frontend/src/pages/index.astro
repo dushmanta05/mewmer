@@ -1,5 +1,18 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import {
+  Sparkles,
+  ArrowRight,
+  Upload,
+  Crop,
+  Download,
+  Zap,
+  Film,
+  Layers,
+  Type,
+  FileImage,
+  ChevronDown
+} from 'lucide-astro';
 
 interface MemeTemplate {
   id: string;
@@ -39,78 +52,78 @@ const popularTemplates: MemeTemplate[] = [
 
 const features = [
   {
-    icon: '⚡',
-    title: 'Zero Server Lag',
-    desc: 'Render memes and cropped images 100% locally in your browser using HTML5 Canvas. Instant 60 FPS feedback with zero wait time.',
+    icon: Zap,
+    title: 'Zero Lag',
+    desc: 'Render memes locally in your browser with zero latency and instant 60 FPS previews.',
   },
   {
-    icon: '🎬',
+    icon: Film,
     title: 'Animated GIF Cropping',
-    desc: 'Upload looping animated GIFs, preview crops in real time, and convert them smoothly with dedicated worker pool processing.',
+    desc: 'Crop looping GIFs with real-time playback and smooth backend worker transcoding.',
   },
   {
-    icon: '📐',
-    title: 'Aspect Ratios & Custom Pixels',
-    desc: 'Crop to 1:1, 4:3, 16:9, or 9:16 reels, or dial in custom pixel widths and heights with step buttons and aspect locking.',
+    icon: Crop,
+    title: 'Flexible Aspect Ratios',
+    desc: 'Crop to 1:1, 4:3, 16:9, or 9:16, or enter custom pixel widths and heights.',
   },
   {
-    icon: '✍️',
+    icon: Layers,
     title: 'Multi-Layer Captions',
-    desc: 'Add unlimited caption layers. Rotate 360° with direct vector handles, scale dynamically, and position anywhere on canvas.',
+    desc: 'Add unlimited text layers with 360° rotation handles, scaling, and custom styling.',
   },
   {
-    icon: '🔤',
+    icon: Type,
     title: 'Curated Typography',
-    desc: 'Choose from classic bold Impact meme headlines, Bebas Neue poster font, modern Poppins, Inter, and expressive Caveat script.',
+    desc: 'Choose from bold Impact, Bebas Neue poster font, modern Poppins, Inter, and Caveat.',
   },
   {
-    icon: '💾',
-    title: 'Lossless & Multi-Format Export',
-    desc: 'Export high-resolution WebP, JPG, or transparent PNG with adjustable compression quality, or copy directly to clipboard.',
+    icon: FileImage,
+    title: 'Multi-Format Export',
+    desc: 'Export high-resolution WebP, JPG, or PNG with custom compression quality.',
   },
 ];
 
 const steps = [
   {
     step: '01',
-    title: 'Upload Photo or Animated GIF',
-    desc: 'Drop in any picture, viral meme, or looping GIF. Mewmer supports all image formats with no forced square squishing.',
-    icon: '🖼️',
+    title: 'Upload Photo or GIF',
+    desc: 'Drop in any image or looping animated GIF without forced square squishing.',
+    icon: Upload,
   },
   {
     step: '02',
-    title: 'Crop, Resize & Add Captions',
-    desc: 'Pick standard ratios like 1:1, 16:9, or custom pixel sizes. Add unlimited text layers with 360° rotation and stylish fonts.',
-    icon: '✍️',
+    title: 'Crop & Add Captions',
+    desc: 'Select standard ratios or custom pixels. Add text layers with 360° rotation.',
+    icon: Crop,
   },
   {
     step: '03',
-    title: 'Export WebP, JPG or PNG',
-    desc: 'Download crystal-clear high-res memes or copy straight to clipboard for instant social media and chat sharing.',
-    icon: '🚀',
+    title: 'Export High-Res',
+    desc: 'Download crisp WebP, JPG, or PNG, or copy directly to your clipboard.',
+    icon: Download,
   },
 ];
 
 const faqs = [
   {
     q: 'Can I crop and caption both static images and animated GIFs?',
-    a: 'Yes. You can upload standard photos (JPG, PNG, WebP) or animated GIFs. Static memes generate 100% in your browser with zero latency. Animated GIFs feature a real-time looping preview and are processed cleanly through our background media worker pool.',
+    a: 'Yes. Upload photos (JPG, PNG, WebP) or animated GIFs. Static memes generate instantly in browser; animated GIFs are processed cleanly via our worker pool.',
   },
   {
     q: 'Can I resize images to specific custom pixel dimensions?',
-    a: 'Yes. In the Crop & Ratio tab, you can choose preset ratios like 1:1, 4:3, 16:9, and 9:16, or enter custom pixel Width and Height with stepper controls and optional aspect ratio locking.',
+    a: 'Yes. Select preset ratios (1:1, 4:3, 16:9, 9:16) or enter custom Width and Height pixels with stepper controls and optional aspect ratio locking.',
   },
   {
     q: 'Can I add multiple text captions and rotate them?',
-    a: 'Yes. You can add unlimited caption layers. Each caption has direct on-canvas handles for rotation and proportional scaling, as well as font selection, text colors, stroke outlines, and size sliders.',
+    a: 'Yes. Add unlimited caption layers with direct on-canvas handles for rotation and scaling, custom fonts, colors, and outline strokes.',
   },
   {
-    q: 'What formats can I export my memes and stickers in?',
-    a: 'You can export in WebP, JPG, or PNG formats with adjustable compression quality, or copy directly to your clipboard for instant pasting into chats and social apps.',
+    q: 'What formats can I export my memes in?',
+    a: 'Export in WebP, JPG, or PNG formats with adjustable quality, or copy directly to your clipboard for instant sharing.',
   },
   {
-    q: 'Do I need an account or software installation to use Mewmer?',
-    a: 'No account, sign-up, or software installation is required. Mewmer runs entirely in modern web browsers on mobile, tablet, and desktop devices.',
+    q: 'Do I need an account to use Mewmer?',
+    a: 'No account or installation required. Mewmer runs completely in your browser across mobile, tablet, and desktop.',
   },
 ];
 ---
@@ -125,8 +138,8 @@ const faqs = [
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
       <div class="text-center max-w-3xl mx-auto">
         <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand-500/10 border border-brand-500/25 text-brand-300 text-xs font-semibold mb-6 shadow-sm">
-          <span>✨</span>
-          <span>100% Client-Side • Free & Instant</span>
+          <Sparkles class="w-3.5 h-3.5 text-brand-400" />
+          <span>Free & Instant • No Sign-Up</span>
         </div>
 
         <h1 class="text-4xl sm:text-6xl lg:text-7xl font-display font-extrabold text-white tracking-tight leading-[1.1]">
@@ -134,28 +147,28 @@ const faqs = [
         </h1>
 
         <p class="mt-6 text-base sm:text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed">
-          The ultra-fast web studio to crop, resize, and add multi-layer rotating captions to photos and animated GIFs. Export in high-res WebP, JPG, or PNG in seconds.
+          Crop, resize, and caption photos or animated GIFs with rotatable text layers. Export crisp WebP, JPG, or PNG in seconds.
         </p>
 
         <div class="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
           <a
             href="/studio"
-            class="w-full sm:w-auto px-8 py-4 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 text-white font-bold text-base shadow-xl shadow-brand-500/30 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
+            class="w-full sm:w-auto px-8 py-4 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 text-white font-bold text-base shadow-xl shadow-brand-500/30 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2.5"
           >
-            <span>🎨</span>
-            <span>Open Meme & Caption Studio — It's Free</span>
+            <Sparkles class="w-5 h-5 text-white" />
+            <span>Open Studio - Free</span>
           </a>
         </div>
 
         <div class="mt-10 flex flex-wrap items-center justify-center gap-3">
           <span class="inline-flex items-center px-4 py-2 rounded-full text-xs sm:text-sm font-medium bg-dark-card/60 backdrop-blur-md border border-white/10 text-slate-300 shadow-sm shadow-black/20 hover:border-brand-500/40 hover:text-white transition-colors">
-            Crop any photo or animated GIF (1:1, 16:9, 9:16)
+            Photo & Animated GIF Cropping
           </span>
           <span class="inline-flex items-center px-4 py-2 rounded-full text-xs sm:text-sm font-medium bg-dark-card/60 backdrop-blur-md border border-white/10 text-slate-300 shadow-sm shadow-black/20 hover:border-brand-500/40 hover:text-white transition-colors">
-            Multi-layer rotating captions
+            Multi-Layer Rotatable Captions
           </span>
           <span class="inline-flex items-center px-4 py-2 rounded-full text-xs sm:text-sm font-medium bg-dark-card/60 backdrop-blur-md border border-white/10 text-slate-300 shadow-sm shadow-black/20 hover:border-brand-500/40 hover:text-white transition-colors">
-            High-res WebP, JPG & PNG exports
+            WebP, JPG & PNG Exports
           </span>
         </div>
       </div>
@@ -166,21 +179,21 @@ const faqs = [
             <div class="flex flex-col md:flex-row items-center justify-between gap-8">
               <div class="flex-1 space-y-4">
                 <span class="px-2.5 py-1 rounded-md bg-brand-500/20 text-brand-300 border border-brand-500/30 text-xs font-bold uppercase tracking-wider">
-                  Live Studio Demo
+                  Browser Studio
                 </span>
                 <h3 class="text-2xl font-bold font-display text-white">
-                  Instant Browser-Based Meme Studio
+                  Instant Meme Studio
                 </h3>
                 <p class="text-sm text-slate-300 leading-relaxed">
-                  Crop photos or animated GIFs to any dimension, rotate bold meme captions with live handles, fine-tune custom typography, and export lightweight lossless graphics ready for social media and chats.
+                  Crop photos or GIFs to any ratio, add rotating captions with custom fonts, and export lightweight lossless images instantly.
                 </p>
                 <div class="pt-2">
                   <a
                     href="/studio"
                     class="inline-flex items-center gap-2 text-sm font-semibold text-brand-400 hover:text-brand-300 transition-colors"
                   >
-                    <span>Launch Studio to customize your own</span>
-                    <span>→</span>
+                    <span>Customize Your Own</span>
+                    <ArrowRight class="w-4 h-4" />
                   </a>
                 </div>
               </div>
@@ -209,15 +222,19 @@ const faqs = [
       <div class="text-center max-w-2xl mx-auto mb-16">
         <h2 class="text-xs font-mono font-bold text-brand-400 uppercase tracking-widest mb-2">Simplicity First</h2>
         <h3 class="text-3xl sm:text-4xl font-display font-extrabold text-white">How It Works in 3 Simple Steps</h3>
-        <p class="text-sm text-slate-400 mt-2">Start creating and exporting custom memes in under 30 seconds</p>
+        <p class="text-sm text-slate-400 mt-2">Create and export custom memes in under 30 seconds</p>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
         {steps.map((s) => (
           <div class="bg-dark-bg border border-dark-border rounded-2xl p-8 relative group hover:border-brand-500/40 transition-colors">
-            <span class="text-4xl mb-6 block">{s.icon}</span>
-            <span class="text-xs font-mono font-bold text-brand-400 uppercase tracking-widest">{s.step}</span>
-            <h4 class="text-xl font-bold text-white mt-2 mb-3">{s.title}</h4>
+            <div class="flex items-center justify-between mb-5">
+              <span class="text-xs font-mono font-bold text-brand-400 uppercase tracking-widest">{s.step}</span>
+              <div class="w-10 h-10 rounded-xl bg-brand-500/10 border border-brand-500/25 flex items-center justify-center text-brand-400">
+                <s.icon class="w-5 h-5" />
+              </div>
+            </div>
+            <h4 class="text-xl font-bold text-white mb-2">{s.title}</h4>
             <p class="text-sm text-slate-400 leading-relaxed">{s.desc}</p>
           </div>
         ))}
@@ -236,8 +253,8 @@ const faqs = [
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {features.map((f) => (
           <div class="bg-dark-card border border-dark-border rounded-2xl p-7 hover:border-brand-500/30 hover:shadow-lg transition-all">
-            <div class="w-12 h-12 rounded-xl bg-dark-bg border border-dark-border flex items-center justify-center text-2xl mb-5">
-              {f.icon}
+            <div class="w-11 h-11 rounded-xl bg-brand-500/10 border border-brand-500/25 flex items-center justify-center text-brand-400 mb-5">
+              <f.icon class="w-5 h-5" />
             </div>
             <h4 class="text-lg font-bold text-white mb-2">{f.title}</h4>
             <p class="text-sm text-slate-400 leading-relaxed">{f.desc}</p>
@@ -260,7 +277,7 @@ const faqs = [
           class="text-sm font-semibold text-brand-400 hover:text-brand-300 transition-colors inline-flex items-center gap-1.5"
         >
           <span>Open Blank Studio</span>
-          <span>→</span>
+          <ArrowRight class="w-4 h-4" />
         </a>
       </div>
 
@@ -298,8 +315,8 @@ const faqs = [
                 href="/studio"
                 class="w-full py-2.5 rounded-xl bg-brand-500/20 hover:bg-brand-500/30 text-brand-300 border border-brand-500/40 font-semibold text-xs flex items-center justify-center gap-2 transition-colors"
               >
-                <span>🎨</span>
                 <span>Customize in Studio</span>
+                <ArrowRight class="w-3.5 h-3.5" />
               </a>
             </div>
           </div>
@@ -320,7 +337,7 @@ const faqs = [
           <details class="group bg-dark-card border border-dark-border rounded-xl p-5 hover:border-brand-500/40 transition-colors">
             <summary class="flex items-center justify-between cursor-pointer list-none text-base font-bold text-white select-none">
               <span>{faq.q}</span>
-              <span class="text-brand-400 text-lg transition-transform duration-200 group-open:rotate-180">▾</span>
+              <ChevronDown class="w-4 h-4 text-brand-400 transition-transform duration-200 group-open:rotate-180" />
             </summary>
             <p class="text-sm text-slate-300 mt-3 leading-relaxed border-t border-dark-border/40 pt-3">{faq.a}</p>
           </details>
@@ -340,9 +357,10 @@ const faqs = [
       <div class="mt-8 flex justify-center">
         <a
           href="/studio"
-          class="px-8 py-4 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 text-white font-bold text-base shadow-xl shadow-brand-500/25 transition-all hover:scale-[1.02] active:scale-[0.98]"
+          class="px-8 py-4 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 text-white font-bold text-base shadow-xl shadow-brand-500/25 transition-all hover:scale-[1.02] active:scale-[0.98] inline-flex items-center gap-2.5"
         >
-          Open Studio Now — It's Free
+          <Sparkles class="w-5 h-5 text-white" />
+          <span>Open Studio - Free</span>
         </a>
       </div>
     </div>

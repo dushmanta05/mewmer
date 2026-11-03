@@ -38,6 +38,10 @@ importers:
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
+    devDependencies:
+      lucide-astro:
+        specifier: ^0.556.0
+        version: 0.556.0(astro@5.18.2(jiti@1.21.7)(rollup@4.64.0)(typescript@5.9.3)(yaml@2.9.1))
 
 packages:
 
@@ -1462,6 +1466,12 @@ packages:
     resolution: {integrity: sha512-U4N8FgzmWxc8k1VH8Kr6lQg18U7Fjvby6wXHVRX/ZZ7IwWbRMgrRbP0Wrb5q5NVinryp4SQampHKdvtecItxUg==}
     engines: {node: 20 || >=22}
 
+  lucide-astro@0.556.0:
+    resolution: {integrity: sha512-ugMjPb45AMfkLCaduNSbyy5NQEKvB1TxVVMmUS4S6L807PMESnX0Qp+DIKHjbyjJmPXOyLRbrzvR3YikTK7brg==}
+    deprecated: 'Deprecated: Use `@lucide/astro`'
+    peerDependencies:
+      astro: '>=2.7.1'
+
   magic-string@0.30.21:
     resolution: {integrity: sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ==}
 
@@ -2251,16 +2261,22 @@ packages:
     resolution: {integrity: sha512-9K2k72s4n7rV9s4bX0MyjbX9iBribvKZbBJKuEmTCZfeWJXs6Yh7bGpY4eoc7UufAjvpheBqwyZCOIPBvxCv0A==}
     peerDependencies:
       '@volar/language-service': ~2.4.0
+      typescript: '*'
     peerDependenciesMeta:
       '@volar/language-service':
+        optional: true
+      typescript:
         optional: true
 
   volar-service-typescript@0.0.71:
     resolution: {integrity: sha512-yTtM/BVT6hoyEYnDtaCyAtNhdNeS/mhTTABlBOdw3NNiRBUin3IznFJpgfjer4c6RYopiPjjQjc9VFhxVl1mLw==}
     peerDependencies:
       '@volar/language-service': ~2.4.0
+      typescript: '*'
     peerDependenciesMeta:
       '@volar/language-service':
+        optional: true
+      typescript:
         optional: true
 
   volar-service-yaml@0.0.71:
@@ -2435,8 +2451,8 @@ snapshots:
       volar-service-emmet: 0.0.71(@volar/language-service@2.4.28)
       volar-service-html: 0.0.71(@volar/language-service@2.4.28)
       volar-service-prettier: 0.0.71(@volar/language-service@2.4.28)(prettier@3.9.9)
-      volar-service-typescript: 0.0.71(@volar/language-service@2.4.28)
-      volar-service-typescript-twoslash-queries: 0.0.71(@volar/language-service@2.4.28)
+      volar-service-typescript: 0.0.71(@volar/language-service@2.4.28)(typescript@5.9.3)
+      volar-service-typescript-twoslash-queries: 0.0.71(@volar/language-service@2.4.28)(typescript@5.9.3)
       volar-service-yaml: 0.0.71(@volar/language-service@2.4.28)
       vscode-html-languageservice: 5.6.2
       vscode-uri: 3.2.0
@@ -3758,6 +3774,10 @@ snapshots:
 
   lru-cache@11.5.3: {}
 
+  lucide-astro@0.556.0(astro@5.18.2(jiti@1.21.7)(rollup@4.64.0)(typescript@5.9.3)(yaml@2.9.1)):
+    dependencies:
+      astro: 5.18.2(jiti@1.21.7)(rollup@4.64.0)(typescript@5.9.3)(yaml@2.9.1)
+
   magic-string@0.30.21:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.6.0
@@ -4772,13 +4792,14 @@ snapshots:
       '@volar/language-service': 2.4.28
       prettier: 3.9.9
 
-  volar-service-typescript-twoslash-queries@0.0.71(@volar/language-service@2.4.28):
+  volar-service-typescript-twoslash-queries@0.0.71(@volar/language-service@2.4.28)(typescript@5.9.3):
     dependencies:
       vscode-uri: 3.2.0
     optionalDependencies:
       '@volar/language-service': 2.4.28
+      typescript: 5.9.3
 
-  volar-service-typescript@0.0.71(@volar/language-service@2.4.28):
+  volar-service-typescript@0.0.71(@volar/language-service@2.4.28)(typescript@5.9.3):
     dependencies:
       path-browserify: 1.0.1
       semver: 7.8.5
@@ -4788,6 +4809,7 @@ snapshots:
       vscode-uri: 3.2.0
     optionalDependencies:
       '@volar/language-service': 2.4.28
+      typescript: 5.9.3
 
   volar-service-yaml@0.0.71(@volar/language-service@2.4.28):
     dependencies:
