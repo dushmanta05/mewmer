@@ -29,7 +29,15 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
   TextItem? _selectedItem;
   bool _useTransparentPadding = true;
   bool _hideBackgroundForCapture = false;
+  bool _isCapturingStatic = false;
   File? _currentImageFile;
+
+  double _imageScale = 1.0;
+  Offset _imageOffset = Offset.zero;
+  double _startScale = 1.0;
+  Offset _startOffset = Offset.zero;
+  Offset _startFocalPoint = Offset.zero;
+  double _canvasDisplaySize = 340.0;
 
   @override
   void initState() {
@@ -50,6 +58,8 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
 
     setState(() {
       _currentImageFile = file;
+      _imageScale = 1.0;
+      _imageOffset = Offset.zero;
     });
 
     if (mounted) {
@@ -69,6 +79,8 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
     if (file != null && mounted) {
       setState(() {
         _currentImageFile = File(file.path);
+        _imageScale = 1.0;
+        _imageOffset = Offset.zero;
       });
     }
   }
@@ -203,25 +215,22 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
     final int w = frame.width;
     final int h = frame.height;
 
-    int newWidth = 512;
-    int newHeight = 512;
-    int xOffset = 0;
-    int yOffset = 0;
+    double fitWidth = 512;
+    double fitHeight = 512;
 
     if (w > h) {
-      newWidth = 512;
-      newHeight = (h * 512 / w).round();
-      yOffset = (512 - newHeight) ~/ 2;
-    } else if (h > w) {
-      newHeight = 512;
-      newWidth = (w * 512 / h).round();
-      xOffset = (512 - newWidth) ~/ 2;
+      fitHeight = 512.0 * h / w;
+    } else {
+      fitWidth = 512.0 * w / h;
     }
+
+    final int targetWidth = (fitWidth * _imageScale).round().clamp(1, 4096);
+    final int targetHeight = (fitHeight * _imageScale).round().clamp(1, 4096);
 
     final img.Image resizedFrame = img.copyResize(
       frame,
-      width: newWidth,
-      height: newHeight,
+      width: targetWidth,
+      height: targetHeight,
       interpolation: img.Interpolation.linear,
     );
 
@@ -238,17 +247,27 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
         height: 512,
         interpolation: img.Interpolation.linear,
       );
-      img.gaussianBlur(bg, radius: 5);
-
+      img.gaussianBlur(bg, radius: 8);
       img.compositeImage(baseImage, bg);
+
       final darkOverlay = img.Image(width: 512, height: 512, numChannels: 4);
-      img.fill(darkOverlay, color: img.ColorRgba8(0, 0, 0, 50));
+      img.fill(darkOverlay, color: img.ColorRgba8(0, 0, 0, 60));
       img.compositeImage(baseImage, darkOverlay);
     } else {
       img.fill(baseImage, color: img.ColorRgba8(0, 0, 0, 0));
     }
 
-    img.compositeImage(baseImage, resizedFrame, dstX: xOffset, dstY: yOffset);
+    final double scaleFactor = 512.0 / (_canvasDisplaySize > 0 ? _canvasDisplaySize : 512.0);
+    final double finalOffsetX = (512 - targetWidth) / 2 + (_imageOffset.dx * scaleFactor);
+    final double finalOffsetY = (512 - targetHeight) / 2 + (_imageOffset.dy * scaleFactor);
+
+    img.compositeImage(
+      baseImage,
+      resizedFrame,
+      dstX: finalOffsetX.round(),
+      dstY: finalOffsetY.round(),
+    );
+
     img.compositeImage(baseImage, textOverlay);
 
     return baseImage;
@@ -377,7 +396,14 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
           rethrow;
         }
       } else {
+        setState(() {
+          _isCapturingStatic = true;
+        });
+        await Future.delayed(const Duration(milliseconds: 50));
         final Uint8List? imageBytes = await _screenshotController.capture();
+        setState(() {
+          _isCapturingStatic = false;
+        });
         if (imageBytes == null) return;
 
         img.Image? decoded = img.decodeImage(imageBytes);
@@ -397,7 +423,7 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
         webpBytes = await FlutterImageCompress.compressWithList(
           rawResizedBytes,
           format: CompressFormat.webp,
-          quality: 40,
+          quality: 75,
         );
       }
 
@@ -621,6 +647,41 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
               ),
             ),
           ),
+          if (_currentImageFile != null && _selectedItem == null)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              color: MewmerTheme.background,
+              child: Row(
+                children: [
+                  const Icon(Icons.zoom_out, size: 16, color: MewmerTheme.textMuted),
+                  Expanded(
+                    child: Slider(
+                      value: _imageScale,
+                      min: 0.4,
+                      max: 3.5,
+                      activeColor: MewmerTheme.brandViolet,
+                      inactiveColor: MewmerTheme.cardHover,
+                      onChanged: (val) {
+                        setState(() {
+                          _imageScale = val;
+                        });
+                      },
+                    ),
+                  ),
+                  const Icon(Icons.zoom_in, size: 16, color: MewmerTheme.textMuted),
+                  const SizedBox(width: 6),
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _imageScale = 1.0;
+                        _imageOffset = Offset.zero;
+                      });
+                    },
+                    child: const Text('Reset', style: TextStyle(fontSize: 12, color: MewmerTheme.brandViolet)),
+                  ),
+                ],
+              ),
+            ),
           if (_selectedItem != null) _buildPropertyPanel(),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -709,74 +770,122 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
   }
 
   Widget _buildEditorCanvas() {
-    return Screenshot(
-      controller: _screenshotController,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          if (_hideBackgroundForCapture)
-            Container(color: Colors.transparent)
-          else if (_currentImageFile == null)
-            Container(
-              decoration: BoxDecoration(
-                color: MewmerTheme.cardSurface,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: MewmerTheme.border),
-              ),
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const CatLogoMark(size: 44),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Canvas Ready',
-                      style: GoogleFonts.spaceGrotesk(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: MewmerTheme.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'Tap "Keyboard GIF" below to insert animation',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: MewmerTheme.textMuted,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            )
-          else if (!_useTransparentPadding) ...[
-            Image.file(_currentImageFile!, fit: BoxFit.cover),
-            BackdropFilter(
-              filter: ui.ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-              child: Container(color: Colors.black.withValues(alpha: 0.2)),
-            ),
-          ] else
-            Container(color: Colors.transparent),
-          if (!_hideBackgroundForCapture && _currentImageFile != null)
-            Image.file(_currentImageFile!, fit: BoxFit.contain),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        _canvasDisplaySize = constraints.maxWidth;
 
-          ..._textItems.map(
-            (item) => DraggableText(
-              item: item,
-              isSelected: _selectedItem == item,
-              onTap: () => setState(() => _selectedItem = item),
-              onUpdate: () => setState(() {}),
-              onDelete: () {
-                setState(() {
-                  _textItems.remove(item);
-                  _selectedItem = null;
-                });
-              },
-              onContentInserted: _handleKeyboardContent,
+        return Screenshot(
+          controller: _screenshotController,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                if (_hideBackgroundForCapture)
+                  Container(color: Colors.transparent)
+                else if (_currentImageFile == null)
+                  Container(
+                    decoration: BoxDecoration(
+                      color: MewmerTheme.cardSurface,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: MewmerTheme.border),
+                    ),
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const CatLogoMark(size: 44),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Canvas Ready',
+                            style: GoogleFonts.spaceGrotesk(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: MewmerTheme.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            'Tap "Keyboard GIF" below to insert animation',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: MewmerTheme.textMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                else ...[
+                  if (_useTransparentPadding)
+                    if (_isCapturingStatic)
+                      Container(color: Colors.transparent)
+                    else
+                      const CheckerboardBackground()
+                  else
+                    Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        Image.file(_currentImageFile!, fit: BoxFit.cover),
+                        BackdropFilter(
+                          filter: ui.ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                          child: Container(color: Colors.black.withValues(alpha: 0.25)),
+                        ),
+                      ],
+                    ),
+
+                  Positioned.fill(
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.translucent,
+                      onScaleStart: (details) {
+                        setState(() {
+                          _selectedItem = null;
+                          _startScale = _imageScale;
+                          _startOffset = _imageOffset;
+                          _startFocalPoint = details.focalPoint;
+                        });
+                      },
+                      onScaleUpdate: (details) {
+                        setState(() {
+                          _imageScale = (_startScale * details.scale).clamp(0.4, 4.0);
+                          final focalDelta = details.focalPoint - _startFocalPoint;
+                          _imageOffset = _startOffset + focalDelta;
+                        });
+                      },
+                      child: Transform.translate(
+                        offset: _imageOffset,
+                        child: Transform.scale(
+                          scale: _imageScale,
+                          child: Image.file(
+                            _currentImageFile!,
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+
+                ..._textItems.map(
+                  (item) => DraggableText(
+                    item: item,
+                    isSelected: _selectedItem == item,
+                    onTap: () => setState(() => _selectedItem = item),
+                    onUpdate: () => setState(() {}),
+                    onDelete: () {
+                      setState(() {
+                        _textItems.remove(item);
+                        _selectedItem = null;
+                      });
+                    },
+                    onContentInserted: _handleKeyboardContent,
+                  ),
+                ),
+              ],
             ),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -1083,4 +1192,43 @@ class WebPMuxer {
     bytes[1] = (value >> 8) & 0xFF;
     return bytes;
   }
+}
+
+class CheckerboardBackground extends StatelessWidget {
+  const CheckerboardBackground({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const CustomPaint(
+      painter: _CheckerboardPainter(),
+      child: SizedBox.expand(),
+    );
+  }
+}
+
+class _CheckerboardPainter extends CustomPainter {
+  const _CheckerboardPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const double tileSize = 16.0;
+    final paint1 = Paint()..color = MewmerTheme.background;
+    final paint2 = Paint()..color = MewmerTheme.cardSurface;
+
+    final int cols = (size.width / tileSize).ceil();
+    final int rows = (size.height / tileSize).ceil();
+
+    for (int i = 0; i < cols; i++) {
+      for (int j = 0; j < rows; j++) {
+        final paint = (i + j) % 2 == 0 ? paint1 : paint2;
+        canvas.drawRect(
+          Rect.fromLTWH(i * tileSize, j * tileSize, tileSize, tileSize),
+          paint,
+        );
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

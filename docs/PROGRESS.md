@@ -54,11 +54,17 @@ This document tracks all completed milestones, current system status, mobile tes
   - Locked app to pure dark mode (`ThemeMode.dark`) and unified system notification/status bar to `#0B0F17`.
   - Added dedicated full-width "Add to WhatsApp" bottom CTA in `pack_details_page.dart`.
   - Implemented Android Keyboard GIF / Sticker input via Commit Content API:
-  - Wired `contentInsertionConfiguration` on `TextField` for `image/gif`, `image/webp`, `image/png`, and `image/jpeg`.
-  - Added dedicated "Keyboard GIF" action and modal sheet in `meme_editor_page.dart` with user instructions.
-  - Automatically copies incoming bytes to local app cache and places the media on the 512×512 canvas while preserving animation.
-  - Supported double-tap text caption inline keyboard GIF insertion via `draggable_text.dart`.
-  - Updated `home_page.dart` to allow opening the Studio directly without requiring an existing gallery photo.
+    - Wired `contentInsertionConfiguration` on `TextField` for `image/gif`, `image/webp`, `image/png`, and `image/jpeg`.
+    - Added dedicated "Keyboard GIF" action and modal sheet in `meme_editor_page.dart` with user instructions.
+    - Automatically copies incoming bytes to local app cache and places the media on the 512×512 canvas while preserving animation.
+    - Supported double-tap text caption inline keyboard GIF insertion via `draggable_text.dart`.
+    - Updated `home_page.dart` to allow opening the Studio directly without requiring an existing gallery photo.
+  - Implemented interactive GIF & image cropping, zooming, and panning:
+    - Added two-finger pinch-to-zoom and pan gestures directly on the 512×512 editor canvas.
+    - Added Zoom slider and Reset framing button when editing image/GIF.
+    - Toggleable transparent vs. blur padding with dark checkerboard preview.
+    - Text captions freely positionable anywhere across canvas bounds and padding margins.
+    - Preserved exact user crop, zoom, and offset transformations across all animated WebP frames and static exports.
 
 ### 6. Documentation & Guidelines Standardization
 - Standardized `AGENTS.md` with:
