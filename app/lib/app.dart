@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'models/sticker_provider.dart';
 import 'screens/home_page.dart';
+import 'theme.dart';
 
 class MewmerApp extends StatelessWidget {
   const MewmerApp({super.key});
@@ -13,13 +14,7 @@ class MewmerApp extends StatelessWidget {
       child: MaterialApp(
         title: 'mewmer',
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: Colors.deepPurple,
-            brightness: Brightness.dark,
-          ),
-          useMaterial3: true,
-        ),
+        theme: MewmerTheme.darkTheme,
         home: const HomePage(),
       ),
     );

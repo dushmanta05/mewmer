@@ -46,6 +46,11 @@ This document tracks all completed milestones, current system status, mobile tes
   - Dynamic 96×96 tray icon generation.
   - Native WhatsApp sticker pack injection via `whatsapp_stickers_injector`.
   - Minimum 3 stickers check and non-mixed static/animated validation.
+- Unified mobile design system with web (`MewmerTheme`):
+  - Matched Obsidian Dark palette (`#0B0F17` background, `#131B2E` cards, `#1F2B48` borders).
+  - Electric Violet (`#8B5CF6`) brand accents and WhatsApp Emerald (`#25D366`) export buttons.
+  - Added dedicated full-width "Add to WhatsApp" bottom CTA in `pack_details_page.dart`.
+  - Fixed `WhatsappStickers` parameter mismatch bug in `home_page.dart` and `pack_details_page.dart` (`flutter analyze` passing with 0 issues).
 
 ### 6. Documentation & Guidelines Standardization
 - Standardized `AGENTS.md` with:

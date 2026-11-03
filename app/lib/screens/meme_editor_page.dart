@@ -11,6 +11,7 @@ import 'package:image/image.dart' as img;
 import '../models/text_item.dart';
 import '../models/sticker_provider.dart';
 import '../widgets/draggable_text.dart';
+import '../theme.dart';
 
 class MemeEditorPage extends StatefulWidget {
   final File imageFile;
@@ -30,9 +31,10 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
   final List<Color> _colors = [
     Colors.white,
     Colors.black,
-    Colors.white.withValues(alpha: 0.5),
-    Colors.black.withValues(alpha: 0.5),
-    Colors.deepPurple,
+    MewmerTheme.brandViolet,
+    MewmerTheme.whatsappGreen,
+    MewmerTheme.amber,
+    MewmerTheme.rose,
   ];
 
   final List<TextStyle> _fonts = [GoogleFonts.poppins(), GoogleFonts.caveat()];
@@ -443,10 +445,11 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Edit Meme'),
+        title: Text('Studio', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
-            icon: const Icon(Icons.check_circle_outline, size: 28),
+            icon: const Icon(Icons.check_circle_rounded, size: 26, color: MewmerTheme.brandViolet),
+            tooltip: 'Save Sticker',
             onPressed: _captureSticker,
           ),
         ],
@@ -463,46 +466,48 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
           ),
           if (_selectedItem != null) _buildPropertyPanel(),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              borderRadius: const BorderRadius.vertical(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            decoration: const BoxDecoration(
+              color: MewmerTheme.cardSurface,
+              borderRadius: BorderRadius.vertical(
                 top: Radius.circular(24),
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black26,
-                  blurRadius: 10,
-                  offset: const Offset(0, -2),
-                ),
-              ],
+              border: Border(top: BorderSide(color: MewmerTheme.border)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 ElevatedButton.icon(
                   onPressed: _addText,
-                  icon: const Icon(Icons.text_fields),
+                  icon: const Icon(Icons.title_rounded, size: 18),
                   label: const Text('Add Text'),
                   style: ElevatedButton.styleFrom(
+                    backgroundColor: MewmerTheme.brandViolet,
+                    foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
+                      horizontal: 20,
                       vertical: 12,
                     ),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(14),
                     ),
                   ),
                 ),
                 ChoiceChip(
                   avatar: Icon(
                     _useTransparentPadding
-                        ? Icons.check_box_outlined
-                        : Icons.blur_on,
-                    size: 18,
+                        ? Icons.check_circle_rounded
+                        : Icons.blur_on_rounded,
+                    size: 16,
+                    color: _useTransparentPadding ? MewmerTheme.brandViolet : MewmerTheme.muted,
                   ),
                   label: const Text('Transparent Padding'),
                   selected: _useTransparentPadding,
+                  selectedColor: MewmerTheme.brandViolet.withValues(alpha: 0.2),
+                  backgroundColor: MewmerTheme.cardHover,
+                  side: BorderSide(
+                    color: _useTransparentPadding ? MewmerTheme.brandViolet : MewmerTheme.border,
+                  ),
                   onSelected: (val) {
                     setState(() {
                       _useTransparentPadding = val;
@@ -558,9 +563,10 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
   Widget _buildPropertyPanel() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      color: Theme.of(
-        context,
-      ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.8),
+      decoration: const BoxDecoration(
+        color: MewmerTheme.cardSurface,
+        border: Border(top: BorderSide(color: MewmerTheme.border)),
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

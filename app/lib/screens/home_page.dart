@@ -10,6 +10,7 @@ import 'package:image/image.dart' as img;
 import 'meme_editor_page.dart';
 import 'pack_details_page.dart';
 import '../models/sticker_provider.dart';
+import '../theme.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -63,14 +64,13 @@ class _HomePageState extends State<HomePage> {
           controller: controller,
           decoration: const InputDecoration(
             hintText: 'Enter pack name',
-            border: OutlineInputBorder(),
           ),
           autofocus: true,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
+            child: const Text('Cancel', style: TextStyle(color: MewmerTheme.textMuted)),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -82,7 +82,7 @@ class _HomePageState extends State<HomePage> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('Pack "$name" created successfully!'),
-                    backgroundColor: Colors.green,
+                    backgroundColor: MewmerTheme.whatsappGreen,
                   ),
                 );
               }
@@ -103,7 +103,7 @@ class _HomePageState extends State<HomePage> {
           content: Text(
             'Need ${3 - pack.stickerPaths.length} more stickers to create a pack (min 3)!',
           ),
-          backgroundColor: Colors.orange,
+          backgroundColor: MewmerTheme.amber,
         ),
       );
       return;
@@ -145,7 +145,6 @@ class _HomePageState extends State<HomePage> {
         publisherWebsite: 'https://mewmer.com',
         privacyPolicyWebsite: 'https://mewmer.com/privacy',
         licenseAgreementWebsite: 'https://mewmer.com/license',
-        animatedStickerPack: isAnimated,
       );
 
       for (var path in pack.stickerPaths) {
@@ -157,8 +156,8 @@ class _HomePageState extends State<HomePage> {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Pack shared to WhatsApp!'),
-          backgroundColor: Colors.green,
+          content: Text('Pack added to WhatsApp!'),
+          backgroundColor: MewmerTheme.whatsappGreen,
         ),
       );
     } catch (e) {
@@ -176,12 +175,12 @@ class _HomePageState extends State<HomePage> {
   Widget _buildPackPreview(List<String> paths) {
     if (paths.isEmpty) {
       return Container(
-        color: Colors.white10,
+        color: MewmerTheme.cardHover,
         child: const Center(
           child: Icon(
             Icons.photo_library_outlined,
-            color: Colors.white24,
-            size: 40,
+            color: MewmerTheme.muted,
+            size: 32,
           ),
         ),
       );
@@ -226,402 +225,416 @@ class _HomePageState extends State<HomePage> {
     final isBusy = _isExporting || _isPickingImage || stickerProvider.isLoading;
 
     return Scaffold(
+      backgroundColor: MewmerTheme.background,
       body: Stack(
         children: [
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Theme.of(context).colorScheme.surface,
-                  Theme.of(
-                    context,
-                  ).colorScheme.primaryContainer.withValues(alpha: 0.15),
-                ],
-              ),
-            ),
-            child: SafeArea(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 16),
-
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.auto_awesome,
-                              color: Colors.deepPurpleAccent,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'mewmer',
-                              style: GoogleFonts.poppins(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1,
+          SafeArea(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 12),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(7),
+                            decoration: BoxDecoration(
+                              color: MewmerTheme.brandViolet.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: MewmerTheme.brandViolet.withValues(alpha: 0.3),
                               ),
                             ),
-                          ],
+                            child: const Icon(
+                              Icons.pets,
+                              color: MewmerTheme.brandViolet,
+                              size: 18,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          RichText(
+                            text: TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: 'mew',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w800,
+                                    color: MewmerTheme.textPrimary,
+                                    letterSpacing: -0.5,
+                                  ),
+                                ),
+                                TextSpan(
+                                  text: 'mer',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w800,
+                                    color: MewmerTheme.brandViolet,
+                                    letterSpacing: -0.5,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: MewmerTheme.cardSurface,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: MewmerTheme.border),
                         ),
-                        IconButton(
+                        child: IconButton(
                           icon: const Icon(
-                            Icons.create_new_folder,
-                            color: Colors.deepPurpleAccent,
+                            Icons.create_new_folder_outlined,
+                            color: MewmerTheme.brandViolet,
+                            size: 20,
                           ),
                           tooltip: 'Create New Pack',
                           onPressed: () => _showCreatePackDialog(context),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 24),
+                ),
+                const SizedBox(height: 20),
 
-                  if (stickerProvider.isLoading)
-                    const Expanded(
-                      child: Center(child: CircularProgressIndicator()),
-                    )
-                  else
-                    Expanded(
-                      child: SingleChildScrollView(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 20,
-                              ),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    'Sticker Packs',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 18,
+                if (stickerProvider.isLoading)
+                  const Expanded(
+                    child: Center(
+                      child: CircularProgressIndicator(color: MewmerTheme.brandViolet),
+                    ),
+                  )
+                else
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Sticker Packs',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.bold,
+                                    color: MewmerTheme.textPrimary,
+                                  ),
+                                ),
+                                TextButton.icon(
+                                  onPressed: () => _showCreatePackDialog(context),
+                                  icon: const Icon(Icons.add, size: 15, color: MewmerTheme.brandViolet),
+                                  label: const Text(
+                                    'Add Pack',
+                                    style: TextStyle(
+                                      fontSize: 12,
                                       fontWeight: FontWeight.bold,
+                                      color: MewmerTheme.brandViolet,
                                     ),
                                   ),
-                                  TextButton.icon(
-                                    onPressed: () =>
-                                        _showCreatePackDialog(context),
-                                    icon: const Icon(Icons.add, size: 16),
-                                    label: const Text(
-                                      'Add Pack',
-                                      style: TextStyle(fontSize: 12),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+
+                          if (packs.isEmpty)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                              child: Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(24),
+                                decoration: BoxDecoration(
+                                  color: MewmerTheme.cardSurface,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: MewmerTheme.border),
+                                ),
+                                child: Column(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: const BoxDecoration(
+                                        color: MewmerTheme.cardHover,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.folder_open_rounded,
+                                        size: 32,
+                                        color: MewmerTheme.muted,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                    const SizedBox(height: 12),
+                                    const Text(
+                                      'No Sticker Packs Yet',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: MewmerTheme.textPrimary,
+                                        fontSize: 15,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    const Text(
+                                      'Create a pack to organize your custom stickers.',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: MewmerTheme.textMuted,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            )
+                          else
+                            SizedBox(
+                              height: 215,
+                              child: ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                itemCount: packs.length,
+                                itemBuilder: (context, index) {
+                                  final pack = packs[index];
+                                  return GestureDetector(
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => PackDetailsPage(
+                                            packIdentifier: pack.identifier,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    child: Container(
+                                      margin: const EdgeInsets.symmetric(horizontal: 6),
+                                      width: 155,
+                                      decoration: BoxDecoration(
+                                        color: MewmerTheme.cardSurface,
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(color: MewmerTheme.border),
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Expanded(
+                                            child: Container(
+                                              margin: const EdgeInsets.all(8),
+                                              decoration: BoxDecoration(
+                                                color: MewmerTheme.cardHover,
+                                                borderRadius: BorderRadius.circular(14),
+                                              ),
+                                              child: _buildPackPreview(pack.stickerPaths),
+                                            ),
+                                          ),
+                                          Padding(
+                                            padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  pack.name,
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 14,
+                                                    color: MewmerTheme.textPrimary,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 3),
+                                                Row(
+                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                  children: [
+                                                    Text(
+                                                      '${pack.stickerPaths.length} stickers',
+                                                      style: const TextStyle(
+                                                        fontSize: 11,
+                                                        color: MewmerTheme.textMuted,
+                                                      ),
+                                                    ),
+                                                    if (pack.stickerPaths.length >= 3)
+                                                      GestureDetector(
+                                                        onTap: () => _exportToWhatsApp(context, pack),
+                                                        child: Container(
+                                                          padding: const EdgeInsets.all(4),
+                                                          decoration: BoxDecoration(
+                                                            color: MewmerTheme.whatsappGreen.withValues(alpha: 0.15),
+                                                            borderRadius: BorderRadius.circular(6),
+                                                          ),
+                                                          child: const Icon(
+                                                            Icons.send_rounded,
+                                                            size: 13,
+                                                            color: MewmerTheme.whatsappGreen,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                  ],
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          const SizedBox(height: 24),
+
+                          if (recentStickers.isNotEmpty) ...[
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 20),
+                              child: Text(
+                                'Recent Creations',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.bold,
+                                  color: MewmerTheme.textPrimary,
+                                ),
                               ),
                             ),
                             const SizedBox(height: 10),
+                            SizedBox(
+                              height: 110,
+                              child: ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                itemCount: recentStickers.length,
+                                itemBuilder: (context, index) {
+                                  final sticker = recentStickers[index];
+                                  final file = File(sticker.imagePath);
 
-                            if (packs.isEmpty)
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 20,
-                                  vertical: 10,
-                                ),
-                                child: Container(
-                                  width: double.infinity,
-                                  padding: const EdgeInsets.all(24),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.05),
-                                    borderRadius: BorderRadius.circular(16),
-                                    border: Border.all(color: Colors.white10),
-                                  ),
-                                  child: Column(
-                                    children: [
-                                      const Icon(
-                                        Icons.folder_open,
-                                        size: 48,
-                                        color: Colors.white24,
-                                      ),
-                                      const SizedBox(height: 12),
-                                      const Text(
-                                        'No Sticker Packs Created Yet',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white70,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      const Text(
-                                        'Create a pack to organize your custom stickers.',
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.white38,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              )
-                            else
-                              SizedBox(
-                                height: 210,
-                                child: ListView.builder(
-                                  scrollDirection: Axis.horizontal,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                  ),
-                                  itemCount: packs.length,
-                                  itemBuilder: (context, index) {
-                                    final pack = packs[index];
-                                    return GestureDetector(
-                                      onTap: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                PackDetailsPage(
-                                                  packIdentifier:
-                                                      pack.identifier,
-                                                ),
+                                  return GestureDetector(
+                                    onLongPress: () async {
+                                      final confirm = await showDialog<bool>(
+                                        context: context,
+                                        builder: (context) => AlertDialog(
+                                          title: const Text('Delete Sticker'),
+                                          content: const Text(
+                                            'Delete this sticker permanently from storage and all packs?',
                                           ),
-                                        );
-                                      },
-                                      child: Container(
-                                        margin: const EdgeInsets.symmetric(
-                                          horizontal: 6,
-                                        ),
-                                        width: 150,
-                                        decoration: BoxDecoration(
-                                          color: Colors.white.withValues(
-                                            alpha: 0.05,
-                                          ),
-                                          borderRadius: BorderRadius.circular(
-                                            16,
-                                          ),
-                                          border: Border.all(
-                                            color: Colors.white10,
-                                          ),
-                                        ),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Expanded(
-                                              child: Container(
-                                                margin: const EdgeInsets.all(8),
-                                                decoration: BoxDecoration(
-                                                  color: Colors.black26,
-                                                  borderRadius:
-                                                      BorderRadius.circular(12),
-                                                ),
-                                                child: _buildPackPreview(
-                                                  pack.stickerPaths,
-                                                ),
-                                              ),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () => Navigator.pop(context, false),
+                                              child: const Text('Cancel', style: TextStyle(color: MewmerTheme.textMuted)),
                                             ),
-                                            Padding(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 10,
-                                                    vertical: 6,
-                                                  ),
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    pack.name,
-                                                    maxLines: 1,
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                    style: const TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontSize: 14,
-                                                    ),
-                                                  ),
-                                                  Row(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .spaceBetween,
-                                                    children: [
-                                                      Text(
-                                                        '${pack.stickerPaths.length} stickers',
-                                                        style: const TextStyle(
-                                                          fontSize: 11,
-                                                          color: Colors.white54,
-                                                        ),
-                                                      ),
-                                                      if (pack
-                                                              .stickerPaths
-                                                              .length >=
-                                                          3)
-                                                        GestureDetector(
-                                                          onTap: () =>
-                                                              _exportToWhatsApp(
-                                                                context,
-                                                                pack,
-                                                              ),
-                                                          child: const Icon(
-                                                            Icons
-                                                                .share_arrival_time_outlined,
-                                                            size: 16,
-                                                            color: Colors
-                                                                .greenAccent,
-                                                          ),
-                                                        ),
-                                                    ],
-                                                  ),
-                                                ],
+                                            ElevatedButton(
+                                              onPressed: () => Navigator.pop(context, true),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: MewmerTheme.rose,
                                               ),
+                                              child: const Text('Delete'),
                                             ),
                                           ],
                                         ),
+                                      );
+                                      if (confirm == true) {
+                                        await stickerProvider.deleteRecentSticker(sticker.imagePath);
+                                      }
+                                    },
+                                    child: Container(
+                                      margin: const EdgeInsets.symmetric(horizontal: 5),
+                                      width: 95,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(14),
+                                        image: DecorationImage(
+                                          image: FileImage(file),
+                                          fit: BoxFit.cover,
+                                        ),
+                                        border: Border.all(color: MewmerTheme.border),
                                       ),
-                                    );
-                                  },
-                                ),
+                                    ),
+                                  );
+                                },
                               ),
+                            ),
                             const SizedBox(height: 28),
+                          ],
 
-                            if (recentStickers.isNotEmpty) ...[
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 20,
-                                ),
-                                child: Text(
-                                  'Recent Creations',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                            child: Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
+                              decoration: BoxDecoration(
+                                color: MewmerTheme.cardSurface,
+                                borderRadius: BorderRadius.circular(24),
+                                border: Border.all(color: MewmerTheme.border),
                               ),
-                              const SizedBox(height: 10),
-                              SizedBox(
-                                height: 120,
-                                child: ListView.builder(
-                                  scrollDirection: Axis.horizontal,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                  ),
-                                  itemCount: recentStickers.length,
-                                  itemBuilder: (context, index) {
-                                    final sticker = recentStickers[index];
-                                    final file = File(sticker.imagePath);
-
-                                    return GestureDetector(
-                                      onLongPress: () async {
-                                        final confirm = await showDialog<bool>(
-                                          context: context,
-                                          builder: (context) => AlertDialog(
-                                            title: const Text('Delete Sticker'),
-                                            content: const Text(
-                                              'Delete this sticker permanently from storage and all packs?',
-                                            ),
-                                            actions: [
-                                              TextButton(
-                                                onPressed: () => Navigator.pop(
-                                                  context,
-                                                  false,
-                                                ),
-                                                child: const Text('Cancel'),
-                                              ),
-                                              ElevatedButton(
-                                                onPressed: () => Navigator.pop(
-                                                  context,
-                                                  true,
-                                                ),
-                                                style: ElevatedButton.styleFrom(
-                                                  backgroundColor: Colors.red,
-                                                ),
-                                                child: const Text('Delete'),
-                                              ),
-                                            ],
-                                          ),
-                                        );
-                                        if (confirm == true) {
-                                          await stickerProvider
-                                              .deleteRecentSticker(
-                                                sticker.imagePath,
-                                              );
-                                        }
-                                      },
-                                      child: Container(
-                                        margin: const EdgeInsets.symmetric(
-                                          horizontal: 4,
-                                        ),
-                                        width: 100,
-                                        decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
-                                          image: DecorationImage(
-                                            image: FileImage(file),
-                                            fit: BoxFit.cover,
-                                          ),
-                                          border: Border.all(
-                                            color: Colors.white10,
-                                          ),
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                              const SizedBox(height: 28),
-                            ],
-
-                            Center(
                               child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  const Icon(
-                                    Icons.add_photo_alternate,
-                                    size: 64,
-                                    color: Colors.white24,
+                                  Container(
+                                    padding: const EdgeInsets.all(14),
+                                    decoration: BoxDecoration(
+                                      color: MewmerTheme.brandViolet.withValues(alpha: 0.12),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.add_photo_alternate_outlined,
+                                      size: 36,
+                                      color: MewmerTheme.brandViolet,
+                                    ),
                                   ),
                                   const SizedBox(height: 12),
                                   Text(
-                                    'Start your next meme',
+                                    'Create New Sticker',
                                     style: GoogleFonts.poppins(
-                                      fontSize: 15,
-                                      color: Colors.white70,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: MewmerTheme.textPrimary,
                                     ),
                                   ),
-                                  const SizedBox(height: 24),
+                                  const SizedBox(height: 4),
+                                  const Text(
+                                    'Import photos or GIFs and caption them.',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: MewmerTheme.textMuted,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 18),
                                   ElevatedButton.icon(
                                     onPressed: isBusy ? null : _pickImage,
-                                    icon: const Icon(Icons.add),
-                                    label: const Text('New Sticker'),
+                                    icon: const Icon(Icons.add_rounded, size: 18),
+                                    label: const Text('Open Studio'),
                                     style: ElevatedButton.styleFrom(
+                                      backgroundColor: MewmerTheme.brandViolet,
+                                      foregroundColor: Colors.white,
                                       padding: const EdgeInsets.symmetric(
-                                        horizontal: 32,
-                                        vertical: 16,
+                                        horizontal: 28,
+                                        vertical: 14,
                                       ),
-                                      textStyle: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(14),
                                       ),
                                     ),
                                   ),
-                                  const SizedBox(height: 40),
                                 ],
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+                          const SizedBox(height: 24),
+                        ],
                       ),
                     ),
-                ],
-              ),
+                  ),
+              ],
             ),
           ),
           if (isBusy)
             Container(
               color: Colors.black54,
-              child: const Center(child: CircularProgressIndicator()),
+              child: const Center(
+                child: CircularProgressIndicator(color: MewmerTheme.brandViolet),
+              ),
             ),
         ],
       ),

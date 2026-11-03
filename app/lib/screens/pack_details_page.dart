@@ -7,6 +7,7 @@ import 'package:whatsapp_stickers_injector/whatsapp_stickers.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:image/image.dart' as img;
 import '../models/sticker_provider.dart';
+import '../theme.dart';
 
 class PackDetailsPage extends StatefulWidget {
   final String packIdentifier;
@@ -31,7 +32,7 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
           content: Text(
             'Need ${3 - pack.stickerPaths.length} more stickers to add to WhatsApp (min 3)!',
           ),
-          backgroundColor: Colors.orange,
+          backgroundColor: MewmerTheme.amber,
         ),
       );
       return;
@@ -73,7 +74,6 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
         publisherWebsite: 'https://mewmer.com',
         privacyPolicyWebsite: 'https://mewmer.com/privacy',
         licenseAgreementWebsite: 'https://mewmer.com/license',
-        animatedStickerPack: isAnimated,
       );
 
       for (var stickerPath in pack.stickerPaths) {
@@ -87,8 +87,8 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Pack shared to WhatsApp!'),
-          backgroundColor: Colors.green,
+          content: Text('Pack added to WhatsApp!'),
+          backgroundColor: MewmerTheme.whatsappGreen,
         ),
       );
     } catch (e) {
@@ -130,17 +130,17 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
       builder: (context) => AlertDialog(
         title: const Text('Delete Stickers'),
         content: Text(
-          'Are you sure you want to delete the ${_selectedStickers.length} selected sticker(s) from this pack?',
+          'Delete ${_selectedStickers.length} sticker(s) from this pack?',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: const Text('Cancel', style: TextStyle(color: MewmerTheme.textMuted)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
+              backgroundColor: MewmerTheme.rose,
               foregroundColor: Colors.white,
             ),
             child: const Text('Delete'),
@@ -167,17 +167,17 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
       builder: (context) => AlertDialog(
         title: const Text('Delete Pack'),
         content: const Text(
-          'Are you sure you want to delete this entire sticker pack? The sticker files will remain in your recent folder.',
+          'Delete this entire pack? Sticker files will remain in your recent collection.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: const Text('Cancel', style: TextStyle(color: MewmerTheme.textMuted)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
+              backgroundColor: MewmerTheme.rose,
               foregroundColor: Colors.white,
             ),
             child: const Text('Delete'),
@@ -212,8 +212,10 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
 
     final pack = stickerProvider.packs[packIndex];
     final stickers = pack.stickerPaths;
+    final canExport = stickers.length >= 3;
 
     return Scaffold(
+      backgroundColor: MewmerTheme.background,
       appBar: AppBar(
         title: _isSelectionMode
             ? Text('${_selectedStickers.length} Selected')
@@ -230,44 +232,32 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
         actions: [
           if (_isSelectionMode)
             IconButton(
-              icon: const Icon(Icons.delete, color: Colors.redAccent),
+              icon: const Icon(Icons.delete_outline, color: MewmerTheme.rose),
               onPressed: () => _deleteSelectedStickers(stickerProvider),
             )
           else ...[
             IconButton(
-              icon: const Icon(Icons.delete_forever, color: Colors.redAccent),
+              icon: const Icon(Icons.delete_forever_outlined, color: MewmerTheme.muted),
               tooltip: 'Delete Pack',
               onPressed: () => _deletePack(stickerProvider),
             ),
-            if (stickers.length >= 3)
-              IconButton(
-                icon: const Icon(Icons.share, color: Colors.greenAccent),
-                tooltip: 'Add to WhatsApp',
-                onPressed: () => _exportToWhatsApp(context, pack),
-              ),
           ],
         ],
       ),
       body: Stack(
         children: [
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Theme.of(context).colorScheme.surface,
-                  Theme.of(
-                    context,
-                  ).colorScheme.primaryContainer.withValues(alpha: 0.1),
-                ],
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: MewmerTheme.cardSurface,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: MewmerTheme.border),
+                  ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -275,247 +265,140 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Publisher: ${pack.publisher}',
-                            style: TextStyle(
-                              color: Colors.white60,
-                              fontSize: 13,
+                            pack.publisher,
+                            style: const TextStyle(
+                              color: MewmerTheme.brandViolet,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 2),
                           Text(
-                            '${stickers.length} stickers',
+                            '${stickers.length} / 30 stickers',
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
-                              fontSize: 15,
+                              fontSize: 14,
+                              color: MewmerTheme.textPrimary,
                             ),
                           ),
                         ],
                       ),
-                      if (stickers.length < 3)
+                      if (!canExport)
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                           decoration: BoxDecoration(
-                            color: Colors.orange.withValues(alpha: 0.2),
-                            border: Border.all(
-                              color: Colors.orange.withValues(alpha: 0.5),
-                            ),
-                            borderRadius: BorderRadius.circular(12),
+                            color: MewmerTheme.amber.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: MewmerTheme.amber.withValues(alpha: 0.3)),
                           ),
-                          child: const Row(
-                            children: [
-                              Icon(
-                                Icons.warning,
-                                color: Colors.orange,
-                                size: 16,
-                              ),
-                              SizedBox(width: 6),
-                              Text(
-                                'Min 3 stickers for WhatsApp',
-                                style: TextStyle(
-                                  color: Colors.orange,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
+                          child: Text(
+                            'Need ${3 - stickers.length} more',
+                            style: const TextStyle(
+                              color: MewmerTheme.amber,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        )
+                      else
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: MewmerTheme.whatsappGreen.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: MewmerTheme.whatsappGreen.withValues(alpha: 0.3)),
+                          ),
+                          child: const Text(
+                            'Ready for WhatsApp',
+                            style: TextStyle(
+                              color: MewmerTheme.whatsappGreen,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                     ],
                   ),
                 ),
-                Expanded(
-                  child: stickers.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(
-                                Icons.portrait,
-                                size: 72,
-                                color: Colors.white24,
+              ),
+              Expanded(
+                child: stickers.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.photo_library_outlined,
+                              size: 56,
+                              color: MewmerTheme.muted,
+                            ),
+                            const SizedBox(height: 14),
+                            Text(
+                              'No stickers in this pack',
+                              style: GoogleFonts.poppins(
+                                color: MewmerTheme.textPrimary,
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
                               ),
-                              const SizedBox(height: 16),
-                              Text(
-                                'No stickers in this pack yet!',
-                                style: GoogleFonts.poppins(
-                                  color: Colors.white60,
-                                  fontSize: 15,
-                                ),
+                            ),
+                            const SizedBox(height: 4),
+                            const Text(
+                              'Create stickers from the studio to add here.',
+                              style: TextStyle(
+                                color: MewmerTheme.textMuted,
+                                fontSize: 13,
                               ),
-                              const SizedBox(height: 8),
-                              const Text(
-                                'Create stickers and add them here.',
-                                style: TextStyle(
-                                  color: Colors.white38,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                      : GridView.builder(
-                          padding: const EdgeInsets.all(12),
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 3,
-                                crossAxisSpacing: 10,
-                                mainAxisSpacing: 10,
-                                childAspectRatio: 1,
-                              ),
-                          itemCount: stickers.length,
-                          itemBuilder: (context, index) {
-                            final path = stickers[index];
-                            final isSelected = _selectedStickers.contains(path);
-                            final file = File(path);
+                            ),
+                          ],
+                        ),
+                      )
+                    : GridView.builder(
+                        padding: const EdgeInsets.all(16),
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          crossAxisSpacing: 10,
+                          mainAxisSpacing: 10,
+                          childAspectRatio: 1,
+                        ),
+                        itemCount: stickers.length,
+                        itemBuilder: (context, index) {
+                          final path = stickers[index];
+                          final isSelected = _selectedStickers.contains(path);
+                          final file = File(path);
 
-                            return GestureDetector(
-                              onTap: () {
-                                if (_isSelectionMode) {
-                                  _toggleStickerSelection(path);
-                                } else {
-                                  showDialog(
-                                    context: context,
-                                    builder: (context) => Dialog(
-                                      child: Container(
-                                        padding: const EdgeInsets.all(16),
-                                        child: Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            AspectRatio(
-                                              aspectRatio: 1,
-                                              child: Image.file(
-                                                file,
-                                                fit: BoxFit.contain,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 16),
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.spaceEvenly,
-                                              children: [
-                                                ElevatedButton.icon(
-                                                  onPressed: () {
-                                                    Navigator.pop(context);
-                                                    _toggleStickerSelection(
-                                                      path,
-                                                    );
-                                                  },
-                                                  icon: const Icon(
-                                                    Icons.select_all,
-                                                  ),
-                                                  label: const Text('Select'),
-                                                ),
-                                                ElevatedButton.icon(
-                                                  onPressed: () async {
-                                                    Navigator.pop(context);
-                                                    final confirm = await showDialog<bool>(
-                                                      context: context,
-                                                      builder: (context) => AlertDialog(
-                                                        title: const Text(
-                                                          'Remove Sticker',
-                                                        ),
-                                                        content: const Text(
-                                                          'Remove this sticker from the pack?',
-                                                        ),
-                                                        actions: [
-                                                          TextButton(
-                                                            onPressed: () =>
-                                                                Navigator.pop(
-                                                                  context,
-                                                                  false,
-                                                                ),
-                                                            child: const Text(
-                                                              'Cancel',
-                                                            ),
-                                                          ),
-                                                          ElevatedButton(
-                                                            onPressed: () =>
-                                                                Navigator.pop(
-                                                                  context,
-                                                                  true,
-                                                                ),
-                                                            style:
-                                                                ElevatedButton.styleFrom(
-                                                                  backgroundColor:
-                                                                      Colors
-                                                                          .red,
-                                                                ),
-                                                            child: const Text(
-                                                              'Remove',
-                                                            ),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    );
-                                                    if (confirm == true) {
-                                                      await stickerProvider
-                                                          .removeStickerFromPack(
-                                                            widget
-                                                                .packIdentifier,
-                                                            path,
-                                                          );
-                                                    }
-                                                  },
-                                                  style:
-                                                      ElevatedButton.styleFrom(
-                                                        backgroundColor: Colors
-                                                            .red
-                                                            .withValues(
-                                                              alpha: 0.8,
-                                                            ),
-                                                        foregroundColor:
-                                                            Colors.white,
-                                                      ),
-                                                  icon: const Icon(
-                                                    Icons.delete,
-                                                  ),
-                                                  label: const Text('Remove'),
-                                                ),
-                                              ],
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                }
-                              },
-                              onLongPress: () => _toggleStickerSelection(path),
+                          return GestureDetector(
+                            onTap: () {
+                              if (_isSelectionMode) {
+                                _toggleStickerSelection(path);
+                              }
+                            },
+                            onLongPress: () => _toggleStickerSelection(path),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: isSelected ? MewmerTheme.brandViolet : MewmerTheme.border,
+                                  width: isSelected ? 2.5 : 1,
+                                ),
+                                color: MewmerTheme.cardSurface,
+                              ),
                               child: Stack(
                                 children: [
-                                  Positioned.fill(
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(16),
-                                        border: Border.all(
-                                          color: isSelected
-                                              ? Colors.blue.shade400
-                                              : Colors.white10,
-                                          width: isSelected ? 3 : 1,
-                                        ),
-                                        color: Colors.white.withValues(
-                                          alpha: 0.05,
-                                        ),
-                                      ),
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(15),
-                                        child: Image.file(
-                                          file,
-                                          fit: BoxFit.cover,
-                                          errorBuilder:
-                                              (context, error, stackTrace) {
-                                                return const Center(
-                                                  child: Icon(
-                                                    Icons.broken_image,
-                                                    color: Colors.white30,
-                                                  ),
-                                                );
-                                              },
-                                        ),
-                                      ),
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(15),
+                                    child: Image.file(
+                                      file,
+                                      fit: BoxFit.cover,
+                                      width: double.infinity,
+                                      height: double.infinity,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return const Center(
+                                          child: Icon(
+                                            Icons.broken_image_outlined,
+                                            color: MewmerTheme.muted,
+                                          ),
+                                        );
+                                      },
                                     ),
                                   ),
                                   if (_isSelectionMode)
@@ -525,39 +408,61 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
                                       child: Container(
                                         decoration: BoxDecoration(
                                           shape: BoxShape.circle,
-                                          color: isSelected
-                                              ? Colors.blue
-                                              : Colors.black54,
-                                          border: Border.all(
-                                            color: Colors.white,
-                                            width: 1.5,
-                                          ),
+                                          color: isSelected ? MewmerTheme.brandViolet : Colors.black54,
+                                          border: Border.all(color: Colors.white, width: 1.5),
                                         ),
-                                        padding: const EdgeInsets.all(4),
+                                        padding: const EdgeInsets.all(3),
                                         child: Icon(
-                                          isSelected
-                                              ? Icons.check
-                                              : Icons.circle,
-                                          size: 14,
-                                          color: isSelected
-                                              ? Colors.white
-                                              : Colors.transparent,
+                                          isSelected ? Icons.check : Icons.circle,
+                                          size: 12,
+                                          color: isSelected ? Colors.white : Colors.transparent,
                                         ),
                                       ),
                                     ),
                                 ],
                               ),
-                            );
-                          },
-                        ),
+                            ),
+                          );
+                        },
+                      ),
+              ),
+
+              Container(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                decoration: const BoxDecoration(
+                  color: MewmerTheme.cardSurface,
+                  border: Border(top: BorderSide(color: MewmerTheme.border)),
                 ),
-              ],
-            ),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: ElevatedButton.icon(
+                    onPressed: canExport && !_isExporting ? () => _exportToWhatsApp(context, pack) : null,
+                    icon: const Icon(Icons.chat_bubble_outline_rounded, size: 20),
+                    label: Text(
+                      canExport ? 'Add to WhatsApp' : 'Add at least 3 stickers to export',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: MewmerTheme.whatsappGreen,
+                      foregroundColor: Colors.white,
+                      disabledBackgroundColor: MewmerTheme.cardHover,
+                      disabledForegroundColor: MewmerTheme.textMuted,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
           if (_isExporting)
             Container(
               color: Colors.black54,
-              child: const Center(child: CircularProgressIndicator()),
+              child: const Center(
+                child: CircularProgressIndicator(color: MewmerTheme.whatsappGreen),
+              ),
             ),
         ],
       ),
