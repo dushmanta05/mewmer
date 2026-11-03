@@ -13,8 +13,52 @@
   let imageScale = $state(1);
   let imageOffsetX = $state(0);
   let imageOffsetY = $state(0);
+  let showSafeMargin = $state(true);
+  let showBrandMark = $state(true);
+  let brandPosition = $state<'bottom-right' | 'bottom-left' | 'top-right'>('bottom-right');
+  let useTransparentPadding = $state(true);
   let isExporting = $state(false);
   let exportSuccessMsg = $state('');
+
+  let isDragging = false;
+  let dragStartX = 0;
+  let dragStartY = 0;
+  let startOffsetX = 0;
+  let startOffsetY = 0;
+
+  function onPointerDown(e: PointerEvent) {
+    if (!loadedImg) return;
+    isDragging = true;
+    dragStartX = e.clientX;
+    dragStartY = e.clientY;
+    startOffsetX = imageOffsetX;
+    startOffsetY = imageOffsetY;
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+  }
+
+  function onPointerMove(e: PointerEvent) {
+    if (!isDragging) return;
+    const dx = e.clientX - dragStartX;
+    const dy = e.clientY - dragStartY;
+    const scaleFactor = 512 / (canvas?.clientWidth || 512);
+    imageOffsetX = startOffsetX + dx * scaleFactor;
+    imageOffsetY = startOffsetY + dy * scaleFactor;
+  }
+
+  function onPointerUp(e: PointerEvent) {
+    if (isDragging) {
+      isDragging = false;
+      try {
+        (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+      } catch {}
+    }
+  }
+
+  function resetFraming() {
+    imageScale = 1;
+    imageOffsetX = 0;
+    imageOffsetY = 0;
+  }
 
   const sampleTemplates = [
     { name: 'Cat Smile', url: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=512&auto=format&fit=crop&q=80' },
@@ -32,6 +76,15 @@
     ctx.clearRect(0, 0, 512, 512);
 
     if (loadedImg && loadedImg.complete) {
+      if (!useTransparentPadding) {
+        ctx.save();
+        ctx.filter = 'blur(16px)';
+        ctx.drawImage(loadedImg, -20, -20, 552, 552);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+        ctx.fillRect(0, 0, 512, 512);
+        ctx.restore();
+      }
+
       const iw = loadedImg.width;
       const ih = loadedImg.height;
       const aspect = iw / ih;
@@ -70,6 +123,50 @@
       ctx.strokeText(bottomText.toUpperCase(), 256, 512 - 25);
       ctx.fillText(bottomText.toUpperCase(), 256, 512 - 25);
     }
+
+    if (showBrandMark) {
+      ctx.save();
+      const brandFontSize = 13;
+      ctx.font = `700 ${brandFontSize}px Inter, system-ui, sans-serif`;
+      const brandText = 'mewmer.com';
+      const textWidth = ctx.measureText(brandText).width;
+      const padX = 8;
+      const badgeHeight = 24;
+      const badgeWidth = textWidth + padX * 2 + 16;
+
+      let bx = 512 - 20 - badgeWidth;
+      let by = 512 - 20 - badgeHeight;
+
+      if (brandPosition === 'bottom-left') {
+        bx = 20;
+        by = 512 - 20 - badgeHeight;
+      } else if (brandPosition === 'top-right') {
+        bx = 512 - 20 - badgeWidth;
+        by = 20;
+      }
+
+      ctx.fillStyle = 'rgba(11, 15, 23, 0.85)';
+      ctx.strokeStyle = 'rgba(139, 92, 246, 0.45)';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      if (ctx.roundRect) {
+        ctx.roundRect(bx, by, badgeWidth, badgeHeight, 6);
+      } else {
+        ctx.rect(bx, by, badgeWidth, badgeHeight);
+      }
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.font = '12px system-ui, sans-serif';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('🐱', bx + 6, by + badgeHeight / 2);
+
+      ctx.font = `700 ${brandFontSize}px Inter, system-ui, sans-serif`;
+      ctx.fillStyle = '#DDD6FE';
+      ctx.textAlign = 'left';
+      ctx.fillText(brandText, bx + 22, by + badgeHeight / 2);
+      ctx.restore();
+    }
   }
 
   function loadImage(src: string) {
@@ -98,7 +195,21 @@
   }
 
   $effect(() => {
-    const _ = [topText, bottomText, fontSize, textColor, strokeColor, strokeWidth, fontFamily, imageScale, imageOffsetX, imageOffsetY];
+    const _ = [
+      topText,
+      bottomText,
+      fontSize,
+      textColor,
+      strokeColor,
+      strokeWidth,
+      fontFamily,
+      imageScale,
+      imageOffsetX,
+      imageOffsetY,
+      showBrandMark,
+      brandPosition,
+      useTransparentPadding,
+    ];
     renderCanvas();
   });
 
@@ -190,12 +301,53 @@
           bind:this={canvas}
           width="512"
           height="512"
-          class="w-full h-full object-contain"
+          class="w-full h-full object-contain cursor-grab active:cursor-grabbing touch-none select-none"
+          onpointerdown={onPointerDown}
+          onpointermove={onPointerMove}
+          onpointerup={onPointerUp}
+          onpointercancel={onPointerUp}
         ></canvas>
 
+        {#if showSafeMargin}
+          <div class="pointer-events-none absolute inset-4 border border-dashed border-brand-400/60 rounded-xl flex items-start justify-between p-2">
+            <span class="text-[10px] font-mono text-brand-300 bg-dark-bg/85 px-1.5 py-0.5 rounded border border-brand-500/30">
+              16px Safe Margin
+            </span>
+          </div>
+        {/if}
+
         <span class="absolute top-3 left-3 px-2 py-1 text-[11px] font-mono font-medium rounded-md bg-dark-bg/80 backdrop-blur border border-dark-border text-slate-300">
-          512 × 512 WebP (WhatsApp Compliant)
+          512 × 512 WebP
         </span>
+      </div>
+
+      <div class="mt-3 flex items-center justify-between gap-2 px-1">
+        <div class="flex items-center gap-1.5">
+          <button
+            type="button"
+            onclick={() => showSafeMargin = !showSafeMargin}
+            class="px-2.5 py-1 rounded-lg text-[11px] font-medium border transition-colors {showSafeMargin ? 'bg-brand-500/20 border-brand-500/40 text-brand-300' : 'bg-dark-bg border-dark-border text-slate-400'}"
+          >
+            Safe Zone (16px)
+          </button>
+          <button
+            type="button"
+            onclick={() => useTransparentPadding = !useTransparentPadding}
+            class="px-2.5 py-1 rounded-lg text-[11px] font-medium border transition-colors {useTransparentPadding ? 'bg-brand-500/20 border-brand-500/40 text-brand-300' : 'bg-dark-bg border-dark-border text-slate-400'}"
+          >
+            {useTransparentPadding ? 'Transparent' : 'Blur BG'}
+          </button>
+        </div>
+
+        {#if imageScale !== 1 || imageOffsetX !== 0 || imageOffsetY !== 0}
+          <button
+            type="button"
+            onclick={resetFraming}
+            class="text-[11px] font-medium text-amber-400 hover:text-amber-300 transition-colors"
+          >
+            Reset Framing
+          </button>
+        {/if}
       </div>
 
       <div class="mt-4 flex flex-col gap-2.5">
@@ -343,6 +495,49 @@
           <span class="text-xs font-mono text-slate-400">{strokeColor}</span>
         </div>
       </div>
+    </div>
+
+    <div class="pt-4 border-t border-dark-border space-y-3">
+      <div class="flex items-center justify-between">
+        <label class="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+          <span>🏷️</span>
+          <span>Brand Watermark</span>
+        </label>
+        <button
+          type="button"
+          onclick={() => showBrandMark = !showBrandMark}
+          class="text-xs font-medium px-2 py-0.5 rounded-lg border transition-colors {showBrandMark ? 'bg-brand-500/20 border-brand-500/40 text-brand-300' : 'bg-dark-bg border-dark-border text-slate-400'}"
+        >
+          {showBrandMark ? 'Enabled' : 'Disabled'}
+        </button>
+      </div>
+
+      {#if showBrandMark}
+        <div class="flex items-center gap-2">
+          <span class="text-xs text-dark-muted">Position:</span>
+          <button
+            type="button"
+            onclick={() => brandPosition = 'bottom-right'}
+            class="text-xs px-2.5 py-1 rounded-lg border transition-colors {brandPosition === 'bottom-right' ? 'bg-brand-500/20 border-brand-500 text-brand-200' : 'bg-dark-bg border-dark-border text-slate-400'}"
+          >
+            Bottom Right
+          </button>
+          <button
+            type="button"
+            onclick={() => brandPosition = 'bottom-left'}
+            class="text-xs px-2.5 py-1 rounded-lg border transition-colors {brandPosition === 'bottom-left' ? 'bg-brand-500/20 border-brand-500 text-brand-200' : 'bg-dark-bg border-dark-border text-slate-400'}"
+          >
+            Bottom Left
+          </button>
+          <button
+            type="button"
+            onclick={() => brandPosition = 'top-right'}
+            class="text-xs px-2.5 py-1 rounded-lg border transition-colors {brandPosition === 'top-right' ? 'bg-brand-500/20 border-brand-500 text-brand-200' : 'bg-dark-bg border-dark-border text-slate-400'}"
+          >
+            Top Right
+          </button>
+        </div>
+      {/if}
     </div>
   </div>
 </div>

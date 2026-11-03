@@ -20,7 +20,7 @@ This document tracks all completed milestones, current system status, mobile tes
 ### 2. Frontend Modernization (`frontend/`)
 - Setup Astro 5 and Svelte 5 with Tailwind CSS and Obsidian Dark design system.
 - Built `QuickSticker.svelte`: Instant hero-section single-sticker generator with template presets, custom file uploads, and Web Share API integration.
-- Built `StickerEditor.svelte`: 512×512 interactive canvas with real-time text dragging, fonts, stroke outlines, zoom, and instant WebP export.
+- Built `StickerEditor.svelte`: 512×512 interactive canvas with real-time text dragging, fonts, stroke outlines, zoom, direct pointer pan, 16px WhatsApp safe margin guide overlay, toggleable `mewmer.com` brand watermark pill, transparent/blur padding options, and instant WebP export.
 - Built `Layout.astro` and landing page `index.astro` with 3-step WhatsApp sharing walkthrough, feature highlights, and SEO tags.
 - Built dedicated `/create` studio page.
 - Configured Astro dev server with `host: true` on port `3031` for seamless mobile hotspot access.
@@ -98,17 +98,13 @@ Then on the mobile device connected to the laptop's Wi-Fi hotspot, navigate in t
 ## Active & Upcoming Roadmap Tasks
 
 ### Immediate (Phase 1 — Web & Editor):
-1. **Mobile Export Verification**: Test Web Share API single-sticker export to WhatsApp on mobile via `http://10.42.0.1:3031`.
-2. **Safe Margin Guide**:
-   - Add a visible ~16 px safe boundary indicator on the 512×512 preview canvas in `StickerEditor.svelte`.
-3. **Movable Brand Mark Layer**:
-   - Add movable, rotatable, scalable "mewmer.com" brand mark layer clamped within canvas bounds.
-   - Default ON for new users with a setting toggle to hide it.
-4. **Connect Frontend to Backend API**:
+1. **Connect Frontend to Backend API**:
    - Wire Svelte editor "Save Pack" / "Upload Sticker" action to Go backend (`POST /api/v1/stickers/upload` and `POST /api/v1/packs`).
    - Populate community packs on `index.astro` from `GET /api/v1/packs`.
-5. **Dynamic Pack Page**:
+2. **Dynamic Pack Page**:
    - Build `frontend/src/pages/packs/[id].astro` for viewing pack contents, downloading individual stickers, and sharing links.
+3. **Mobile Export Verification**:
+   - Test Web Share API single-sticker export to WhatsApp on mobile via `http://10.42.0.1:3031`.
 
 ### Mobile & Advanced (Phase 2):
 6. **Keyboard GIF Input in Flutter (`app/`)**:
