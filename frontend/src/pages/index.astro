@@ -1,7 +1,18 @@
 ---
 import Layout from '../layouts/Layout.astro';
 
-const featuredPacks = [
+interface PackItem {
+  id: string;
+  title: string;
+  publisher: string;
+  stickersCount: number;
+  preview: string;
+  downloads: string;
+  isAnimated: boolean;
+  tag: string;
+}
+
+const fallbackPacks: PackItem[] = [
   {
     id: 'cats-chaotic',
     title: 'Chaotic Felines Vol. 1',
@@ -33,6 +44,26 @@ const featuredPacks = [
     tag: 'Animated',
   }
 ];
+
+let featuredPacks: PackItem[] = fallbackPacks;
+try {
+  const res = await fetch('http://localhost:3030/api/v1/packs');
+  if (res.ok) {
+    const data = await res.json();
+    if (data.packs && data.packs.length > 0) {
+      featuredPacks = data.packs.map((p: any) => ({
+        id: p.id,
+        title: p.title,
+        publisher: p.publisher,
+        stickersCount: p.stickers ? p.stickers.length : 1,
+        preview: p.trayImageUrl,
+        downloads: `${p.downloadsCount || 1}k`,
+        isAnimated: p.isAnimated,
+        tag: p.isAnimated ? 'Animated' : 'Community',
+      }));
+    }
+  }
+} catch {}
 
 const features = [
   {
@@ -300,11 +331,18 @@ const faqs = [
 
             <div class="mt-5 pt-5 border-t border-dark-border flex items-center gap-3">
               <a
-                href="/create"
-                class="flex-1 py-2.5 rounded-xl bg-whatsapp/15 hover:bg-whatsapp/25 text-whatsapp border border-whatsapp/30 font-semibold text-xs flex items-center justify-center gap-2 transition-colors"
+                href={`/packs/${pack.id}`}
+                class="flex-1 py-2.5 rounded-xl bg-brand-500/20 hover:bg-brand-500/30 text-brand-300 border border-brand-500/40 font-semibold text-xs flex items-center justify-center gap-2 transition-colors"
               >
-                <span>💬</span>
-                <span>Open in Studio</span>
+                <span>📦</span>
+                <span>View Pack</span>
+              </a>
+              <a
+                href="/create"
+                class="py-2.5 px-3.5 rounded-xl bg-dark-bg hover:bg-dark-border text-slate-300 font-semibold text-xs flex items-center justify-center transition-colors"
+                title="Open in Studio"
+              >
+                <span>✨</span>
               </a>
             </div>
           </div>

@@ -18,6 +18,10 @@
   let brandPosition = $state<'bottom-right' | 'bottom-left' | 'top-right'>('bottom-right');
   let useTransparentPadding = $state(true);
   let isExporting = $state(false);
+  let isPublishing = $state(false);
+  let showPublishModal = $state(false);
+  let packTitle = $state('My Sticker Pack');
+  let packPublisher = $state('Anonymous · mewmer.com');
   let exportSuccessMsg = $state('');
 
   let isDragging = false;
@@ -288,6 +292,60 @@
       exportSuccessMsg = '';
     }, 4500);
   }
+
+  async function publishPack() {
+    isPublishing = true;
+    try {
+      const blob = await getWebpBlob();
+      if (!blob) throw new Error('Failed to generate sticker image');
+
+      const formData = new FormData();
+      formData.append('sticker', blob, 'sticker.webp');
+
+      const uploadRes = await fetch('/api/v1/stickers/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!uploadRes.ok) {
+        throw new Error('Upload failed');
+      }
+
+      const uploadData = await uploadRes.json();
+      const stickerUrl = uploadData.imageUrl;
+
+      const packRes = await fetch('/api/v1/packs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: packTitle || 'Mewmer Sticker',
+          publisher: packPublisher || 'Creator · mewmer.com',
+          trayImageUrl: stickerUrl,
+          stickerUrls: [stickerUrl],
+          isAnimated: false,
+          isPublic: true,
+        }),
+      });
+
+      if (!packRes.ok) {
+        throw new Error('Failed to create sticker pack');
+      }
+
+      const packData = await packRes.json();
+      showPublishModal = false;
+      showNotice(`Sticker pack created! Opening /packs/${packData.id}...`);
+      setTimeout(() => {
+        window.location.href = `/packs/${packData.id}`;
+      }, 1000);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Error creating pack';
+      showNotice(`Failed to save pack: ${msg}`);
+    } finally {
+      isPublishing = false;
+    }
+  }
 </script>
 
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -376,7 +434,84 @@
             <span>Copy to Clipboard</span>
           </button>
         </div>
+
+        <button
+          onclick={() => showPublishModal = true}
+          class="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 text-white font-semibold text-xs flex items-center justify-center gap-2 transition-all shadow-md shadow-brand-500/20"
+        >
+          <span>📦</span>
+          <span>Publish to Sticker Pack</span>
+        </button>
       </div>
+
+      {#if showPublishModal}
+        <div class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+          <div class="bg-dark-card border border-dark-border rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
+            <div class="flex items-center justify-between">
+              <h4 class="text-base font-bold text-white flex items-center gap-2">
+                <span>📦</span>
+                <span>Publish Sticker Pack</span>
+              </h4>
+              <button
+                type="button"
+                onclick={() => showPublishModal = false}
+                class="text-slate-400 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p class="text-xs text-dark-muted">
+              Published packs are shared publicly on Mewmer so anyone can view, download, or share them into WhatsApp.
+            </p>
+
+            <div class="space-y-3">
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Pack Title</label>
+                <input
+                  type="text"
+                  bind:value={packTitle}
+                  placeholder="e.g. My Cat Reactions"
+                  class="w-full px-3.5 py-2.5 rounded-xl bg-dark-bg border border-dark-border focus:border-brand-500 focus:outline-none text-sm text-white"
+                />
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Publisher Name</label>
+                <input
+                  type="text"
+                  bind:value={packPublisher}
+                  placeholder="e.g. Dushmanta · mewmer.com"
+                  class="w-full px-3.5 py-2.5 rounded-xl bg-dark-bg border border-dark-border focus:border-brand-500 focus:outline-none text-sm text-white"
+                />
+              </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onclick={() => showPublishModal = false}
+                class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:bg-dark-border"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isPublishing}
+                onclick={publishPack}
+                class="px-5 py-2 rounded-xl bg-brand-500 hover:bg-brand-400 disabled:opacity-50 text-white font-semibold text-xs flex items-center gap-1.5"
+              >
+                {#if isPublishing}
+                  <span class="animate-spin">⏳</span>
+                  <span>Publishing...</span>
+                {:else}
+                  <span>Publish Pack</span>
+                {/if}
+              </button>
+            </div>
+          </div>
+        </div>
+      {/if}
 
       {#if exportSuccessMsg}
         <div class="mt-3 p-3 rounded-xl bg-brand-500/20 border border-brand-500/40 text-brand-200 text-xs text-center animate-fade-in">

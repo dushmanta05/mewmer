@@ -46,7 +46,7 @@ func main() {
 
 	// CORS configuration for Astro frontend
 	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:3031", "http://localhost:4321", "http://localhost:3000", "https://mewmer.com"},
+		AllowedOrigins:   []string{"http://localhost:3031", "http://localhost:4321", "http://localhost:3000", "https://mewmer.com", "http://10.42.0.1:3031", "http://172.16.25.221:3031"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		ExposedHeaders:   []string{"Link"},

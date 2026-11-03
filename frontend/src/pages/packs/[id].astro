@@ -1,0 +1,27 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import PackViewer from '../../components/PackViewer.svelte';
+
+export async function getStaticPaths() {
+  try {
+    const res = await fetch('http://localhost:3030/api/v1/packs');
+    if (res.ok) {
+      const data = await res.json();
+      if (data.packs && data.packs.length > 0) {
+        return data.packs.map((p: { id: string }) => ({ params: { id: p.id } }));
+      }
+    }
+  } catch {}
+  return [
+    { params: { id: 'cats-chaotic' } },
+    { params: { id: 'doge-reactions' } },
+    { params: { id: 'office-dev-chaos' } }
+  ];
+}
+
+const { id } = Astro.params;
+---
+
+<Layout title="Sticker Pack | Mewmer" description="View and share WhatsApp sticker packs on Mewmer.">
+  <PackViewer client:load packId={id} />
+</Layout>
