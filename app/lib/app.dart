@@ -14,7 +14,9 @@ class MewmerApp extends StatelessWidget {
       child: MaterialApp(
         title: 'mewmer',
         debugShowCheckedModeBanner: false,
+        themeMode: ThemeMode.dark,
         theme: MewmerTheme.darkTheme,
+        darkTheme: MewmerTheme.darkTheme,
         home: const HomePage(),
       ),
     );

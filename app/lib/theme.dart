@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class MewmerTheme {
@@ -31,11 +32,11 @@ class MewmerTheme {
       textTheme: GoogleFonts.interTextTheme(
         ThemeData.dark().textTheme,
       ).copyWith(
-        displayLarge: GoogleFonts.poppins(color: textPrimary, fontWeight: FontWeight.bold),
-        displayMedium: GoogleFonts.poppins(color: textPrimary, fontWeight: FontWeight.bold),
-        titleLarge: GoogleFonts.poppins(color: textPrimary, fontWeight: FontWeight.w700),
-        titleMedium: GoogleFonts.poppins(color: textPrimary, fontWeight: FontWeight.w600),
-        titleSmall: GoogleFonts.poppins(color: textPrimary, fontWeight: FontWeight.w600),
+        displayLarge: GoogleFonts.spaceGrotesk(color: textPrimary, fontWeight: FontWeight.w800, letterSpacing: -1.0),
+        displayMedium: GoogleFonts.spaceGrotesk(color: textPrimary, fontWeight: FontWeight.w800, letterSpacing: -0.8),
+        titleLarge: GoogleFonts.spaceGrotesk(color: textPrimary, fontWeight: FontWeight.w700, letterSpacing: -0.5),
+        titleMedium: GoogleFonts.spaceGrotesk(color: textPrimary, fontWeight: FontWeight.w700),
+        titleSmall: GoogleFonts.spaceGrotesk(color: textPrimary, fontWeight: FontWeight.w600),
         bodyLarge: GoogleFonts.inter(color: textPrimary),
         bodyMedium: GoogleFonts.inter(color: textMuted),
       ),
@@ -44,11 +45,18 @@ class MewmerTheme {
         elevation: 0,
         scrolledUnderElevation: 0,
         surfaceTintColor: Colors.transparent,
-        titleTextStyle: GoogleFonts.poppins(
+        systemOverlayStyle: const SystemUiOverlayStyle(
+          statusBarColor: background,
+          statusBarIconBrightness: Brightness.light,
+          statusBarBrightness: Brightness.dark,
+          systemNavigationBarColor: background,
+          systemNavigationBarIconBrightness: Brightness.light,
+        ),
+        titleTextStyle: GoogleFonts.spaceGrotesk(
           fontSize: 20,
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.w700,
           color: textPrimary,
-          letterSpacing: 0.5,
+          letterSpacing: -0.5,
         ),
         iconTheme: const IconThemeData(color: textPrimary),
       ),

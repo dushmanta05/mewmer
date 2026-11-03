@@ -10,6 +10,7 @@ import 'package:image/image.dart' as img;
 import 'meme_editor_page.dart';
 import 'pack_details_page.dart';
 import '../models/sticker_provider.dart';
+import '../widgets/cat_branding.dart';
 import '../theme.dart';
 
 class HomePage extends StatefulWidget {
@@ -238,50 +239,7 @@ class _HomePageState extends State<HomePage> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(7),
-                            decoration: BoxDecoration(
-                              color: MewmerTheme.brandViolet.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: MewmerTheme.brandViolet.withValues(alpha: 0.3),
-                              ),
-                            ),
-                            child: const Icon(
-                              Icons.pets,
-                              color: MewmerTheme.brandViolet,
-                              size: 18,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          RichText(
-                            text: TextSpan(
-                              children: [
-                                TextSpan(
-                                  text: 'mew',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.w800,
-                                    color: MewmerTheme.textPrimary,
-                                    letterSpacing: -0.5,
-                                  ),
-                                ),
-                                TextSpan(
-                                  text: 'mer',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.w800,
-                                    color: MewmerTheme.brandViolet,
-                                    letterSpacing: -0.5,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
+                      const MewmerBrandHeader(iconSize: 36, fontSize: 24),
                       Container(
                         decoration: BoxDecoration(
                           color: MewmerTheme.cardSurface,
@@ -322,8 +280,8 @@ class _HomePageState extends State<HomePage> {
                               children: [
                                 Text(
                                   'Sticker Packs',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 17,
+                                  style: GoogleFonts.spaceGrotesk(
+                                    fontSize: 18,
                                     fontWeight: FontWeight.bold,
                                     color: MewmerTheme.textPrimary,
                                   ),
@@ -494,8 +452,8 @@ class _HomePageState extends State<HomePage> {
                               padding: const EdgeInsets.symmetric(horizontal: 20),
                               child: Text(
                                 'Recent Creations',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 17,
+                                style: GoogleFonts.spaceGrotesk(
+                                  fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                   color: MewmerTheme.textPrimary,
                                 ),
@@ -586,8 +544,8 @@ class _HomePageState extends State<HomePage> {
                                   const SizedBox(height: 12),
                                   Text(
                                     'Create New Sticker',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 16,
+                                    style: GoogleFonts.spaceGrotesk(
+                                      fontSize: 17,
                                       fontWeight: FontWeight.bold,
                                       color: MewmerTheme.textPrimary,
                                     ),

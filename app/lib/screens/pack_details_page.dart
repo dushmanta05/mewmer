@@ -221,7 +221,7 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
             ? Text('${_selectedStickers.length} Selected')
             : Text(
                 pack.name,
-                style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+                style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.bold),
               ),
         leading: _isSelectionMode
             ? IconButton(
@@ -335,7 +335,7 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
                             const SizedBox(height: 14),
                             Text(
                               'No stickers in this pack',
-                              style: GoogleFonts.poppins(
+                              style: GoogleFonts.spaceGrotesk(
                                 color: MewmerTheme.textPrimary,
                                 fontSize: 15,
                                 fontWeight: FontWeight.bold,

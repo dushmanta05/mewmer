@@ -49,6 +49,9 @@ This document tracks all completed milestones, current system status, mobile tes
 - Unified mobile design system with web (`MewmerTheme`):
   - Matched Obsidian Dark palette (`#0B0F17` background, `#131B2E` cards, `#1F2B48` borders).
   - Electric Violet (`#8B5CF6`) brand accents and WhatsApp Emerald (`#25D366`) export buttons.
+  - Built custom `CatLogoMark` & `MewmerBrandHeader` (`app/lib/widgets/cat_branding.dart`) featuring vector cat ears and whiskers.
+  - Upgraded display typography to stylish `Space Grotesk` with tight modern tracking.
+  - Locked app to pure dark mode (`ThemeMode.dark`) and unified system notification/status bar to `#0B0F17`.
   - Added dedicated full-width "Add to WhatsApp" bottom CTA in `pack_details_page.dart`.
   - Fixed `WhatsappStickers` parameter mismatch bug in `home_page.dart` and `pack_details_page.dart` (`flutter analyze` passing with 0 issues).
 

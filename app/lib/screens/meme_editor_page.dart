@@ -445,7 +445,7 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Studio', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+        title: Text('Studio', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
             icon: const Icon(Icons.check_circle_rounded, size: 26, color: MewmerTheme.brandViolet),
