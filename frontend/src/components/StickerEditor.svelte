@@ -81,15 +81,6 @@
     },
   ];
 
-  const watermarkPresets = [
-    { label: 'Bottom Right', x: 86, y: 94 },
-    { label: 'Bottom Left', x: 14, y: 94 },
-    { label: 'Top Right', x: 86, y: 6 },
-    { label: 'Top Left', x: 14, y: 6 },
-    { label: 'Bottom Center', x: 50, y: 94 },
-    { label: 'Top Center', x: 50, y: 6 },
-  ];
-
   const watermarkColors = [
     '#FFFFFF',
     '#000000',
@@ -1119,7 +1110,7 @@
     {#if activeTab === 'crop'}
       <div class="space-y-5 animate-fade-in">
         <div class="space-y-2">
-          <span class="block text-xs font-semibold text-slate-300 uppercase tracking-wider">
+          <span class="block text-[11px] sm:text-xs font-semibold text-slate-300 uppercase tracking-wider">
             Aspect Ratio Presets
           </span>
           <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -1170,7 +1161,7 @@
 
         <div class="space-y-3 pt-3 border-t border-dark-border">
           <div class="flex items-center justify-between gap-2">
-            <span class="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+            <span class="text-[11px] sm:text-xs font-semibold text-slate-300 uppercase tracking-wider">
               Output
             </span>
             <button
@@ -1279,7 +1270,7 @@
         </div>
 
         <div class="space-y-2 pt-3 border-t border-dark-border">
-          <span class="block text-xs font-semibold text-slate-300 uppercase tracking-wider">
+          <span class="block text-[11px] sm:text-xs font-semibold text-slate-300 uppercase tracking-wider">
             Change Image or GIF
           </span>
           <div class="flex items-center gap-2">
@@ -1307,7 +1298,7 @@
     {:else if activeTab === 'text'}
       <div class="space-y-5 animate-fade-in">
         <div class="flex items-center justify-between">
-          <span class="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+          <span class="text-[11px] sm:text-xs font-semibold text-slate-300 uppercase tracking-wider">
             Caption Layers ({textLayers.length})
           </span>
           <button
@@ -1356,12 +1347,12 @@
         {#if selectedLayer}
           <div class="p-4 rounded-xl bg-dark-bg border border-dark-border space-y-4 pt-4">
             <div>
-              <span class="block text-xs font-semibold text-slate-300 mb-1">Edit Caption Text</span>
+              <span class="block text-[11px] sm:text-xs font-semibold text-slate-300 mb-1">Edit Caption</span>
               <input
                 type="text"
                 bind:value={selectedLayer.text}
                 oninput={() => renderCanvas()}
-                class="w-full px-3.5 py-2.5 rounded-xl bg-dark-card border border-dark-border focus:border-brand-500 focus:outline-none text-sm text-white"
+                class="w-full px-3 py-2 rounded-xl bg-dark-card border border-dark-border focus:border-brand-500 focus:outline-none text-xs sm:text-sm text-white"
               />
             </div>
 
@@ -1510,8 +1501,8 @@
               </div>
             </div>
 
-            <div class="flex items-center gap-4 pt-1">
-              <label class="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+            <div class="flex items-center gap-3.5 sm:gap-4 flex-wrap pt-1">
+              <label class="flex items-center gap-1.5 text-[11px] sm:text-xs text-slate-300 cursor-pointer select-none">
                 <input
                   type="checkbox"
                   bind:checked={selectedLayer.useCaps}
@@ -1521,14 +1512,14 @@
                 <span>ALL CAPS</span>
               </label>
 
-              <label class="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+              <label class="flex items-center gap-1.5 text-[11px] sm:text-xs text-slate-300 cursor-pointer select-none">
                 <input
                   type="checkbox"
                   bind:checked={selectedLayer.isMemeStyle}
                   onchange={() => renderCanvas()}
                   class="rounded accent-brand-500"
                 />
-                <span>Bold Outline (Meme Style)</span>
+                <span>Bold Outline</span>
               </label>
             </div>
           </div>
@@ -1537,7 +1528,7 @@
     {:else if activeTab === 'export'}
       <div class="space-y-5 animate-fade-in">
         <div class="space-y-2">
-          <span class="block text-xs font-semibold text-slate-300 uppercase tracking-wider">
+          <span class="block text-[11px] sm:text-xs font-semibold text-slate-300 uppercase tracking-wider">
             Format
           </span>
           <div class="grid grid-cols-3 gap-2">
@@ -1584,40 +1575,19 @@
 
         <div class="pt-3 border-t border-dark-border space-y-3">
           <div class="flex items-center justify-between">
-            <span class="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+            <span class="text-[11px] sm:text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
               <Tag class="w-3.5 h-3.5 text-brand-400 shrink-0" />
               <span>Watermark</span>
-            </span>
-            <span class="text-[11px] font-medium px-2 py-0.5 rounded border bg-brand-500/15 border-brand-500/35 text-brand-300 flex items-center gap-1">
-              <Lock class="w-3 h-3 text-brand-300 shrink-0" />
-              <span>Movable Watermark</span>
             </span>
           </div>
 
           <div class="space-y-3 bg-dark-bg p-3.5 rounded-xl border border-dark-border">
-            <div>
-              <div class="flex items-center justify-between mb-1.5">
-                <span class="text-xs text-slate-300 font-medium">Position Presets</span>
-                <span class="text-[10px] text-brand-300 font-mono">({watermarkX}%, {watermarkY}%)</span>
-              </div>
-              <div class="grid grid-cols-3 gap-1.5">
-                {#each watermarkPresets as preset}
-                  <button
-                    type="button"
-                    onclick={() => { watermarkX = preset.x; watermarkY = preset.y; renderCanvas(); }}
-                    class="py-1.5 px-2 rounded-lg border text-[11px] font-medium transition-colors text-center {(Math.abs(watermarkX - preset.x) < 4 && Math.abs(watermarkY - preset.y) < 4) ? 'bg-brand-500/25 border-brand-500 text-brand-200' : 'bg-dark-card border-dark-border text-slate-400 hover:text-white'}"
-                  >
-                    {preset.label}
-                  </button>
-                {/each}
-              </div>
-              <p class="text-[10px] text-dark-muted mt-1.5 flex items-center gap-1">
-                <Info class="w-3 h-3 text-brand-400 shrink-0" />
-                <span>Drag the watermark on the preview canvas to position it anywhere within the crop frame.</span>
-              </p>
-            </div>
+            <p class="text-xs text-dark-muted flex items-center gap-1.5">
+              <Info class="w-3.5 h-3.5 text-brand-400 shrink-0" />
+              <span>Drag the watermark directly on the canvas to reposition.</span>
+            </p>
 
-            <div class="grid grid-cols-2 gap-3 pt-2 border-t border-dark-border/60">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-dark-border/60">
               <div>
                 <span class="block text-xs text-slate-300 font-medium mb-1.5">Watermark Color</span>
                 <div class="flex items-center gap-2">
@@ -1647,14 +1617,14 @@
                   <button
                     type="button"
                     onclick={() => { watermarkStyle = 'text-only'; renderCanvas(); }}
-                    class="flex-1 py-1 px-1.5 rounded-lg border text-[11px] font-medium transition-colors {watermarkStyle === 'text-only' ? 'bg-brand-500/20 border-brand-500 text-brand-200' : 'bg-dark-card border-dark-border text-slate-400'}"
+                    class="flex-1 py-1.5 px-2 rounded-lg border text-xs font-medium transition-colors text-center {watermarkStyle === 'text-only' ? 'bg-brand-500/20 border-brand-500 text-brand-200' : 'bg-dark-card border-dark-border text-slate-400'}"
                   >
                     Text Only
                   </button>
                   <button
                     type="button"
                     onclick={() => { watermarkStyle = 'glassy'; renderCanvas(); }}
-                    class="flex-1 py-1 px-1.5 rounded-lg border text-[11px] font-medium transition-colors {watermarkStyle === 'glassy' ? 'bg-brand-500/20 border-brand-500 text-brand-200' : 'bg-dark-card border-dark-border text-slate-400'}"
+                    class="flex-1 py-1.5 px-2 rounded-lg border text-xs font-medium transition-colors text-center {watermarkStyle === 'glassy' ? 'bg-brand-500/20 border-brand-500 text-brand-200' : 'bg-dark-card border-dark-border text-slate-400'}"
                   >
                     Glassy Pill
                   </button>
