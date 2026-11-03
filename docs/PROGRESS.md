@@ -53,7 +53,12 @@ This document tracks all completed milestones, current system status, mobile tes
   - Upgraded display typography to stylish `Space Grotesk` with tight modern tracking.
   - Locked app to pure dark mode (`ThemeMode.dark`) and unified system notification/status bar to `#0B0F17`.
   - Added dedicated full-width "Add to WhatsApp" bottom CTA in `pack_details_page.dart`.
-  - Fixed `WhatsappStickers` parameter mismatch bug in `home_page.dart` and `pack_details_page.dart` (`flutter analyze` passing with 0 issues).
+  - Implemented Android Keyboard GIF / Sticker input via Commit Content API:
+  - Wired `contentInsertionConfiguration` on `TextField` for `image/gif`, `image/webp`, `image/png`, and `image/jpeg`.
+  - Added dedicated "Keyboard GIF" action and modal sheet in `meme_editor_page.dart` with user instructions.
+  - Automatically copies incoming bytes to local app cache and places the media on the 512×512 canvas while preserving animation.
+  - Supported double-tap text caption inline keyboard GIF insertion via `draggable_text.dart`.
+  - Updated `home_page.dart` to allow opening the Studio directly without requiring an existing gallery photo.
 
 ### 6. Documentation & Guidelines Standardization
 - Standardized `AGENTS.md` with:

@@ -6,16 +6,18 @@ import 'package:screenshot/screenshot.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:image/image.dart' as img;
 import '../models/text_item.dart';
 import '../models/sticker_provider.dart';
 import '../widgets/draggable_text.dart';
+import '../widgets/cat_branding.dart';
 import '../theme.dart';
 
 class MemeEditorPage extends StatefulWidget {
-  final File imageFile;
-  const MemeEditorPage({super.key, required this.imageFile});
+  final File? imageFile;
+  const MemeEditorPage({super.key, this.imageFile});
 
   @override
   State<MemeEditorPage> createState() => _MemeEditorPageState();
@@ -27,6 +29,151 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
   TextItem? _selectedItem;
   bool _useTransparentPadding = true;
   bool _hideBackgroundForCapture = false;
+  File? _currentImageFile;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentImageFile = widget.imageFile;
+  }
+
+  Future<void> _handleKeyboardContent(KeyboardInsertedContent content) async {
+    if (content.data == null || content.data!.isEmpty) return;
+
+    final tempDir = await getTemporaryDirectory();
+    final mime = content.mimeType.toLowerCase();
+    final ext = mime.contains('gif')
+        ? 'gif'
+        : (mime.contains('webp') ? 'webp' : (mime.contains('png') ? 'png' : 'jpg'));
+    final file = File('${tempDir.path}/keyboard_insert_${DateTime.now().millisecondsSinceEpoch}.$ext');
+    await file.writeAsBytes(content.data!);
+
+    setState(() {
+      _currentImageFile = file;
+    });
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Inserted ${ext.toUpperCase()} from keyboard!'),
+          backgroundColor: MewmerTheme.whatsappGreen,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  Future<void> _pickFromGallery() async {
+    final picker = ImagePicker();
+    final XFile? file = await picker.pickImage(source: ImageSource.gallery);
+    if (file != null && mounted) {
+      setState(() {
+        _currentImageFile = File(file.path);
+      });
+    }
+  }
+
+  void _showKeyboardGifModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: MewmerTheme.cardSurface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        side: BorderSide(color: MewmerTheme.border),
+      ),
+      builder: (bottomSheetContext) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 20,
+            bottom: MediaQuery.of(bottomSheetContext).viewInsets.bottom + 24,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      const CatLogoMark(size: 30),
+                      const SizedBox(width: 10),
+                      Text(
+                        'Keyboard GIF / Sticker',
+                        style: GoogleFonts.spaceGrotesk(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: MewmerTheme.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close, color: MewmerTheme.muted),
+                    onPressed: () => Navigator.pop(bottomSheetContext),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: MewmerTheme.brandViolet.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: MewmerTheme.brandViolet.withValues(alpha: 0.25),
+                  ),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(
+                      Icons.tips_and_updates_outlined,
+                      size: 20,
+                      color: MewmerTheme.brandViolet,
+                    ),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Open your keyboard\'s GIF or Sticker tab (Gboard, Samsung, SwiftKey) and tap any animation.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: MewmerTheme.textPrimary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                autofocus: true,
+                style: const TextStyle(color: MewmerTheme.textPrimary),
+                decoration: const InputDecoration(
+                  hintText: 'Tap here, then select a keyboard GIF...',
+                  prefixIcon: Icon(Icons.gif_box_rounded, color: MewmerTheme.brandViolet),
+                ),
+                contentInsertionConfiguration: ContentInsertionConfiguration(
+                  allowedMimeTypes: const <String>[
+                    'image/gif',
+                    'image/webp',
+                    'image/png',
+                    'image/jpeg',
+                  ],
+                  onContentInserted: (data) {
+                    Navigator.pop(bottomSheetContext);
+                    _handleKeyboardContent(data);
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   final List<Color> _colors = [
     Colors.white,
@@ -108,11 +255,21 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
   }
 
   Future<void> _captureSticker() async {
+    if (_currentImageFile == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please add an image or keyboard GIF first!'),
+          backgroundColor: MewmerTheme.amber,
+        ),
+      );
+      return;
+    }
+
     setState(() => _selectedItem = null);
     await Future.delayed(const Duration(milliseconds: 300));
 
     try {
-      final Uint8List sourceBytes = await widget.imageFile.readAsBytes();
+      final Uint8List sourceBytes = await _currentImageFile!.readAsBytes();
       if (!mounted) return;
       final img.Image? decodedSource = img.decodeImage(sourceBytes);
       final bool isAnimated =
@@ -466,7 +623,7 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
           ),
           if (_selectedItem != null) _buildPropertyPanel(),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: const BoxDecoration(
               color: MewmerTheme.cardSurface,
               borderRadius: BorderRadius.vertical(
@@ -474,47 +631,76 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
               ),
               border: Border(top: BorderSide(color: MewmerTheme.border)),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ElevatedButton.icon(
-                  onPressed: _addText,
-                  icon: const Icon(Icons.title_rounded, size: 18),
-                  label: const Text('Add Text'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: MewmerTheme.brandViolet,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 12,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  ElevatedButton.icon(
+                    onPressed: _showKeyboardGifModal,
+                    icon: const Icon(Icons.gif_box_rounded, size: 18),
+                    label: const Text('Keyboard GIF'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: MewmerTheme.brandViolet,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
                     ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+                  ),
+                  const SizedBox(width: 8),
+                  OutlinedButton.icon(
+                    onPressed: _addText,
+                    icon: const Icon(Icons.title_rounded, size: 18, color: MewmerTheme.textPrimary),
+                    label: const Text('Add Text', style: TextStyle(color: MewmerTheme.textPrimary)),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: MewmerTheme.border),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
                     ),
                   ),
-                ),
-                ChoiceChip(
-                  avatar: Icon(
-                    _useTransparentPadding
-                        ? Icons.check_circle_rounded
-                        : Icons.blur_on_rounded,
-                    size: 16,
-                    color: _useTransparentPadding ? MewmerTheme.brandViolet : MewmerTheme.muted,
+                  const SizedBox(width: 8),
+                  OutlinedButton.icon(
+                    onPressed: _pickFromGallery,
+                    icon: const Icon(Icons.photo_library_outlined, size: 18, color: MewmerTheme.textPrimary),
+                    label: const Text('Gallery', style: TextStyle(color: MewmerTheme.textPrimary)),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: MewmerTheme.border),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
                   ),
-                  label: const Text('Transparent Padding'),
-                  selected: _useTransparentPadding,
-                  selectedColor: MewmerTheme.brandViolet.withValues(alpha: 0.2),
-                  backgroundColor: MewmerTheme.cardHover,
-                  side: BorderSide(
-                    color: _useTransparentPadding ? MewmerTheme.brandViolet : MewmerTheme.border,
+                  const SizedBox(width: 8),
+                  ChoiceChip(
+                    avatar: Icon(
+                      _useTransparentPadding
+                          ? Icons.check_circle_rounded
+                          : Icons.blur_on_rounded,
+                      size: 16,
+                      color: _useTransparentPadding ? MewmerTheme.brandViolet : MewmerTheme.muted,
+                    ),
+                    label: const Text('Transparent'),
+                    selected: _useTransparentPadding,
+                    selectedColor: MewmerTheme.brandViolet.withValues(alpha: 0.2),
+                    backgroundColor: MewmerTheme.cardHover,
+                    side: BorderSide(
+                      color: _useTransparentPadding ? MewmerTheme.brandViolet : MewmerTheme.border,
+                    ),
+                    onSelected: (val) {
+                      setState(() {
+                        _useTransparentPadding = val;
+                      });
+                    },
                   ),
-                  onSelected: (val) {
-                    setState(() {
-                      _useTransparentPadding = val;
-                    });
-                  },
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],
@@ -530,16 +716,49 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
         children: [
           if (_hideBackgroundForCapture)
             Container(color: Colors.transparent)
+          else if (_currentImageFile == null)
+            Container(
+              decoration: BoxDecoration(
+                color: MewmerTheme.cardSurface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: MewmerTheme.border),
+              ),
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const CatLogoMark(size: 44),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Canvas Ready',
+                      style: GoogleFonts.spaceGrotesk(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: MewmerTheme.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Tap "Keyboard GIF" below to insert animation',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: MewmerTheme.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
           else if (!_useTransparentPadding) ...[
-            Image.file(widget.imageFile, fit: BoxFit.cover),
+            Image.file(_currentImageFile!, fit: BoxFit.cover),
             BackdropFilter(
               filter: ui.ImageFilter.blur(sigmaX: 5, sigmaY: 5),
               child: Container(color: Colors.black.withValues(alpha: 0.2)),
             ),
           ] else
             Container(color: Colors.transparent),
-          if (!_hideBackgroundForCapture)
-            Image.file(widget.imageFile, fit: BoxFit.contain),
+          if (!_hideBackgroundForCapture && _currentImageFile != null)
+            Image.file(_currentImageFile!, fit: BoxFit.contain),
 
           ..._textItems.map(
             (item) => DraggableText(
@@ -553,6 +772,7 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
                   _selectedItem = null;
                 });
               },
+              onContentInserted: _handleKeyboardContent,
             ),
           ),
         ],

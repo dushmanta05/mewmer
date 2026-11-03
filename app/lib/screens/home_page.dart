@@ -559,21 +559,51 @@ class _HomePageState extends State<HomePage> {
                                     ),
                                   ),
                                   const SizedBox(height: 18),
-                                  ElevatedButton.icon(
-                                    onPressed: isBusy ? null : _pickImage,
-                                    icon: const Icon(Icons.add_rounded, size: 18),
-                                    label: const Text('Open Studio'),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: MewmerTheme.brandViolet,
-                                      foregroundColor: Colors.white,
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 28,
-                                        vertical: 14,
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      ElevatedButton.icon(
+                                        onPressed: isBusy
+                                            ? null
+                                            : () {
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) => const MemeEditorPage(),
+                                                  ),
+                                                );
+                                              },
+                                        icon: const Icon(Icons.gif_box_rounded, size: 18),
+                                        label: const Text('Open Studio'),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: MewmerTheme.brandViolet,
+                                          foregroundColor: Colors.white,
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 18,
+                                            vertical: 14,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(14),
+                                          ),
+                                        ),
                                       ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(14),
+                                      const SizedBox(width: 8),
+                                      OutlinedButton.icon(
+                                        onPressed: isBusy ? null : _pickImage,
+                                        icon: const Icon(Icons.photo_library_outlined, size: 18, color: MewmerTheme.textPrimary),
+                                        label: const Text('From Gallery', style: TextStyle(color: MewmerTheme.textPrimary)),
+                                        style: OutlinedButton.styleFrom(
+                                          side: const BorderSide(color: MewmerTheme.border),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 16,
+                                            vertical: 14,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(14),
+                                          ),
+                                        ),
                                       ),
-                                    ),
+                                    ],
                                   ),
                                 ],
                               ),

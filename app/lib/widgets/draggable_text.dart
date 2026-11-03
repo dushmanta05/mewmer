@@ -7,6 +7,7 @@ class DraggableText extends StatefulWidget {
   final VoidCallback onTap;
   final VoidCallback onUpdate;
   final VoidCallback onDelete;
+  final ValueChanged<KeyboardInsertedContent>? onContentInserted;
 
   const DraggableText({
     super.key,
@@ -15,6 +16,7 @@ class DraggableText extends StatefulWidget {
     required this.onTap,
     required this.onUpdate,
     required this.onDelete,
+    this.onContentInserted,
   });
 
   @override
@@ -139,6 +141,22 @@ class _DraggableTextState extends State<DraggableText> {
                             child: TextField(
                               controller: _controller,
                               autofocus: true,
+                              contentInsertionConfiguration: widget.onContentInserted != null
+                                  ? ContentInsertionConfiguration(
+                                      allowedMimeTypes: const <String>[
+                                        'image/gif',
+                                        'image/webp',
+                                        'image/png',
+                                        'image/jpeg',
+                                      ],
+                                      onContentInserted: (data) {
+                                        setState(() {
+                                          _isEditing = false;
+                                        });
+                                        widget.onContentInserted!(data);
+                                      },
+                                    )
+                                  : null,
                               style: widget.item.fontStyle.copyWith(
                                 color: widget.item.color,
                                 fontSize: widget.item.fontSize,
