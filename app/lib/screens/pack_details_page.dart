@@ -264,13 +264,37 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            pack.publisher,
-                            style: const TextStyle(
-                              color: MewmerTheme.brandViolet,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                            ),
+                          Row(
+                            children: [
+                              Text(
+                                pack.publisher,
+                                style: const TextStyle(
+                                  color: MewmerTheme.brandViolet,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: pack.isActuallyAnimated
+                                      ? MewmerTheme.brandViolet.withValues(alpha: 0.2)
+                                      : MewmerTheme.whatsappGreen.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  pack.typeLabel,
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: pack.isActuallyAnimated
+                                        ? MewmerTheme.brandViolet
+                                        : MewmerTheme.whatsappGreen,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 2),
                           Text(

@@ -56,41 +56,163 @@ class _HomePageState extends State<HomePage> {
   void _showCreatePackDialog(BuildContext context) {
     final provider = context.read<StickerProvider>();
     final controller = TextEditingController();
+    bool isAnimated = false;
 
     showDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Create Sticker Pack'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(
-            hintText: 'Enter pack name',
-          ),
-          autofocus: true,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel', style: TextStyle(color: MewmerTheme.textMuted)),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final name = controller.text.trim();
-              if (name.isNotEmpty) {
-                await provider.createPack(name);
-                if (!context.mounted) return;
-                Navigator.pop(dialogContext);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Pack "$name" created successfully!'),
-                    backgroundColor: MewmerTheme.whatsappGreen,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Create Sticker Pack'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  controller: controller,
+                  decoration: const InputDecoration(
+                    labelText: 'Pack Name',
+                    hintText: 'e.g. My Favorite Cats',
+                    border: OutlineInputBorder(),
                   ),
-                );
-              }
-            },
-            child: const Text('Create'),
+                  autofocus: true,
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Sticker Pack Type:',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: MewmerTheme.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => setDialogState(() => isAnimated = false),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                          decoration: BoxDecoration(
+                            color: !isAnimated
+                                ? MewmerTheme.whatsappGreen.withValues(alpha: 0.2)
+                                : MewmerTheme.cardSurface,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: !isAnimated
+                                  ? MewmerTheme.whatsappGreen
+                                  : MewmerTheme.border,
+                              width: !isAnimated ? 1.5 : 1,
+                            ),
+                          ),
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.photo_library_outlined,
+                                size: 22,
+                                color: !isAnimated
+                                    ? MewmerTheme.whatsappGreen
+                                    : MewmerTheme.textMuted,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Static (Photos)',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: !isAnimated
+                                      ? MewmerTheme.whatsappGreen
+                                      : MewmerTheme.textMuted,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => setDialogState(() => isAnimated = true),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                          decoration: BoxDecoration(
+                            color: isAnimated
+                                ? MewmerTheme.brandViolet.withValues(alpha: 0.2)
+                                : MewmerTheme.cardSurface,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: isAnimated
+                                  ? MewmerTheme.brandViolet
+                                  : MewmerTheme.border,
+                              width: isAnimated ? 1.5 : 1,
+                            ),
+                          ),
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.animation,
+                                size: 22,
+                                color: isAnimated
+                                    ? MewmerTheme.brandViolet
+                                    : MewmerTheme.textMuted,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Animated (GIFs)',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: isAnimated
+                                      ? MewmerTheme.brandViolet
+                                      : MewmerTheme.textMuted,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  'WhatsApp strictly requires packs to be either 100% static or 100% animated.',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: MewmerTheme.textMuted.withValues(alpha: 0.8),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ],
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel', style: TextStyle(color: MewmerTheme.textMuted)),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final name = controller.text.trim();
+                if (name.isNotEmpty) {
+                  await provider.createPack(name, isAnimated: isAnimated);
+                  if (!context.mounted) return;
+                  Navigator.pop(dialogContext);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('${isAnimated ? "Animated" : "Static"} pack "$name" created!'),
+                      backgroundColor: MewmerTheme.whatsappGreen,
+                    ),
+                  );
+                }
+              },
+              child: const Text('Create'),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -410,12 +532,36 @@ class _HomePageState extends State<HomePage> {
                                                 Row(
                                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                                   children: [
-                                                    Text(
-                                                      '${pack.stickerPaths.length} stickers',
-                                                      style: const TextStyle(
-                                                        fontSize: 11,
-                                                        color: MewmerTheme.textMuted,
-                                                      ),
+                                                    Row(
+                                                      children: [
+                                                        Container(
+                                                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                                                          decoration: BoxDecoration(
+                                                            color: pack.isActuallyAnimated
+                                                                ? MewmerTheme.brandViolet.withValues(alpha: 0.2)
+                                                                : MewmerTheme.whatsappGreen.withValues(alpha: 0.15),
+                                                            borderRadius: BorderRadius.circular(4),
+                                                          ),
+                                                          child: Text(
+                                                            pack.typeLabel,
+                                                            style: TextStyle(
+                                                              fontSize: 9,
+                                                              fontWeight: FontWeight.bold,
+                                                              color: pack.isActuallyAnimated
+                                                                  ? MewmerTheme.brandViolet
+                                                                  : MewmerTheme.whatsappGreen,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                        const SizedBox(width: 5),
+                                                        Text(
+                                                          '${pack.stickerPaths.length}',
+                                                          style: const TextStyle(
+                                                            fontSize: 11,
+                                                            color: MewmerTheme.textMuted,
+                                                          ),
+                                                        ),
+                                                      ],
                                                     ),
                                                     if (pack.stickerPaths.length >= 3)
                                                       GestureDetector(

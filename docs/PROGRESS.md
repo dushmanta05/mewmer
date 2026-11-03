@@ -63,7 +63,7 @@ This document tracks all completed milestones, current system status, mobile tes
   - Local sticker pack creation and editing.
   - Dynamic 96×96 tray icon generation.
   - Native WhatsApp sticker pack injection via `whatsapp_stickers_injector`.
-  - Minimum 3 stickers check and non-mixed static/animated validation.
+  - Minimum 3 stickers check and strict non-mixed static/animated validation with explicit type selector during pack creation (`Static` vs `Animated`), type badges across home/details pages, and auto-filtering of incompatible packs during sticker save.
 - Unified mobile design system with web (`MewmerTheme`):
   - Matched Obsidian Dark palette (`#0B0F17` background, `#131B2E` cards, `#1F2B48` borders).
   - Electric Violet (`#8B5CF6`) brand accents and WhatsApp Emerald (`#25D366`) export buttons.

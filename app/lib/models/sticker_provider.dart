@@ -29,6 +29,9 @@ class StickerPack {
   final DateTime createdAt;
   bool? isAnimated;
 
+  bool get isActuallyAnimated => isAnimated == true;
+  String get typeLabel => isActuallyAnimated ? 'Animated' : 'Static';
+
   StickerPack({
     required this.identifier,
     required this.name,
@@ -157,6 +160,7 @@ class StickerProvider extends ChangeNotifier {
   Future<void> createPack(
     String name, {
     String publisher = 'mewmer.com',
+    bool isAnimated = false,
   }) async {
     final id = 'mewmer_pack_${DateTime.now().millisecondsSinceEpoch}';
     final newPack = StickerPack(
@@ -165,6 +169,7 @@ class StickerProvider extends ChangeNotifier {
       publisher: publisher,
       stickerPaths: [],
       createdAt: DateTime.now(),
+      isAnimated: isAnimated,
     );
     _packs.insert(0, newPack);
     await saveToStorage();
@@ -180,9 +185,11 @@ class StickerProvider extends ChangeNotifier {
     final packIndex = _packs.indexWhere((p) => p.identifier == packIdentifier);
     if (packIndex != -1) {
       final pack = _packs[packIndex];
-      
+
       if (pack.isAnimated != null && pack.isAnimated != isAnimated) {
-        throw 'Cannot mix animated and static stickers in the same pack!';
+        final packType = pack.isAnimated == true ? 'animated' : 'static';
+        final stickerType = isAnimated ? 'animated' : 'static';
+        throw 'Cannot add $stickerType sticker to a $packType pack. WhatsApp does not allow mixing static and animated stickers!';
       }
 
       pack.isAnimated ??= isAnimated;

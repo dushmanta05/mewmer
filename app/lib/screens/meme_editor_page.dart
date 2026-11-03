@@ -515,7 +515,7 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
                           ),
                         ),
                         items: compatiblePacks.map((pack) {
-                          final String typeLabel = pack.isAnimated == true ? 'Animated' : (pack.isAnimated == false ? 'Static' : 'New');
+                          final String typeLabel = pack.typeLabel;
                           return DropdownMenuItem<String>(
                             value: pack.identifier,
                             child: Text(
@@ -532,6 +532,13 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
                                 });
                               },
                       ),
+                      if (stickerProvider.packs.length > compatiblePacks.length) ...[
+                        const SizedBox(height: 6),
+                        Text(
+                          '${stickerProvider.packs.length - compatiblePacks.length} pack(s) hidden (${isAnimated ? "Static" : "Animated"} packs cannot mix with ${isAnimated ? "animated" : "static"} stickers)',
+                          style: const TextStyle(fontSize: 11, color: MewmerTheme.amber),
+                        ),
+                      ],
                       const SizedBox(height: 16),
                       Row(
                         children: [
@@ -613,7 +620,7 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
                     try {
                       String targetPackId;
                       if (createNew) {
-                        await stickerProvider.createPack(packName);
+                        await stickerProvider.createPack(packName, isAnimated: isAnimated);
                         targetPackId = stickerProvider.packs.first.identifier;
                       } else {
                         targetPackId = selectedPackId!;
