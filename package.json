@@ -6,6 +6,7 @@
     "dev:backend": "cd server && if [ -f .env ]; then set -a && . ./.env && set +a; fi && PORT=3030 go run main.go",
     "dev:frontend": "cd frontend && pnpm dev",
     "dev:app": "cd app && flutter run",
+    "adb:reverse": "adb reverse tcp:3030 tcp:3030",
     "build:frontend": "cd frontend && pnpm build",
     "build:backend": "cd server && if [ -f .env ]; then set -a && . ./.env && set +a; fi && go build -o mewmer-server .",
     "build:app": "cd app && flutter build apk",
