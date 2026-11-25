@@ -16,23 +16,13 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  late final TextEditingController _serverUrlController;
   bool _obscurePassword = true;
-  bool _showServerConfig = false;
   bool _isSubmitting = false;
-
-  @override
-  void initState() {
-    super.initState();
-    final baseUrl = context.read<CloudProvider>().baseUrl;
-    _serverUrlController = TextEditingController(text: baseUrl);
-  }
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
-    _serverUrlController.dispose();
     super.dispose();
   }
 
@@ -46,7 +36,6 @@ class _LoginPageState extends State<LoginPage> {
       await cloudProvider.login(
         email: _emailController.text.trim(),
         password: _passwordController.text,
-        serverUrl: _serverUrlController.text.trim(),
       );
       if (!mounted) return;
       Navigator.pop(context, true);
@@ -147,51 +136,6 @@ class _LoginPageState extends State<LoginPage> {
                         },
                         onFieldSubmitted: (_) => _submit(),
                       ),
-                      const SizedBox(height: 12),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: TextButton.icon(
-                          onPressed: () => setState(
-                            () => _showServerConfig = !_showServerConfig,
-                          ),
-                          icon: Icon(
-                            _showServerConfig
-                                ? Icons.expand_less
-                                : Icons.settings_outlined,
-                            size: 16,
-                            color: MewmerTheme.textMuted,
-                          ),
-                          label: const Text(
-                            'Server URL',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: MewmerTheme.textMuted,
-                            ),
-                          ),
-                        ),
-                      ),
-                      if (_showServerConfig) ...[
-                        const SizedBox(height: 8),
-                        TextFormField(
-                          controller: _serverUrlController,
-                          keyboardType: TextInputType.url,
-                          autocorrect: false,
-                          decoration: const InputDecoration(
-                            labelText: 'API Base URL',
-                            hintText: 'http://localhost:3030/api/v1',
-                            prefixIcon: Icon(Icons.dns_outlined),
-                          ),
-                          validator: (value) {
-                            final trimmed = value?.trim() ?? '';
-                            if (trimmed.isEmpty ||
-                                (!trimmed.startsWith('http://') &&
-                                    !trimmed.startsWith('https://'))) {
-                              return 'Enter a valid http(s) URL';
-                            }
-                            return null;
-                          },
-                        ),
-                      ],
                       const SizedBox(height: 20),
                       SizedBox(
                         height: 50,

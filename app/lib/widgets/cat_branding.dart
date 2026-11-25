@@ -59,7 +59,7 @@ class _CatEarsAndWhiskersPainter extends CustomPainter {
     canvas.drawPath(headPath, headPaint);
 
     final innerEarPaint = Paint()
-      ..color = MewmerTheme.rose.withValues(alpha: 0.85)
+      ..color = Colors.white.withValues(alpha: 0.9)
       ..style = PaintingStyle.fill;
 
     final leftInnerEar = Path()
@@ -77,7 +77,7 @@ class _CatEarsAndWhiskersPainter extends CustomPainter {
     canvas.drawPath(rightInnerEar, innerEarPaint);
 
     final whiskerPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.85)
+      ..color = Colors.white
       ..strokeWidth = 1.2
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
@@ -96,7 +96,7 @@ class _CatEarsAndWhiskersPainter extends CustomPainter {
     canvas.drawCircle(Offset(w * 0.64, h * 0.52), 1.8, eyePaint);
 
     final nosePaint = Paint()
-      ..color = MewmerTheme.rose
+      ..color = Colors.white
       ..style = PaintingStyle.fill;
 
     final nosePath = Path()

@@ -655,10 +655,23 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
       appBar: AppBar(
         title: Text('Studio', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.bold)),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.check_circle_rounded, size: 26, color: MewmerTheme.brandViolet),
-            tooltip: 'Save Sticker',
-            onPressed: _captureSticker,
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: TextButton.icon(
+              onPressed: _captureSticker,
+              icon: const Icon(
+                Icons.save_rounded,
+                size: 18,
+                color: MewmerTheme.brandViolet,
+              ),
+              label: const Text(
+                'Save',
+                style: TextStyle(
+                  color: MewmerTheme.brandViolet,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
           ),
         ],
       ),

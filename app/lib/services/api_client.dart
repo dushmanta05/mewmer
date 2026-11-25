@@ -21,7 +21,10 @@ class LoginResult {
 }
 
 class MewmerApiClient {
-  static const String defaultBaseUrl = 'http://localhost:3030/api/v1';
+  static const String defaultBaseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'http://localhost:3030/api/v1',
+  );
 
   String baseUrl;
   final http.Client _http;

@@ -69,11 +69,14 @@ class _HomePageState extends State<HomePage> {
         filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
         child: StatefulBuilder(
           builder: (context, setDialogState) => AlertDialog(
+            insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
             title: const Text(
               'Create Sticker Pack',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
             ),
-            content: SingleChildScrollView(
+            content: SizedBox(
+              width: 360,
+              child: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -198,6 +201,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ],
               ),
+            ),
             ),
             actions: [
               TextButton(
@@ -358,13 +362,17 @@ class _HomePageState extends State<HomePage> {
       builder: (dialogContext) => BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
         child: AlertDialog(
+          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
           title: const Text(
             'Not Signed In',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
           ),
-          content: const Text(
-            'Sign in to sync your sticker packs to the cloud, or open Settings to configure the server.',
-            style: TextStyle(fontSize: 13, color: MewmerTheme.textMuted),
+          content: const SizedBox(
+            width: 360,
+            child: Text(
+              'Sign in to sync your sticker packs to the cloud.',
+              style: TextStyle(fontSize: 13, color: MewmerTheme.textMuted),
+            ),
           ),
           actions: [
             TextButton(
@@ -376,7 +384,7 @@ class _HomePageState extends State<HomePage> {
                 );
               },
               child: const Text(
-                'Settings',
+                'Account',
                 style: TextStyle(color: MewmerTheme.textMuted),
               ),
             ),
@@ -419,36 +427,27 @@ class _HomePageState extends State<HomePage> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const MewmerBrandHeader(iconSize: 36, fontSize: 24),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: MewmerTheme.cardSurface,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: MewmerTheme.border),
+                      IconButton(
+                        icon: Icon(
+                          Icons.account_circle,
+                          color: cloudProvider.isAuthenticated
+                              ? MewmerTheme.whatsappGreen
+                              : MewmerTheme.brandViolet,
+                          size: 28,
                         ),
-                        child: IconButton(
-                          icon: Icon(
-                            cloudProvider.isAuthenticated
-                                ? Icons.person_rounded
-                                : Icons.person_outline_rounded,
-                            color: cloudProvider.isAuthenticated
-                                ? MewmerTheme.whatsappGreen
-                                : MewmerTheme.textPrimary,
-                            size: 20,
-                          ),
-                          tooltip: 'Account & Settings',
-                          onPressed: () {
-                            if (cloudProvider.isAuthenticated) {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const ProfilePage(),
-                                ),
-                              );
-                            } else {
-                              _showNotLoggedInModal(context);
-                            }
-                          },
-                        ),
+                        tooltip: 'Account',
+                        onPressed: () {
+                          if (cloudProvider.isAuthenticated) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const ProfilePage(),
+                              ),
+                            );
+                          } else {
+                            _showNotLoggedInModal(context);
+                          }
+                        },
                       ),
                     ],
                   ),
