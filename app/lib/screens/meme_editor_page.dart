@@ -680,30 +680,48 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
           Expanded(
             child: GestureDetector(
               onTap: () => setState(() => _selectedItem = null),
-              child: Center(
-                child: AspectRatio(aspectRatio: 1, child: _buildEditorCanvas()),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Center(
+                  child: AspectRatio(
+                    aspectRatio: 1,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(color: MewmerTheme.border, width: 1),
+                      ),
+                      child: _buildEditorCanvas(),
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
           if (_currentImageFile != null && _selectedItem == null)
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
               color: MewmerTheme.background,
               child: Row(
                 children: [
                   const Icon(Icons.zoom_out, size: 16, color: MewmerTheme.textMuted),
                   Expanded(
-                    child: Slider(
-                      value: _imageScale,
-                      min: 0.4,
-                      max: 3.5,
-                      activeColor: MewmerTheme.brandViolet,
-                      inactiveColor: MewmerTheme.cardHover,
-                      onChanged: (val) {
-                        setState(() {
-                          _imageScale = val;
-                        });
-                      },
+                    child: SliderTheme(
+                      data: SliderTheme.of(context).copyWith(
+                        trackHeight: 3,
+                        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7),
+                        overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
+                      ),
+                      child: Slider(
+                        value: _imageScale,
+                        min: 0.4,
+                        max: 3.5,
+                        activeColor: MewmerTheme.brandViolet,
+                        inactiveColor: MewmerTheme.cardHover,
+                        onChanged: (val) {
+                          setState(() {
+                            _imageScale = val;
+                          });
+                        },
+                      ),
                     ),
                   ),
                   const Icon(Icons.zoom_in, size: 16, color: MewmerTheme.textMuted),
@@ -722,7 +740,12 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
             ),
           if (_selectedItem != null) _buildPropertyPanel(),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            padding: EdgeInsets.fromLTRB(
+              16,
+              12,
+              16,
+              12 + MediaQuery.paddingOf(context).bottom,
+            ),
             decoration: const BoxDecoration(
               color: MewmerTheme.cardSurface,
               borderRadius: BorderRadius.vertical(
@@ -777,26 +800,46 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  ChoiceChip(
-                    avatar: Icon(
-                      _useTransparentPadding
-                          ? Icons.check_circle_rounded
-                          : Icons.blur_on_rounded,
-                      size: 16,
-                      color: _useTransparentPadding ? MewmerTheme.brandViolet : MewmerTheme.muted,
-                    ),
-                    label: const Text('Transparent'),
-                    selected: _useTransparentPadding,
-                    selectedColor: MewmerTheme.brandViolet.withValues(alpha: 0.2),
-                    backgroundColor: MewmerTheme.cardHover,
-                    side: BorderSide(
-                      color: _useTransparentPadding ? MewmerTheme.brandViolet : MewmerTheme.border,
-                    ),
-                    onSelected: (val) {
+                  OutlinedButton.icon(
+                    onPressed: () {
                       setState(() {
-                        _useTransparentPadding = val;
+                        _useTransparentPadding = !_useTransparentPadding;
                       });
                     },
+                    icon: Icon(
+                      _useTransparentPadding
+                          ? Icons.grid_on_rounded
+                          : Icons.blur_on_rounded,
+                      size: 17,
+                      color: _useTransparentPadding
+                          ? MewmerTheme.brandViolet
+                          : MewmerTheme.textMuted,
+                    ),
+                    label: Text(
+                      _useTransparentPadding ? 'Transparent' : 'Blur BG',
+                      style: TextStyle(
+                        color: _useTransparentPadding
+                            ? MewmerTheme.brandViolet
+                            : MewmerTheme.textPrimary,
+                        fontWeight: _useTransparentPadding
+                            ? FontWeight.w600
+                            : FontWeight.normal,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      backgroundColor: _useTransparentPadding
+                          ? MewmerTheme.brandViolet.withValues(alpha: 0.14)
+                          : Colors.transparent,
+                      side: BorderSide(
+                        color: _useTransparentPadding
+                            ? MewmerTheme.brandViolet
+                            : MewmerTheme.border,
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -823,10 +866,7 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
                   Container(color: Colors.transparent)
                 else if (_currentImageFile == null)
                   Container(
-                    decoration: BoxDecoration(
-                      color: MewmerTheme.cardSurface,
-                      border: Border.all(color: MewmerTheme.border),
-                    ),
+                    color: MewmerTheme.cardSurface,
                     child: Center(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
@@ -843,7 +883,7 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
                           ),
                           const SizedBox(height: 4),
                           const Text(
-                            'Tap "Keyboard GIF" below to insert animation',
+                            'Tap Keyboard GIF or Gallery below to start',
                             style: TextStyle(
                               fontSize: 12,
                               color: MewmerTheme.textMuted,
@@ -1084,32 +1124,35 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
           ),
           const SizedBox(height: 12),
 
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: _colors.map((color) {
-              return GestureDetector(
-                onTap: () => setState(() => _selectedItem!.color = color),
-                child: Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 8),
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: color,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: _selectedItem!.color == color
-                          ? Colors.blue
-                          : Colors.grey,
-                      width: 2,
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: _colors.map((color) {
+                return GestureDetector(
+                  onTap: () => setState(() => _selectedItem!.color = color),
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 6),
+                    width: 30,
+                    height: 30,
+                    decoration: BoxDecoration(
+                      color: color,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: _selectedItem!.color == color
+                            ? MewmerTheme.brandViolet
+                            : MewmerTheme.border,
+                        width: _selectedItem!.color == color ? 2.5 : 1.5,
+                      ),
+                      boxShadow: [
+                        if (color.a < 1)
+                          const BoxShadow(color: Colors.white24, blurRadius: 2),
+                      ],
                     ),
-                    boxShadow: [
-                      if (color.a < 1)
-                        BoxShadow(color: Colors.white24, blurRadius: 2),
-                    ],
                   ),
-                ),
-              );
-            }).toList(),
+                );
+              }).toList(),
+            ),
           ),
         ],
       ),
@@ -1248,9 +1291,9 @@ class _CheckerboardPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    const double tileSize = 16.0;
-    final paint1 = Paint()..color = MewmerTheme.background;
-    final paint2 = Paint()..color = MewmerTheme.cardSurface;
+    const double tileSize = 14.0;
+    final paint1 = Paint()..color = const Color(0xFF111827);
+    final paint2 = Paint()..color = const Color(0xFF1E293B);
 
     final int cols = (size.width / tileSize).ceil();
     final int rows = (size.height / tileSize).ceil();
