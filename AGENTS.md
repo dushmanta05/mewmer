@@ -37,15 +37,20 @@ Prefer a clearer name or a smaller function over a comment explaining a murky on
   - **Animated stickers (GIF/Video)**: Offload conversion to the Go backend FFmpeg worker pool or process in Flutter mobile app.
 
 ### Backend (Go + Chi + PGX):
-- Go 1.23+ with standard library and minimal dependencies (`go-chi/chi/v5`, `jackc/pgx/v5`).
+- Go 1.23+ with standard library and minimal dependencies (`go-chi/chi/v5`, `jackc/pgx/v5`, plus the AWS SDK only for R2 S3-compatible operations).
 - CPU-intensive tasks (FFmpeg) **must** run through the bounded worker pool (`internal/processor/processor.go`) to prevent VPS overload. Never execute FFmpeg synchronously inside an HTTP request handler.
 - Local database: PostgreSQL 17 (`mewmer`).
 - Migrations in `server/migrations/`.
+- **Cloud Storage**: All binary media lives in Cloudflare R2. PostgreSQL stores metadata and R2 object keys only. Use two buckets:
+  - Public bucket for meme templates and public memes.
+  - Private bucket for sticker packs/stickers; served through short-lived signed URLs.
+- Never commit R2 credentials, session tokens, or passwords.
 
 ### Mobile (Flutter — `app/`):
 - Native Android/iOS sticker pack integration using `whatsapp_stickers_injector`.
 - Direct WhatsApp tray injection requires native platform support (content provider on Android).
 - Gboard/keyboard GIF content insertion via `TextField.contentInsertionConfiguration`.
+- Cloud sync is explicit after login; local editing remains first-class and works offline.
 
 ---
 
@@ -65,8 +70,9 @@ Meta / WhatsApp strictly enforces these rules:
 ---
 
 ## 4. Business & Product Logic
-- **Anonymous Users**: Sticker packs created anonymously are **always public**. This provides free user-generated content (UGC) and indexable SEO landing pages.
-- **Authenticated Users**: Can toggle between public and private visibility.
+- **Anonymous Users**: Can use the web studio locally to caption images and export/download them without any server retention or account. Cannot upload templates, create cloud sticker packs, or publish community content.
+- **Authenticated Users**: Own their sticker packs and stickers. Packs are private by default for the authenticated owner.
+- **Admin Accounts (Launch Mode)**: Only admins can upload public meme templates and publish public packs. Public registration is disabled until community publishing is ready.
 - **Publisher Name**: Set to creator display name with brand attribution (e.g. `<creator> · mewmer.com`).
 
 ---
@@ -91,10 +97,19 @@ Ensure zero TypeScript, Svelte, or Astro build errors.
 ### Backend Check:
 ```bash
 cd server
+gofmt -l .
+go test ./...
 go vet ./...
 go build -o /dev/null .
 ```
-Ensure Go code compiles cleanly without unused imports or type errors.
+Ensure Go code compiles cleanly, tests pass, and there are no formatting drift, unused imports, or type errors.
+
+### Mobile Check:
+```bash
+cd app
+flutter analyze
+flutter test
+```
 
 ### Zero Comment Check:
 ```bash
@@ -111,7 +126,7 @@ grep -rn "/\*" frontend/src/ || echo "No block comments found"
 - **Conventional Commits**: Format commit messages as `type(scope): subject` or `type: subject`, using `feat`, `fix`, `perf`, `refactor`, `docs`, `style`, `test`, or `chore`.
 - **Concise Subject Line**: Keep the subject concise, in all lowercase, and without a trailing period.
 - **No Body or Attribution**: The subject line is the complete commit message. Never add a commit description, `Co-Authored-By` line, or any AI/assistant trailer.
-- **Pre-Commit Verification**: Run the relevant build/type check (`pnpm check && pnpm build` for frontend, `go vet && go build` for backend, `flutter analyze` for mobile) and ensure clean output before committing. Every commit in history must build cleanly.
+- **Pre-Commit Verification**: Run the relevant build/type check (`pnpm check && pnpm build` for frontend, `gofmt && go test && go vet && go build` for backend, `flutter analyze && flutter test` for mobile) and ensure clean output before committing. Every commit in history must build cleanly.
 
 ---
 
@@ -119,12 +134,18 @@ grep -rn "/\*" frontend/src/ || echo "No block comments found"
 
 1. **Start of Session**: Read `docs/PROGRESS.md` and `docs/PROJECT.md` to understand active state and immediate next tasks.
 2. **Implementation**: Work on one distinct task or component at a time, strictly adhering to the no-comments rule.
-3. **Mandatory Verification**: Run frontend checks (`pnpm check && pnpm build`), backend checks (`go vet ./... && go build`), or mobile checks (`flutter analyze`). Verify zero unwanted code comments exist.
+3. **Mandatory Verification**: Run frontend checks (`pnpm check && pnpm build`), backend checks (`gofmt && go test && go vet && go build`), or mobile checks (`flutter analyze && flutter test`). Verify zero unwanted code comments exist.
 4. **Immediate Commit**: Update `docs/PROGRESS.md` and commit the verified change immediately before moving to the next task—commit often, don't wait for session end.
 
 ---
 
-## 8. Directory Structure
+## 8. Go Learning Notes
+
+After completing each distinct Go backend task, include a concise **Go learning note** in the final response. Explain the concepts used in that change—such as interfaces, structs, methods, error wrapping, context cancellation, Chi middleware and routing, PGX connections and transactions, goroutines and channels, or testing—why they were chosen, and which files demonstrate them. Use a tiny example only when it clarifies the concept. Do not add tutorial comments to the code.
+
+---
+
+## 9. Directory Structure
 
 ```text
 mewmer/
@@ -138,11 +159,11 @@ mewmer/
 │   ├── src/
 │   │   ├── components/  # Svelte 5 islands (QuickSticker, StickerEditor)
 │   │   ├── layouts/     # Astro layout shells
-│   │   └── pages/       # Astro pages (/index, /create, /packs/[id])
+│   │   └── pages/       # Astro pages (/index, /templates, /studio)
 │   ├── astro.config.mjs
 │   └── package.json
 ├── server/              # Go 1.23+ backend
-│   ├── internal/        # Handlers, database, processor worker pool
+│   ├── internal/        # Handlers, database, processor worker pool, storage, auth
 │   ├── migrations/      # PostgreSQL migrations
 │   └── main.go
 ├── scripts/             # Dev scripts (dev.sh)

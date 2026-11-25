@@ -6,51 +6,45 @@ Mewmer (`mewmer.com`) is an open-source, privacy-first web and mobile platform f
 
 ## 1. Project Vision & Phased Roadmap
 
-### Phase 1: High-Performance Sticker Studio & Native Pack Export (Active)
-- **Web App (`frontend/`)**:
-  - 512×512 sticker studio running 100% client-side on HTML5 Canvas.
-  - Transparent checkerboard preview, real-time caption dragging, custom fonts, stroke outline, zoom, and safe margin guides (~16 px safe boundary).
-  - Movable, clamped "mewmer.com" brand mark layer (default ON, rotatable, scalable, clamped within canvas, togglable in settings).
-  - Single sticker direct sharing to WhatsApp chats via Web Share API (`image/webp`) or clipboard (`image/png`).
-  - High-converting, SEO-optimized marketing landing page and public pack discovery gallery.
-- **Go Backend (`server/`)**:
-  - High-throughput Go server (Chi + PGX + PostgreSQL 17).
-  - Bounded FFmpeg worker pool for transcoding animated GIFs and videos into WhatsApp-compliant animated WebP (< 500 KB, looping, no audio).
-  - REST API for pack listings, search, and sticker uploads with server-side validation.
-- **Flutter Mobile App (`app/`)**:
-  - Native WhatsApp sticker pack injection into the WhatsApp keyboard drawer (3–30 stickers + 96×96 tray icon) via `whatsapp_stickers_injector`.
-  - Android Keyboard Content API (`TextField.contentInsertionConfiguration`) for directly inserting GIFs and stickers from Gboard, Samsung Keyboard, and SwiftKey without any third-party GIF search API (no Tenor/Giphy dependency; user queries stay private).
-  - Auto-compress export for static (< 100 KB) and animated (< 500 KB) stickers.
+### Phase 1: Admin Auth, Templates & Sticker Cloud Sync (Active)
 
-### Phase 2: Cloud Accounts, Meme Templates & Community Publishing (Next)
-- **Authentication & User Profiles**:
-  - Email Magic Link / OAuth / session-based authentication in Go backend.
-  - Role-based permissions (`user`, `creator`, `staff`, `admin`).
-  - Anonymous users: Can freely crop, customize, rotate captions, and export/download (WebP, JPG, PNG) locally with zero server retention and no login required.
-  - Logged-in users: Can publish memes to the public community feed and submit clean uncaptioned base images as community templates.
+- **Identity & Sessions (Go Backend)**:
+  - PostgreSQL-backed users table with roles, display name, unique username/email, and future-ready `links` JSONB.
+  - Revocable opaque session tokens; web uses HttpOnly cookies, Flutter uses bearer tokens stored in secure storage.
+  - Admin-only seeding; no public registration.
+
+- **Cloud Storage (Cloudflare R2)**:
+  - Public R2 bucket for meme templates and public memes.
+  - Private R2 bucket for sticker packs and stickers, served via signed URLs.
+  - PostgreSQL stores object keys and media metadata only.
+
 - **Meme Templates Domain (`meme_templates`)**:
-  - Clean uncaptioned base image or animated GIF stored as a template.
-  - Tagged with at least 3 descriptive tags for discovery and SEO.
-  - Tracks `memes_count` (number of memes generated from this template).
-  - Dedicated `/templates` directory page ranked by popularity (`memes_count` DESC), recency, and tags.
-  - Template detail page (`/templates/:slug`) showcases the clean base template alongside a gallery of all generated memes created under it.
-  - Studio integration: One-click "Use this Template" pre-loads the clean base into `/studio?template=:slug`.
-- **Community Memes Domain (`memes`)**:
-  - Published memes generated from a template (or custom base) linked to `template_id` and creator `user_id`.
-  - Publishing requirements: Authenticated user, caption summary/title, and **at least 3 descriptive tags** (`cardinality(tags) >= 3`).
-  - Stores rich multi-layer text coordinates, rotation, scaling, fonts, and colors in `layers_data` (JSONB) for future re-editing.
-  - Permanent public URLs (`/memes/:slug`) with OpenGraph cards and creator attribution.
-- **WhatsApp Sticker Packs Domain (`sticker_packs` & `stickers`) — Mobile Only**:
-  - Kept strictly distinct and isolated from arbitrary aspect-ratio community memes.
-  - **Platform Boundary**: Stickers and sticker packs are **strictly a native mobile feature (`app/`) and are NOT accessed or browsed on the web**. The web platform is exclusively focused on the Meme Studio, Templates, and Community Memes.
-  - WhatsApp technical constraints strictly enforced: exactly 512×512 square WebP, static < 100 KB, animated < 500 KB.
-  - Packs require 3 to 30 stickers + 96×96 tray icon for native keyboard drawer injection via Flutter mobile app (`app/`).
-  - Every sticker pack and sticker is strictly owned by an authenticated user (`user_id UUID NOT NULL REFERENCES users(id)`).
+  - Clean uncaptioned base images/GIFs uploaded by an admin.
+  - Tagged with at least 3 descriptive tags.
+  - Public catalog ranked by recency and popularity.
+  - One-click `Use this Template` pre-loads `/studio?template=:slug`.
 
-### Phase 3: Moderation, Community Curation & Mobile Cloud Sync
-- Community reporting system (`reports` table) and staff moderation dashboard for reported memes and sticker packs.
-- Flutter mobile app cloud sync: Fetch sticker packs from `GET /api/v1/packs/:id` and inject directly into WhatsApp tray.
-- Advanced tag autocomplete, trending memes feed, and creator profile showcases.
+- **Web Studio (`frontend/`)**:
+  - Client-side captioning and export for anonymous users.
+  - Template preloading for public templates.
+
+- **Flutter Mobile App (`app/`)**:
+  - Existing local editor stays first-class.
+  - Admin login, explicit cloud save for compliant stickers, and restore to owned packs.
+  - Native WhatsApp pack injection after downloading media to local files.
+
+### Phase 2: Community Memes, Multi-User Publishing & Curation (Next)
+
+- Public registration, OAuth, or magic-link authentication.
+- `memes` table for rendered community memes linked to templates and creators.
+- Public meme feed, likes, reports, and moderation tools.
+- Creator/staff roles beyond admin/user.
+
+### Phase 3: Moderation, Advanced Discovery & Mobile Polish
+
+- Reporting system and staff moderation dashboard.
+- Trending feeds, tag autocomplete, creator profiles.
+- Offline sync conflict resolution and iOS/app-store polish.
 
 ---
 
@@ -61,7 +55,8 @@ Mewmer (`mewmer.com`) is an open-source, privacy-first web and mobile platform f
 | **Web Frontend** | Astro 5 + Svelte 5 + Tailwind CSS | Islands architecture, zero-JS page shells, 100/100 Core Web Vitals, SSR/SSG. |
 | **Package Manager** | `pnpm` | Mandatory package manager across all frontend tooling. |
 | **Backend** | Go (Golang 1.23+) | Chi v5 router, PGX v5 connection pool, native bounded Goroutine worker pool. |
-| **Media Processing**| Browser Canvas + Native FFmpeg | Static stickers generated client-side via HTML5 Canvas; animated GIF/video transcoding handled by Go FFmpeg worker pool. |
+| **Media Storage** | Cloudflare R2 | Public bucket for templates/public memes; private bucket for stickers/packs. |
+| **Media Processing**| Browser Canvas + Native FFmpeg | Static stickers generated client-side; animated GIF/video transcoding handled by Go FFmpeg worker pool. |
 | **Database** | PostgreSQL 17 | Relational database with `uuid-ossp` and `pg_trgm` extensions for fast trigram search. |
 | **Mobile App** | Flutter (`app/`) | Android & iOS native app for WhatsApp pack injection (`whatsapp_stickers_injector`), local file storage, and Gboard GIF insertion. |
 
@@ -135,16 +130,16 @@ Meta / WhatsApp strictly enforces the following technical rules:
 - **Anonymous Users**:
   - Can freely crop, customize, rotate captions, and export/download (WebP, JPG, PNG) locally with zero server retention.
   - No server storage or account required for private creation.
-  - Cannot publish to public community gallery or submit new community templates.
+  - Cannot upload templates, save stickers to the cloud, or publish community content.
 - **Authenticated Users & Roles**:
-  - Roles: `user` (default), `creator` (verified uploader), `staff` (moderator), `admin`.
-  - Can submit clean uncaptioned images/GIFs as community templates.
-  - Can publish generated memes under templates to the public community feed.
+  - Roles: `user` (default), `admin`.
+  - `admin` can upload public meme templates and publish sticker packs.
+  - Future roles `creator` and `staff` are reserved in the schema but not enabled yet.
 - **Publishing Requirements**:
-  - **Meme Publishing**: Must be logged in, provide a meme title/caption summary, and **at least 3 descriptive tags** (`cardinality(tags) >= 3`).
-  - **Template Submission**: Must be logged in, provide template name, clean uncaptioned media, and **at least 3 tags**.
-  - **Creator Attribution**: Every published meme and template is attributed to `creator_id` (`users.id`).
-- **Data Deletion**: Complete account and associated meme/pack deletion supported upon user request.
+  - **Template Submission**: Must be logged in as admin, provide template name, clean uncaptioned media, and **at least 3 tags**.
+  - **Sticker Cloud Save**: Must be logged in, owned pack, compliant WebP bytes.
+  - **Creator Attribution**: Every published template and pack is attributed to its owner.
+- **Data Deletion**: Complete account and associated content deletion supported upon user request.
 
 ---
 
@@ -160,28 +155,40 @@ CREATE TABLE users (
   email VARCHAR(255) UNIQUE NOT NULL,
   username VARCHAR(64) UNIQUE NOT NULL,
   display_name VARCHAR(100) NOT NULL,
-  password_hash TEXT,
-  role VARCHAR(20) NOT NULL DEFAULT 'user', -- user | creator | staff | admin
-  avatar_url TEXT,
+  password_hash TEXT NOT NULL,
+  role VARCHAR(20) NOT NULL DEFAULT 'user', -- user | admin (creator | staff reserved)
+  avatar_key TEXT,
   bio TEXT,
+  links JSONB NOT NULL DEFAULT '[]'::jsonb,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- 2. Meme Templates Table (Clean uncaptioned bases)
+-- 2. Sessions Table
+CREATE TABLE sessions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  token_hash VARCHAR(255) UNIQUE NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  last_used_at TIMESTAMP WITH TIME ZONE
+);
+
+-- 3. Meme Templates Table (Clean uncaptioned bases)
 CREATE TABLE meme_templates (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   slug VARCHAR(100) UNIQUE NOT NULL,
   title VARCHAR(150) NOT NULL,
   description TEXT,
-  image_url TEXT NOT NULL,
-  thumbnail_url TEXT,
+  image_key TEXT NOT NULL,
+  thumbnail_key TEXT,
   media_type VARCHAR(20) NOT NULL DEFAULT 'image', -- image | animated_gif
   width INTEGER NOT NULL,
   height INTEGER NOT NULL,
-  aspect_ratio VARCHAR(20) DEFAULT 'original',
+  byte_size INTEGER NOT NULL,
+  mime_type VARCHAR(100) NOT NULL,
   tags TEXT[] NOT NULL DEFAULT '{}',
-  creator_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  creator_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   memes_count INTEGER NOT NULL DEFAULT 0,
   is_verified BOOLEAN NOT NULL DEFAULT FALSE,
   is_active BOOLEAN NOT NULL DEFAULT TRUE,
@@ -190,7 +197,37 @@ CREATE TABLE meme_templates (
   CONSTRAINT min_template_tags CHECK (cardinality(tags) >= 3)
 );
 
--- 3. Generated Community Memes Table
+-- 4. WhatsApp Sticker Packs Table
+CREATE TABLE sticker_packs (
+  id VARCHAR(64) PRIMARY KEY,
+  title VARCHAR(100) NOT NULL,
+  publisher VARCHAR(100) NOT NULL DEFAULT 'mewmer.com',
+  tray_image_key TEXT NOT NULL,
+  is_animated BOOLEAN DEFAULT FALSE,
+  visibility VARCHAR(20) NOT NULL DEFAULT 'private', -- private | unlisted | public
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  downloads_count INTEGER DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 5. Individual WhatsApp Stickers Table (512x512 WebP)
+CREATE TABLE stickers (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  pack_id VARCHAR(64) NOT NULL REFERENCES sticker_packs(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  image_key TEXT NOT NULL,
+  emojis TEXT[] DEFAULT ARRAY['✨']::TEXT[],
+  byte_size INTEGER NOT NULL,
+  width INTEGER NOT NULL,
+  height INTEGER NOT NULL,
+  is_animated BOOLEAN DEFAULT FALSE,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 6. Generated Community Memes Table (Phase 2)
 CREATE TABLE memes (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   slug VARCHAR(100) UNIQUE NOT NULL,
@@ -198,11 +235,12 @@ CREATE TABLE memes (
   creator_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   title VARCHAR(200) NOT NULL,
   caption_summary TEXT,
-  layers_data JSONB NOT NULL DEFAULT '[]', -- caption layers: text, x, y, scale, rotation, font, colors
-  image_url TEXT NOT NULL,
-  media_type VARCHAR(20) NOT NULL DEFAULT 'image', -- image | animated_gif
+  layers_data JSONB NOT NULL DEFAULT '[]',
+  image_key TEXT NOT NULL,
+  media_type VARCHAR(20) NOT NULL DEFAULT 'image',
   width INTEGER NOT NULL,
   height INTEGER NOT NULL,
+  byte_size INTEGER NOT NULL,
   tags TEXT[] NOT NULL,
   is_public BOOLEAN NOT NULL DEFAULT TRUE,
   views_count INTEGER NOT NULL DEFAULT 0,
@@ -212,35 +250,7 @@ CREATE TABLE memes (
   CONSTRAINT min_meme_tags CHECK (cardinality(tags) >= 3)
 );
 
--- 4. WhatsApp Sticker Packs Table (Mobile Only - Not accessible on Web)
-CREATE TABLE sticker_packs (
-  id VARCHAR(64) PRIMARY KEY,
-  title VARCHAR(100) NOT NULL,
-  publisher VARCHAR(100) NOT NULL DEFAULT 'mewmer.com',
-  tray_image_url TEXT NOT NULL,
-  is_animated BOOLEAN DEFAULT FALSE,
-  is_public BOOLEAN DEFAULT TRUE,
-  visibility VARCHAR(20) NOT NULL DEFAULT 'public', -- private | unlisted | public
-  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  downloads_count INTEGER DEFAULT 0,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  deleted_at TIMESTAMP WITH TIME ZONE
-);
-
--- 5. Individual WhatsApp Stickers Table (512x512 WebP - Mobile Only)
-CREATE TABLE stickers (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  pack_id VARCHAR(64) NOT NULL REFERENCES sticker_packs(id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  image_url TEXT NOT NULL,
-  emojis TEXT[] DEFAULT ARRAY['✨']::TEXT[],
-  file_size INTEGER NOT NULL,
-  is_animated BOOLEAN DEFAULT FALSE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  deleted_at TIMESTAMP WITH TIME ZONE
-);
-
--- 6. Content Moderation Reports Table
+-- 7. Content Moderation Reports Table (Phase 2)
 CREATE TABLE reports (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   target_type VARCHAR(20) NOT NULL, -- meme | template | sticker | pack
@@ -252,6 +262,9 @@ CREATE TABLE reports (
 );
 
 -- Indexes for Fast Search, Tag Overlaps & Ranking
+CREATE INDEX idx_sessions_user_id ON sessions(user_id);
+CREATE INDEX idx_sessions_token_hash ON sessions(token_hash);
+CREATE INDEX idx_meme_templates_creator_id ON meme_templates(creator_id, created_at DESC);
 CREATE INDEX idx_meme_templates_memes_count ON meme_templates(memes_count DESC);
 CREATE INDEX idx_meme_templates_tags ON meme_templates USING gin (tags);
 CREATE INDEX idx_meme_templates_title_trgm ON meme_templates USING gin (title gin_trgm_ops);
@@ -259,9 +272,11 @@ CREATE INDEX idx_memes_template_id ON memes(template_id, created_at DESC);
 CREATE INDEX idx_memes_creator_id ON memes(creator_id, created_at DESC);
 CREATE INDEX idx_memes_tags ON memes USING gin (tags);
 CREATE INDEX idx_memes_public ON memes(is_public, created_at DESC);
-CREATE INDEX idx_sticker_packs_public ON sticker_packs(is_public, created_at DESC);
+CREATE INDEX idx_sticker_packs_user_id ON sticker_packs(user_id, created_at DESC);
+CREATE INDEX idx_sticker_packs_visibility ON sticker_packs(visibility, created_at DESC);
 CREATE INDEX idx_sticker_packs_title_trgm ON sticker_packs USING gin (title gin_trgm_ops);
-CREATE INDEX idx_stickers_pack_id ON stickers(pack_id);
+CREATE INDEX idx_stickers_pack_id ON stickers(pack_id, sort_order);
+CREATE INDEX idx_stickers_user_id ON stickers(user_id);
 ```
 
 ---
@@ -269,52 +284,45 @@ CREATE INDEX idx_stickers_pack_id ON stickers(pack_id);
 ## 8. Backend API Endpoints
 
 ### Auth & User Endpoints
-- `POST /api/v1/auth/register` — Register new user account
-- `POST /api/v1/auth/login` — Authenticate and receive session token / cookie
-- `POST /api/v1/auth/logout` — Revoke active session
-- `GET /api/v1/auth/me` — Retrieve current authenticated user profile and roles
+- `POST /api/v1/auth/login` — Authenticate and receive session cookie / token.
+- `POST /api/v1/auth/logout` — Revoke active session.
+- `GET /api/v1/auth/me` — Retrieve current authenticated user profile and role.
 
 ### Meme Templates Endpoints
-- `GET /api/v1/templates?q=&tag=&sort=popular|newest&page=&limit=` — List uncaptioned templates (ranked by `memes_count` or recency)
-- `GET /api/v1/templates/{slug}` — Retrieve template details and top/recent memes generated under this template
-- `GET /api/v1/templates/{slug}/memes?page=&limit=` — Paginated list of generated memes for this template
-- `POST /api/v1/templates` — (Auth required) Upload clean uncaptioned base template with title and ≥ 3 tags
+- `GET /api/v1/templates?q=&tag=&sort=popular|newest&page=&limit=` — List public templates.
+- `GET /api/v1/templates/{slug}` — Retrieve template details.
+- `POST /api/v1/templates` — (Admin only) Upload clean uncaptioned base template with title and ≥ 3 tags.
 
-### Community Memes Endpoints
-- `GET /api/v1/memes?q=&tag=&template_id=&sort=trending|newest&page=&limit=` — Community memes feed with tag and search filters
-- `GET /api/v1/memes/{slug}` — Retrieve single published meme, creator attribution, parent template link, and share metadata
-- `POST /api/v1/memes` — (Auth required) Publish rendered meme with caption summary, `layers_data` JSONB, and ≥ 3 tags; automatically increments parent template `memes_count`
+### Community Memes Endpoints (Phase 2)
+- `GET /api/v1/memes?q=&tag=&template_id=&sort=trending|newest&page=&limit=` — Community memes feed.
+- `GET /api/v1/memes/{slug}` — Single published meme.
+- `POST /api/v1/memes` — (Auth required) Publish rendered meme.
 
-### WhatsApp Sticker Packs Endpoints (Isolated)
-- `GET /api/v1/packs?q=&page=&limit=` — List public WhatsApp sticker packs
-- `GET /api/v1/packs/{id}` — Pack details and sticker list (3–30 stickers)
-- `POST /api/v1/packs` — (Auth required) Create new sticker pack with 96×96 tray icon
-- `POST /api/v1/stickers/upload` — Upload client-rendered 512×512 WebP sticker (< 100 KB)
-- `POST /api/v1/stickers/process-animated` — Transcode GIF/video to animated WebP via FFmpeg worker pool (< 500 KB)
+### WhatsApp Sticker Packs Endpoints (Authenticated)
+- `GET /api/v1/me/packs` — List owned packs.
+- `GET /api/v1/packs/{id}` — Pack details and sticker list (owner or public).
+- `POST /api/v1/packs` — Create new owned sticker pack with 96×96 tray icon.
+- `POST /api/v1/packs/{id}/stickers` — Upload client-rendered 512×512 WebP sticker into an owned pack.
+- `POST /api/v1/stickers/process-animated` — Transcode GIF/video to animated WebP via FFmpeg worker pool (< 500 KB).
 
 ### System & Moderation Endpoints
-- `GET /health` — Service healthcheck
-- `POST /api/v1/reports` — Report inappropriate meme, template, or pack
-- `GET /uploads/*` — Serve public media assets
+- `GET /health` — Service healthcheck.
+- `POST /api/v1/reports` — Report inappropriate content (Phase 2).
+- `GET /uploads/*` or `/media/*` — Serve or proxy media; private media requires auth or signed URL.
 
 ---
 
 ## 9. Template Submission & Studio Workflow Architecture
 
-### Studio Ingestion vs Dedicated Template Page:
-1. **In-Studio Submission**:
-   - When a user imports an image/GIF into `/studio`, if they have not added captions, an action button **"Save as Community Template"** is presented.
-   - For authenticated users, clicking this opens a submission modal requesting:
-     - Template Name (e.g., "Distracted Boyfriend")
-     - At least 3 tags (e.g., `funny`, `relationship`, `choice`)
-     - Category / Description (optional)
-   - The uncaptioned original media is saved via `POST /api/v1/templates`.
-2. **Dedicated `/templates` Catalog**:
-   - The `/templates` page showcases community templates sorted by popularity (`memes_count DESC`), trending, or tags.
-   - Includes a primary **"Upload New Template"** CTA that opens the template submission modal directly or routes to `/studio` in template ingestion mode.
-   - Each template card features a **"Use this Template"** button that opens `/studio?template=:slug`, preloading the clean uncaptioned image and binding the `template_id` to the session.
-3. **Meme Publishing Flow**:
-   - When exporting in `/studio`, authenticated users see **"Publish to Community"**.
-   - Requires: Meme Title / Caption summary, and **at least 3 tags**.
-   - Saves final rendered WebP/JPG to `POST /api/v1/memes`, links to the template (if created from one), and increments `template.memes_count`.
-   - Anonymous users are prompted to log in to publish, or can download/share locally without an account.
+1. **Admin Upload**:
+   - Admin logs into the web app and uploads a clean uncaptioned image/GIF via `POST /api/v1/templates`.
+   - Media is validated, stored in public R2, and metadata saved to `meme_templates`.
+2. **Public Catalog (`/templates`)**:
+   - Lists public templates sorted by recency and popularity.
+   - Each card features **"Use this Template"**, routing to `/studio?template=:slug`.
+3. **Studio Flow**:
+   - The studio loads the clean base image and lets anonymous users caption and export locally.
+   - No account is required for local creation.
+4. **Sticker Cloud Save (Flutter)**:
+   - Admin logs in, generates a compliant sticker, and explicitly saves it to an owned cloud pack.
+   - Media is validated and stored in private R2; the pack can later be retrieved and injected into WhatsApp.
