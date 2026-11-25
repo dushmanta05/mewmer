@@ -64,9 +64,13 @@ class StickerPack {
 }
 
 class StickerProvider extends ChangeNotifier {
+  final Future<File> Function()? _metadataFileProvider;
   final List<Sticker> _recentStickers = [];
   final List<StickerPack> _packs = [];
   bool _isLoading = true;
+
+  StickerProvider({Future<File> Function()? metadataFileProvider})
+      : _metadataFileProvider = metadataFileProvider;
 
   List<Sticker> get recentStickers => List.unmodifiable(_recentStickers);
   List<StickerPack> get packs => List.unmodifiable(_packs);
@@ -77,6 +81,9 @@ class StickerProvider extends ChangeNotifier {
   }
 
   Future<File> _getMetadataFile() async {
+    if (_metadataFileProvider != null) {
+      return _metadataFileProvider();
+    }
     final directory = await getApplicationDocumentsDirectory();
     final path = '${directory.path}/stickers_metadata.json';
     return File(path);

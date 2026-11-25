@@ -219,5 +219,178 @@ void main() {
       expect(localPath, isNotNull);
       expect(await File(localPath!).readAsBytes(), [82, 73, 70, 70]);
     });
+
+    test('login throws ApiException on 401 invalid credentials', () async {
+      final mockHttp = MockClient((request) async {
+        return http.Response(
+          json.encode({'error': 'invalid credentials'}),
+          401,
+        );
+      });
+
+      final apiClient = MewmerApiClient(httpClient: mockHttp);
+      final provider = CloudProvider(
+        apiClient: apiClient,
+        sessionStore: InMemorySessionStore(),
+        mediaCache: MediaCacheService(
+          apiClient: apiClient,
+          directoryProvider: () async => tempDir,
+        ),
+      );
+
+      await expectLater(
+        () => provider.login(email: 'wrong@mewmer.com', password: 'bad'),
+        throwsA(isA<ApiException>()),
+      );
+      expect(provider.isAuthenticated, isFalse);
+      expect(provider.errorMessage, 'invalid credentials');
+    });
+
+    test('createPack, uploadSticker, deleteSticker, and deletePack sync cleanly', () async {
+      final traySource = File('${tempDir.path}/tray_src.png');
+      await traySource.writeAsBytes([1, 2, 3]);
+      final stickerSource = File('${tempDir.path}/sticker_src.webp');
+      await stickerSource.writeAsBytes([4, 5, 6]);
+
+      final mockHttp = MockClient((request) async {
+        if (request.url.path == '/api/v1/auth/login') {
+          return http.Response(
+            json.encode({
+              'user': {
+                'id': 'u1',
+                'email': 'admin@mewmer.com',
+                'username': 'admin',
+                'displayName': 'Admin',
+                'role': 'admin',
+              },
+              'token': 'tok_123',
+            }),
+            200,
+          );
+        }
+        if (request.url.path == '/api/v1/me/packs') {
+          return http.Response(json.encode({'packs': []}), 200);
+        }
+        if (request.url.path == '/api/v1/packs' && request.method == 'POST') {
+          return http.Response(
+            json.encode({
+              'id': 'p_new',
+              'title': 'New Pack',
+              'publisher': 'Admin · mewmer.com',
+              'trayImageKey': 'https://cdn.example.com/tray_new.png',
+              'isAnimated': false,
+              'visibility': 'private',
+              'userId': 'u1',
+              'downloadsCount': 0,
+              'createdAt': '2026-01-01T00:00:00Z',
+            }),
+            201,
+            headers: {'content-type': 'application/json; charset=utf-8'},
+          );
+        }
+        if (request.url.path == '/api/v1/packs/p_new/stickers' &&
+            request.method == 'POST') {
+          return http.Response(
+            json.encode({
+              'id': 's_new',
+              'packId': 'p_new',
+              'userId': 'u1',
+              'imageKey': 'https://cdn.example.com/s_new.webp',
+              'emojis': ['😂', '👍'],
+              'byteSize': 3,
+              'width': 512,
+              'height': 512,
+              'isAnimated': false,
+              'sortOrder': 1,
+              'createdAt': '2026-01-01T00:00:00Z',
+            }),
+            201,
+            headers: {'content-type': 'application/json; charset=utf-8'},
+          );
+        }
+        if (request.url.path == '/api/v1/packs/p_new' &&
+            request.method == 'GET') {
+          return http.Response(
+            json.encode({
+              'id': 'p_new',
+              'title': 'New Pack',
+              'publisher': 'Admin · mewmer.com',
+              'trayImageKey': 'https://cdn.example.com/tray_new.png',
+              'isAnimated': false,
+              'visibility': 'private',
+              'userId': 'u1',
+              'downloadsCount': 0,
+              'createdAt': '2026-01-01T00:00:00Z',
+              'stickers': [
+                {
+                  'id': 's_new',
+                  'packId': 'p_new',
+                  'userId': 'u1',
+                  'imageKey': 'https://cdn.example.com/s_new.webp',
+                  'emojis': ['😂', '👍'],
+                  'byteSize': 3,
+                  'width': 512,
+                  'height': 512,
+                  'isAnimated': false,
+                  'sortOrder': 1,
+                  'createdAt': '2026-01-01T00:00:00Z',
+                }
+              ],
+            }),
+            200,
+            headers: {'content-type': 'application/json; charset=utf-8'},
+          );
+        }
+        if (request.url.path == '/api/v1/stickers/s_new' &&
+            request.method == 'DELETE') {
+          return http.Response(json.encode({'status': 'deleted'}), 200);
+        }
+        if (request.url.path == '/api/v1/packs/p_new' &&
+            request.method == 'DELETE') {
+          return http.Response(json.encode({'status': 'deleted'}), 200);
+        }
+        if (request.url.path == '/tray_new.png') {
+          return http.Response.bytes([1, 2, 3], 200);
+        }
+        if (request.url.path == '/s_new.webp') {
+          return http.Response.bytes([4, 5, 6], 200);
+        }
+        return http.Response('Not found', 404);
+      });
+
+      final apiClient = MewmerApiClient(httpClient: mockHttp);
+      final provider = CloudProvider(
+        apiClient: apiClient,
+        sessionStore: InMemorySessionStore(),
+        mediaCache: MediaCacheService(
+          apiClient: apiClient,
+          directoryProvider: () async => tempDir,
+        ),
+      );
+
+      await provider.login(email: 'admin@mewmer.com', password: 'secret');
+      final created = await provider.createPack(
+        title: 'New Pack',
+        trayFile: traySource,
+      );
+      expect(created.id, 'p_new');
+
+      final uploaded = await provider.uploadStickerToPack(
+        packId: 'p_new',
+        stickerFile: stickerSource,
+        isAnimated: false,
+        emojis: const ['😂', '👍'],
+      );
+      expect(uploaded.id, 's_new');
+      expect(provider.localStickerPath('s_new'), isNotNull);
+
+      await provider.deleteSticker('p_new', 's_new');
+      expect(provider.localStickerPath('s_new'), isNull);
+      expect(provider.packDetail('p_new')?.stickers, isEmpty);
+
+      await provider.deletePack('p_new');
+      expect(provider.packs, isEmpty);
+      expect(provider.localTrayPath('p_new'), isNull);
+    });
   });
 }

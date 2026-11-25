@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:whatsapp_stickers_injector/whatsapp_stickers.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:image/image.dart' as img;
+import 'all_packs_page.dart';
 import 'login_page.dart';
 import 'meme_editor_page.dart';
 import 'pack_details_page.dart';
@@ -479,17 +480,40 @@ class _HomePageState extends State<HomePage> {
                                     color: MewmerTheme.textPrimary,
                                   ),
                                 ),
-                                TextButton.icon(
-                                  onPressed: () => _showCreatePackDialog(context),
-                                  icon: const Icon(Icons.add, size: 15, color: MewmerTheme.brandViolet),
-                                  label: const Text(
-                                    'Add Pack',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
-                                      color: MewmerTheme.brandViolet,
+                                Row(
+                                  children: [
+                                    if (packs.isNotEmpty)
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) => const AllPacksPage(),
+                                            ),
+                                          );
+                                        },
+                                        child: const Text(
+                                          'View All',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                            color: MewmerTheme.textMuted,
+                                          ),
+                                        ),
+                                      ),
+                                    TextButton.icon(
+                                      onPressed: () => _showCreatePackDialog(context),
+                                      icon: const Icon(Icons.add, size: 15, color: MewmerTheme.brandViolet),
+                                      label: const Text(
+                                        'Add Pack',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                          color: MewmerTheme.brandViolet,
+                                        ),
+                                      ),
                                     ),
-                                  ),
+                                  ],
                                 ),
                               ],
                             ),
@@ -544,122 +568,115 @@ class _HomePageState extends State<HomePage> {
                               ),
                             )
                           else
-                            SizedBox(
-                              height: 215,
-                              child: ListView.builder(
-                                scrollDirection: Axis.horizontal,
-                                padding: const EdgeInsets.symmetric(horizontal: 16),
-                                itemCount: packs.length,
-                                itemBuilder: (context, index) {
-                                  final pack = packs[index];
-                                  return GestureDetector(
-                                    onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => PackDetailsPage(
-                                            packIdentifier: pack.identifier,
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                    child: Container(
-                                      margin: const EdgeInsets.symmetric(horizontal: 6),
-                                      width: 155,
-                                      decoration: BoxDecoration(
-                                        color: MewmerTheme.cardSurface,
-                                        borderRadius: BorderRadius.circular(20),
-                                        border: Border.all(color: MewmerTheme.border),
-                                      ),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Expanded(
-                                            child: Container(
-                                              margin: const EdgeInsets.all(8),
-                                              decoration: BoxDecoration(
-                                                color: MewmerTheme.cardHover,
-                                                borderRadius: BorderRadius.circular(14),
-                                              ),
-                                              child: _buildPackPreview(pack.stickerPaths),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 20),
+                              child: Column(
+                                children: packs.take(4).map((pack) {
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 10),
+                                    child: InkWell(
+                                      borderRadius: BorderRadius.circular(18),
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => PackDetailsPage(
+                                              packIdentifier: pack.identifier,
                                             ),
                                           ),
-                                          Padding(
-                                            padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  pack.name,
-                                                  maxLines: 1,
-                                                  overflow: TextOverflow.ellipsis,
-                                                  style: const TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 14,
-                                                    color: MewmerTheme.textPrimary,
-                                                  ),
-                                                ),
-                                                const SizedBox(height: 3),
-                                                Row(
-                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                  children: [
-                                                    Row(
-                                                      children: [
-                                                        Container(
-                                                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
-                                                          decoration: BoxDecoration(
-                                                            color: pack.isActuallyAnimated
-                                                                ? MewmerTheme.brandViolet.withValues(alpha: 0.2)
-                                                                : MewmerTheme.whatsappGreen.withValues(alpha: 0.15),
-                                                            borderRadius: BorderRadius.circular(4),
-                                                          ),
-                                                          child: Text(
-                                                            pack.typeLabel,
-                                                            style: TextStyle(
-                                                              fontSize: 9,
-                                                              fontWeight: FontWeight.bold,
-                                                              color: pack.isActuallyAnimated
-                                                                  ? MewmerTheme.brandViolet
-                                                                  : MewmerTheme.whatsappGreen,
-                                                            ),
-                                                          ),
-                                                        ),
-                                                        const SizedBox(width: 5),
-                                                        Text(
-                                                          '${pack.stickerPaths.length}',
-                                                          style: const TextStyle(
-                                                            fontSize: 11,
-                                                            color: MewmerTheme.textMuted,
-                                                          ),
-                                                        ),
-                                                      ],
+                                        );
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.all(12),
+                                        decoration: BoxDecoration(
+                                          color: MewmerTheme.cardSurface,
+                                          borderRadius: BorderRadius.circular(18),
+                                          border: Border.all(color: MewmerTheme.border),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            SizedBox(
+                                              width: 56,
+                                              height: 56,
+                                              child: ClipRRect(
+                                                borderRadius: BorderRadius.circular(12),
+                                                child: _buildPackPreview(pack.stickerPaths),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 14),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    pack.name,
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
+                                                    style: const TextStyle(
+                                                      fontWeight: FontWeight.bold,
+                                                      fontSize: 15,
+                                                      color: MewmerTheme.textPrimary,
                                                     ),
-                                                    if (pack.stickerPaths.length >= 3)
-                                                      GestureDetector(
-                                                        onTap: () => _exportToWhatsApp(context, pack),
-                                                        child: Container(
-                                                          padding: const EdgeInsets.all(4),
-                                                          decoration: BoxDecoration(
-                                                            color: MewmerTheme.whatsappGreen.withValues(alpha: 0.15),
-                                                            borderRadius: BorderRadius.circular(6),
-                                                          ),
-                                                          child: const Icon(
-                                                            Icons.send_rounded,
-                                                            size: 13,
-                                                            color: MewmerTheme.whatsappGreen,
+                                                  ),
+                                                  const SizedBox(height: 4),
+                                                  Row(
+                                                    children: [
+                                                      Container(
+                                                        padding: const EdgeInsets.symmetric(
+                                                          horizontal: 6,
+                                                          vertical: 2,
+                                                        ),
+                                                        decoration: BoxDecoration(
+                                                          color: pack.isActuallyAnimated
+                                                              ? MewmerTheme.brandViolet.withValues(alpha: 0.2)
+                                                              : MewmerTheme.whatsappGreen.withValues(alpha: 0.15),
+                                                          borderRadius: BorderRadius.circular(6),
+                                                        ),
+                                                        child: Text(
+                                                          pack.typeLabel,
+                                                          style: TextStyle(
+                                                            fontSize: 10,
+                                                            fontWeight: FontWeight.bold,
+                                                            color: pack.isActuallyAnimated
+                                                                ? MewmerTheme.brandViolet
+                                                                : MewmerTheme.whatsappGreen,
                                                           ),
                                                         ),
                                                       ),
-                                                  ],
-                                                ),
-                                              ],
+                                                      const SizedBox(width: 8),
+                                                      Text(
+                                                        '${pack.stickerPaths.length} stickers',
+                                                        style: const TextStyle(
+                                                          fontSize: 12,
+                                                          color: MewmerTheme.textMuted,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ],
+                                              ),
                                             ),
-                                          ),
-                                        ],
+                                            if (pack.stickerPaths.length >= 3)
+                                              IconButton(
+                                                onPressed: () => _exportToWhatsApp(context, pack),
+                                                icon: const Icon(
+                                                  Icons.send_rounded,
+                                                  size: 18,
+                                                  color: MewmerTheme.whatsappGreen,
+                                                ),
+                                                tooltip: 'Add to WhatsApp',
+                                              )
+                                            else
+                                              const Icon(
+                                                Icons.chevron_right_rounded,
+                                                color: MewmerTheme.textMuted,
+                                              ),
+                                          ],
+                                        ),
                                       ),
                                     ),
                                   );
-                                },
+                                }).toList(),
                               ),
                             ),
                           const SizedBox(height: 24),
