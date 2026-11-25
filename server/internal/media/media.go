@@ -68,6 +68,34 @@ func ValidateSticker(r io.Reader, maxBytes int64) (*Info, error) {
 	}, nil
 }
 
+func ValidateTray(r io.Reader, maxBytes int64) (*Info, error) {
+	data, err := readLimited(r, maxBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	img, format, err := image.Decode(bytes.NewReader(data))
+	if err != nil {
+		return nil, err
+	}
+
+	if format != "png" && format != "webp" {
+		return nil, errors.New("tray icon must be png or webp")
+	}
+
+	bounds := img.Bounds()
+	if bounds.Dx() != 96 || bounds.Dy() != 96 {
+		return nil, errors.New("tray icon must be 96x96")
+	}
+
+	return &Info{
+		MIME:   formatToMIME(format),
+		Width:  bounds.Dx(),
+		Height: bounds.Dy(),
+		Size:   int64(len(data)),
+	}, nil
+}
+
 func readLimited(r io.Reader, maxBytes int64) ([]byte, error) {
 	data, err := io.ReadAll(io.LimitReader(r, maxBytes+1))
 	if err != nil {

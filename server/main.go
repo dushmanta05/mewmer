@@ -91,10 +91,12 @@ func main() {
 		r.Get("/templates", h.ListTemplates)
 		r.Get("/templates/{slug}", h.GetTemplate)
 
-		r.Get("/packs", h.ListPacks)
-		r.Get("/packs/{id}", h.GetPack)
+		r.With(appMiddleware.RequireAuth).Get("/me/packs", h.ListMyPacks)
 		r.With(appMiddleware.RequireAuth).Post("/packs", h.CreatePack)
-		r.With(appMiddleware.RequireAuth).Post("/stickers/upload", h.UploadSticker)
+		r.With(appMiddleware.RequireAuth).Get("/packs/{id}", h.GetPack)
+		r.With(appMiddleware.RequireAuth).Delete("/packs/{id}", h.DeletePack)
+		r.With(appMiddleware.RequireAuth).Post("/packs/{id}/stickers", h.CreateSticker)
+		r.With(appMiddleware.RequireAuth).Delete("/stickers/{id}", h.DeleteSticker)
 		r.Post("/stickers/process-animated", h.ProcessAnimated)
 	})
 
