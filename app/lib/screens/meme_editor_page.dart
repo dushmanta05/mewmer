@@ -815,7 +815,7 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
         return Screenshot(
           controller: _screenshotController,
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.zero,
             child: Stack(
               fit: StackFit.expand,
               children: [
@@ -825,7 +825,6 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
                   Container(
                     decoration: BoxDecoration(
                       color: MewmerTheme.cardSurface,
-                      borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: MewmerTheme.border),
                     ),
                     child: Center(
