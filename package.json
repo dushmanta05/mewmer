@@ -5,11 +5,14 @@
     "dev": "bash scripts/dev.sh",
     "dev:backend": "cd server && if [ -f .env ]; then set -a && . ./.env && set +a; fi && PORT=3030 go run main.go",
     "dev:frontend": "cd frontend && pnpm dev",
+    "dev:app": "cd app && flutter run",
     "build:frontend": "cd frontend && pnpm build",
     "build:backend": "cd server && if [ -f .env ]; then set -a && . ./.env && set +a; fi && go build -o mewmer-server .",
+    "build:app": "cd app && flutter build apk",
     "check": "pnpm check:frontend && pnpm check:backend",
     "check:frontend": "cd frontend && pnpm check && pnpm build",
     "check:backend": "cd server && gofmt -l . && go test ./... && go vet ./... && go build -o /dev/null .",
+    "check:app": "cd app && flutter analyze && flutter test",
     "migrate": "cd server && if [ -f .env ]; then set -a && . ./.env && set +a; fi && for f in migrations/*.sql; do psql \"$DATABASE_URL\" -f \"$f\"; done",
     "create:admin": "cd server && if [ -f .env ]; then set -a && . ./.env && set +a; fi && go run ./cmd/create-admin"
   }
