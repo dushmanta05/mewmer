@@ -7,8 +7,11 @@ import 'package:provider/provider.dart';
 import 'package:whatsapp_stickers_injector/whatsapp_stickers.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:image/image.dart' as img;
+import 'cloud_packs_page.dart';
+import 'login_page.dart';
 import 'meme_editor_page.dart';
 import 'pack_details_page.dart';
+import '../models/cloud_provider.dart';
 import '../models/sticker_provider.dart';
 import '../widgets/cat_branding.dart';
 import '../theme.dart';
@@ -343,6 +346,7 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     final stickerProvider = context.watch<StickerProvider>();
+    final cloudProvider = context.watch<CloudProvider>();
     final recentStickers = stickerProvider.recentStickers;
     final packs = stickerProvider.packs;
     final isBusy = _isExporting || _isPickingImage || stickerProvider.isLoading;
@@ -362,21 +366,73 @@ class _HomePageState extends State<HomePage> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const MewmerBrandHeader(iconSize: 36, fontSize: 24),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: MewmerTheme.cardSurface,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: MewmerTheme.border),
-                        ),
-                        child: IconButton(
-                          icon: const Icon(
-                            Icons.create_new_folder_outlined,
-                            color: MewmerTheme.brandViolet,
-                            size: 20,
+                      Row(
+                        children: [
+                          Container(
+                            decoration: BoxDecoration(
+                              color: MewmerTheme.cardSurface,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: MewmerTheme.border),
+                            ),
+                            child: IconButton(
+                              icon: Icon(
+                                cloudProvider.isAuthenticated
+                                    ? Icons.cloud_done_outlined
+                                    : Icons.cloud_outlined,
+                                color: cloudProvider.isAuthenticated
+                                    ? MewmerTheme.whatsappGreen
+                                    : MewmerTheme.textMuted,
+                                size: 20,
+                              ),
+                              tooltip: cloudProvider.isAuthenticated
+                                  ? 'My Cloud Packs'
+                                  : 'Cloud Sign In',
+                              onPressed: () {
+                                if (cloudProvider.isAuthenticated) {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => const CloudPacksPage(),
+                                    ),
+                                  );
+                                } else {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => const LoginPage(),
+                                    ),
+                                  ).then((loggedIn) {
+                                    if (loggedIn == true && context.mounted) {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => const CloudPacksPage(),
+                                        ),
+                                      );
+                                    }
+                                  });
+                                }
+                              },
+                            ),
                           ),
-                          tooltip: 'Create New Pack',
-                          onPressed: () => _showCreatePackDialog(context),
-                        ),
+                          const SizedBox(width: 8),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: MewmerTheme.cardSurface,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: MewmerTheme.border),
+                            ),
+                            child: IconButton(
+                              icon: const Icon(
+                                Icons.create_new_folder_outlined,
+                                color: MewmerTheme.brandViolet,
+                                size: 20,
+                              ),
+                              tooltip: 'Create New Pack',
+                              onPressed: () => _showCreatePackDialog(context),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
