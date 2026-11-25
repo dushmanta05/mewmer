@@ -61,6 +61,7 @@ func (h *Handler) CreatePack(w http.ResponseWriter, r *http.Request) {
 	}
 
 	visibility := normalizeVisibility(r.FormValue("visibility"))
+	tags := parseTags(r.FormValue("tags"))
 
 	file, _, err := r.FormFile("tray")
 	if err != nil {
@@ -96,6 +97,7 @@ func (h *Handler) CreatePack(w http.ResponseWriter, r *http.Request) {
 		Publisher:    fmt.Sprintf("%s · mewmer.com", user.DisplayName),
 		TrayImageKey: key,
 		Visibility:   visibility,
+		Tags:         tags,
 		UserID:       user.ID,
 	}
 

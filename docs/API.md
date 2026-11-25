@@ -98,7 +98,7 @@ curl "http://localhost:3030/api/v1/me/packs?q=my+pack&page=1&limit=10" \
   -H "Authorization: Bearer <token>"
 ```
 
-- `q` — optional title search (case-insensitive).
+- `q` — optional search across title and tags (case-insensitive).
 - `page` — defaults to `1`.
 - `limit` — defaults to `10`, maximum `50`.
 
@@ -119,11 +119,13 @@ curl -X POST http://localhost:3030/api/v1/packs \
   -H "Authorization: Bearer <token>" \
   -F "title=My Pack" \
   -F "visibility=private" \
+  -F "tags=meme,funny,reactions" \
   -F "tray=@tray-96x96.png"
 ```
 
-`visibility` is optional and defaults to `private` (`private`, `unlisted`, `public`).
-The tray icon must be a 96×96 PNG or WebP under 50 KB.
+- `visibility` is optional and defaults to `private` (`private`, `unlisted`, `public`).
+- `tags` is optional; supply comma-separated values.
+- The tray icon must be a 96×96 PNG or WebP under 50 KB.
 
 ### Get a pack with stickers
 

@@ -31,23 +31,31 @@ CREATE TABLE stickers (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-INSERT INTO sticker_packs (id, title, publisher, tray_image_key, is_animated, visibility, user_id, downloads_count, created_at, updated_at)
-SELECT
-    id,
-    title,
-    publisher,
-    CASE
-        WHEN tray_image_url IS NULL OR tray_image_url = '' THEN 'legacy'
-        ELSE split_part(tray_image_url, '/', array_length(string_to_array(tray_image_url, '/'), 1))
-    END AS tray_image_key,
-    COALESCE(is_animated, FALSE),
-    'private',
-    user_id,
-    COALESCE(downloads_count, 0),
-    COALESCE(created_at, NOW()),
-    COALESCE(updated_at, NOW())
-FROM sticker_packs_old
-WHERE user_id IS NOT NULL;
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'sticker_packs_old' AND column_name = 'tray_image_url'
+    ) THEN
+        INSERT INTO sticker_packs (id, title, publisher, tray_image_key, is_animated, visibility, user_id, downloads_count, created_at, updated_at)
+        SELECT
+            id,
+            title,
+            publisher,
+            CASE
+                WHEN tray_image_url IS NULL OR tray_image_url = '' THEN 'legacy'
+                ELSE split_part(tray_image_url, '/', array_length(string_to_array(tray_image_url, '/'), 1))
+            END AS tray_image_key,
+            COALESCE(is_animated, FALSE),
+            'private',
+            user_id,
+            COALESCE(downloads_count, 0),
+            COALESCE(created_at, NOW()),
+            COALESCE(updated_at, NOW())
+        FROM sticker_packs_old
+        WHERE user_id IS NOT NULL;
+    END IF;
+END $$;
 
 DROP TABLE IF EXISTS stickers_old;
 DROP TABLE IF EXISTS sticker_packs_old;

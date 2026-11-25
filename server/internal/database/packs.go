@@ -14,14 +14,14 @@ func (db *DB) CreatePack(ctx context.Context, p *models.StickerPack) error {
 	}
 
 	query := `
-		INSERT INTO sticker_packs (id, title, publisher, tray_image_key, is_animated, visibility, user_id)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		INSERT INTO sticker_packs (id, title, publisher, tray_image_key, is_animated, visibility, tags, user_id)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		RETURNING created_at, updated_at
 	`
 	return db.Pool.QueryRow(
 		ctx,
 		query,
-		p.ID, p.Title, p.Publisher, p.TrayImageKey, p.IsAnimated, p.Visibility, p.UserID,
+		p.ID, p.Title, p.Publisher, p.TrayImageKey, p.IsAnimated, p.Visibility, p.Tags, p.UserID,
 	).Scan(&p.CreatedAt, &p.UpdatedAt)
 }
 
@@ -33,7 +33,8 @@ func (db *DB) CountPacksByUser(ctx context.Context, userID, search string) (int,
 	query := `
 		SELECT COUNT(*)
 		FROM sticker_packs
-		WHERE user_id = $1 AND title ILIKE $2
+		WHERE user_id = $1
+		  AND (title ILIKE $2 OR EXISTS (SELECT 1 FROM unnest(tags) t WHERE t ILIKE $2))
 	`
 	var total int
 	err := db.Pool.QueryRow(ctx, query, userID, "%"+search+"%").Scan(&total)
@@ -46,9 +47,10 @@ func (db *DB) GetPacksByUser(ctx context.Context, userID, search string, limit, 
 	}
 
 	query := `
-		SELECT id, title, publisher, tray_image_key, is_animated, visibility, user_id, downloads_count, created_at, updated_at
+		SELECT id, title, publisher, tray_image_key, is_animated, visibility, tags, user_id, downloads_count, created_at, updated_at
 		FROM sticker_packs
-		WHERE user_id = $1 AND title ILIKE $2
+		WHERE user_id = $1
+		  AND (title ILIKE $2 OR EXISTS (SELECT 1 FROM unnest(tags) t WHERE t ILIKE $2))
 		ORDER BY created_at DESC
 		LIMIT $3 OFFSET $4
 	`
@@ -62,7 +64,7 @@ func (db *DB) GetPacksByUser(ctx context.Context, userID, search string, limit, 
 	for rows.Next() {
 		var p models.StickerPack
 		if err := rows.Scan(
-			&p.ID, &p.Title, &p.Publisher, &p.TrayImageKey, &p.IsAnimated, &p.Visibility,
+			&p.ID, &p.Title, &p.Publisher, &p.TrayImageKey, &p.IsAnimated, &p.Visibility, &p.Tags,
 			&p.UserID, &p.DownloadsCount, &p.CreatedAt, &p.UpdatedAt,
 		); err != nil {
 			return nil, err
@@ -78,13 +80,13 @@ func (db *DB) GetPackByIDWithStickers(ctx context.Context, packID, userID string
 	}
 
 	query := `
-		SELECT id, title, publisher, tray_image_key, is_animated, visibility, user_id, downloads_count, created_at, updated_at
+		SELECT id, title, publisher, tray_image_key, is_animated, visibility, tags, user_id, downloads_count, created_at, updated_at
 		FROM sticker_packs
 		WHERE id = $1 AND user_id = $2
 	`
 	var p models.StickerPack
 	err := db.Pool.QueryRow(ctx, query, packID, userID).Scan(
-		&p.ID, &p.Title, &p.Publisher, &p.TrayImageKey, &p.IsAnimated, &p.Visibility,
+		&p.ID, &p.Title, &p.Publisher, &p.TrayImageKey, &p.IsAnimated, &p.Visibility, &p.Tags,
 		&p.UserID, &p.DownloadsCount, &p.CreatedAt, &p.UpdatedAt,
 	)
 	if err != nil {
@@ -225,7 +227,7 @@ func (db *DB) GetStickerByID(ctx context.Context, stickerID, userID string) (*mo
 func scanPack(row pgx.Row) (*models.StickerPack, error) {
 	var p models.StickerPack
 	err := row.Scan(
-		&p.ID, &p.Title, &p.Publisher, &p.TrayImageKey, &p.IsAnimated, &p.Visibility,
+		&p.ID, &p.Title, &p.Publisher, &p.TrayImageKey, &p.IsAnimated, &p.Visibility, &p.Tags,
 		&p.UserID, &p.DownloadsCount, &p.CreatedAt, &p.UpdatedAt,
 	)
 	if err != nil {

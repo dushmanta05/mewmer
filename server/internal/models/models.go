@@ -40,6 +40,7 @@ type StickerPack struct {
 	TrayImageKey   string    `json:"trayImageKey"`
 	IsAnimated     bool      `json:"isAnimated"`
 	Visibility     string    `json:"visibility"`
+	Tags           []string  `json:"tags"`
 	UserID         string    `json:"userId"`
 	DownloadsCount int       `json:"downloadsCount"`
 	CreatedAt      time.Time `json:"createdAt"`

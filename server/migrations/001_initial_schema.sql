@@ -39,8 +39,17 @@ CREATE TABLE IF NOT EXISTS stickers (
 );
 
 -- Indexes for lightning fast queries and search
-CREATE INDEX IF NOT EXISTS idx_sticker_packs_public ON sticker_packs(is_public);
-CREATE INDEX IF NOT EXISTS idx_sticker_packs_downloads ON sticker_packs(downloads_count DESC);
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'sticker_packs' AND column_name = 'is_public'
+    ) THEN
+        CREATE INDEX IF NOT EXISTS idx_sticker_packs_public ON sticker_packs(is_public);
+        CREATE INDEX IF NOT EXISTS idx_sticker_packs_downloads ON sticker_packs(downloads_count DESC);
+    END IF;
+END $$;
+
 CREATE INDEX IF NOT EXISTS idx_stickers_pack_id ON stickers(pack_id);
 
 -- Full-text fuzzy search indexes
