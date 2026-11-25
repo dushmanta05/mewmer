@@ -54,7 +54,7 @@ Mewmer (`mewmer.com`) is an open-source, privacy-first web and mobile platform f
 | :--- | :--- | :--- |
 | **Web Frontend** | Astro 5 + Svelte 5 + Tailwind CSS | Islands architecture, zero-JS page shells, 100/100 Core Web Vitals, SSR/SSG. |
 | **Package Manager** | `pnpm` | Mandatory package manager across all frontend tooling. |
-| **Backend** | Go (Golang 1.23+) | Chi v5 router, PGX v5 connection pool, native bounded Goroutine worker pool. |
+| **Backend** | Go (Golang 1.24+) | Chi v5 router, PGX v5 connection pool, native bounded Goroutine worker pool. |
 | **Media Storage** | Cloudflare R2 | Public bucket for templates/public memes; private bucket for stickers/packs. |
 | **Media Processing**| Browser Canvas + Native FFmpeg | Static stickers generated client-side; animated GIF/video transcoding handled by Go FFmpeg worker pool. |
 | **Database** | PostgreSQL 17 | Relational database with `uuid-ossp` and `pg_trgm` extensions for fast trigram search. |

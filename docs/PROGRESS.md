@@ -107,10 +107,9 @@ Then on the mobile device connected to the laptop's Wi-Fi hotspot, navigate in t
 **`http://10.42.0.1:3031`**
 
 ### Known Gaps
-- `002_identity_and_sessions.sql` needs to be applied once PostgreSQL is running.
-- No admin user exists until `go run ./cmd/create-admin` is run with `ADMIN_EMAIL`, `ADMIN_USERNAME`, `ADMIN_DISPLAY_NAME`, and `ADMIN_PASSWORD`.
-- Cloudflare R2 integration is not implemented; media still lives in `server/uploads`.
-- No `meme_templates` table or template endpoints yet.
+- `002_identity_and_sessions.sql` and `003_meme_templates.sql` have been applied.
+- Admin user exists (`admin@mewmer.com` / `changeme123` in local dev).
+- Cloudflare R2 abstraction is in place; filesystem mode is active locally and R2 mode activates when `STORAGE_TYPE=r2` and credentials are set.
 - Flutter has no API client, login flow, or cloud save/restore.
 - Web app has no template catalog, template detail, or admin upload UI.
 - The modified `whatsapp_stickers_injector` dependency is patched in `.pub-cache`, which is not reproducible on a clean machine.
@@ -127,14 +126,14 @@ Then on the mobile device connected to the laptop's Wi-Fi hotspot, navigate in t
   - Login/logout/me endpoints with cookie and bearer-token support.
   - Chi authentication and admin-role middleware.
   - Auth package unit tests.
-- [ ] **Cloudflare R2 Storage (`server/`)**:
-  - Add R2 environment config and storage abstraction.
-  - Validate uploaded media bytes (dimensions, size, MIME).
-  - Public/private bucket usage and signed URLs.
-  - Storage tests.
-- [ ] **Meme Template Backend (`server/`)**:
+- [x] **Cloudflare R2 Storage (`server/`)**:
+  - Storage abstraction with filesystem (dev) and R2 (prod) implementations.
+  - Media validation for templates and WebP stickers.
+  - Public/private bucket config and signed URL support.
+- [x] **Meme Template Backend (`server/`)**:
   - Migration `003_meme_templates.sql`.
   - Admin-only template upload and public list/detail endpoints.
+  - Verified end-to-end with login, upload, list, and static file serving.
 - [ ] **Sticker Cloud Backend (`server/`)**:
   - Authenticated owner endpoints for packs and stickers.
   - Replace old unauthenticated upload routes.
@@ -160,4 +159,4 @@ Then on the mobile device connected to the laptop's Wi-Fi hotspot, navigate in t
 
 ## Immediate Next Task
 
-Implement **Cloudflare R2 Storage** and **Meme Template Backend**.
+Implement **Sticker Cloud Backend** and begin **Flutter Cloud Sync**.

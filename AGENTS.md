@@ -37,7 +37,7 @@ Prefer a clearer name or a smaller function over a comment explaining a murky on
   - **Animated stickers (GIF/Video)**: Offload conversion to the Go backend FFmpeg worker pool or process in Flutter mobile app.
 
 ### Backend (Go + Chi + PGX):
-- Go 1.23+ with standard library and minimal dependencies (`go-chi/chi/v5`, `jackc/pgx/v5`, plus the AWS SDK only for R2 S3-compatible operations).
+- Go 1.24+ with standard library and minimal dependencies (`go-chi/chi/v5`, `jackc/pgx/v5`, `golang.org/x/image/webp`, plus the AWS SDK only for R2 S3-compatible operations).
 - CPU-intensive tasks (FFmpeg) **must** run through the bounded worker pool (`internal/processor/processor.go`) to prevent VPS overload. Never execute FFmpeg synchronously inside an HTTP request handler.
 - Local database: PostgreSQL 17 (`mewmer`).
 - Migrations in `server/migrations/`.
