@@ -108,9 +108,7 @@ Then on the mobile device connected to the laptop's Wi-Fi hotspot, navigate in t
 
 ### Known Gaps
 - Backend core (auth, templates, sticker cloud) is implemented and verified.
-- Flutter has no API client, login flow, or cloud save/restore.
 - Web app has no template catalog, template detail, or admin upload UI.
-- The modified `whatsapp_stickers_injector` dependency is patched in `.pub-cache`, which is not reproducible on a clean machine.
 
 ---
 
@@ -136,9 +134,10 @@ Then on the mobile device connected to the laptop's Wi-Fi hotspot, navigate in t
   - Authenticated owner endpoints for packs and stickers.
   - Replaced old unauthenticated upload routes.
   - Verified end-to-end with pack creation, sticker upload, list, and retrieval.
-- [ ] **Flutter Cloud Sync (`app/`)**:
-  - API client, secure session store, login screen, cloud save/restore.
-  - *Assigned to a separate agent.*
+- [x] **Flutter Cloud Sync (`app/`)**:
+  - Vendored `whatsapp_stickers_injector` under `app/packages/whatsapp_stickers_injector` as a path dependency.
+  - Added `MewmerApiClient`, `SecureSessionStore` (`flutter_secure_storage`), `MediaCacheService`, and `CloudProvider`.
+  - Added `LoginPage`, `CloudPacksPage` (pull-to-refresh), `CloudPackDetailsPage` (local media download/caching, delete pack/sticker, WhatsApp injection from downloaded local files), and explicit "Cloud" save flow in `MemeEditorPage`.
 - [ ] **Web Template Flow (`frontend/`)**:
   - Admin login, template upload, public catalog/detail pages, studio preloading.
 
