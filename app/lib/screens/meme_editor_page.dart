@@ -110,19 +110,13 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      const CatLogoMark(size: 30),
-                      const SizedBox(width: 10),
-                      Text(
-                        'Keyboard GIF / Sticker',
-                        style: GoogleFonts.spaceGrotesk(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: MewmerTheme.textPrimary,
-                        ),
-                      ),
-                    ],
+                  const Text(
+                    'Keyboard GIF',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w500,
+                      color: MewmerTheme.textPrimary,
+                    ),
                   ),
                   IconButton(
                     icon: const Icon(Icons.close, color: MewmerTheme.muted),
@@ -130,42 +124,20 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: MewmerTheme.brandViolet.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: MewmerTheme.brandViolet.withValues(alpha: 0.25),
-                  ),
-                ),
-                child: const Row(
-                  children: [
-                    Icon(
-                      Icons.tips_and_updates_outlined,
-                      size: 20,
-                      color: MewmerTheme.brandViolet,
-                    ),
-                    SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'Open your keyboard\'s GIF or Sticker tab (Gboard, Samsung, SwiftKey) and tap any animation.',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: MewmerTheme.textPrimary,
-                        ),
-                      ),
-                    ),
-                  ],
+              const SizedBox(height: 8),
+              const Text(
+                'Open your keyboard\'s GIF tab and tap any animation.',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: MewmerTheme.textMuted,
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 14),
               TextField(
                 autofocus: true,
                 style: const TextStyle(color: MewmerTheme.textPrimary),
                 decoration: const InputDecoration(
-                  hintText: 'Tap here, then select a keyboard GIF...',
+                  hintText: 'Choose a GIF',
                   prefixIcon: Icon(Icons.gif_box_rounded, color: MewmerTheme.brandViolet),
                 ),
                 contentInsertionConfiguration: ContentInsertionConfiguration(

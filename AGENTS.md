@@ -121,7 +121,7 @@ grep -rn "/\*" frontend/src/ || echo "No block comments found"
 
 ## 6. Git & Commits
 
-- **Commit Often with Meaningful Changes**: Never accumulate large, monolithic batches of changes. Commit each distinct, verified, and functional change as soon as it is completed and passes verification checks. Frequent, atomic commits ensure a granular history, straightforward rollbacks, and safe progress tracking.
+- **Commit as Often as Possible with Meaningful Changes**: Never accumulate large, monolithic batches of changes. Commit as often as possible—immediately after every distinct, verified sub-task, component, bug fix, or UI tweak passes checks, rather than waiting until a whole feature or session finishes. Frequent, atomic commits ensure a granular history, straightforward rollbacks, and safe progress tracking.
 - **One Distinct Change Per Commit**: Keep each commit focused on a single logical change or feature component.
 - **Conventional Commits**: Format commit messages as `type(scope): subject` or `type: subject`, using `feat`, `fix`, `perf`, `refactor`, `docs`, `style`, `test`, or `chore`.
 - **Concise Subject Line**: Keep the subject concise, in all lowercase, and without a trailing period.

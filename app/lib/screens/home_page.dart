@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -7,10 +8,10 @@ import 'package:provider/provider.dart';
 import 'package:whatsapp_stickers_injector/whatsapp_stickers.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:image/image.dart' as img;
-import 'cloud_packs_page.dart';
 import 'login_page.dart';
 import 'meme_editor_page.dart';
 import 'pack_details_page.dart';
+import 'profile_page.dart';
 import '../models/cloud_provider.dart';
 import '../models/sticker_provider.dart';
 import '../widgets/cat_branding.dart';
@@ -63,158 +64,165 @@ class _HomePageState extends State<HomePage> {
 
     showDialog(
       context: context,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Create Sticker Pack'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TextField(
-                  controller: controller,
-                  decoration: const InputDecoration(
-                    labelText: 'Pack Name',
-                    hintText: 'e.g. My Favorite Cats',
-                    border: OutlineInputBorder(),
+      barrierColor: Colors.black.withValues(alpha: 0.55),
+      builder: (dialogContext) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        child: StatefulBuilder(
+          builder: (context, setDialogState) => AlertDialog(
+            title: const Text(
+              'Create Sticker Pack',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(
+                    controller: controller,
+                    decoration: const InputDecoration(
+                      labelText: 'Pack Name',
+                      hintText: 'Mewmer Cat',
+                      border: OutlineInputBorder(),
+                    ),
+                    autofocus: true,
                   ),
-                  autofocus: true,
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Sticker Pack Type:',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                    color: MewmerTheme.textPrimary,
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Pack Type',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                      color: MewmerTheme.textPrimary,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () => setDialogState(() => isAnimated = false),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-                          decoration: BoxDecoration(
-                            color: !isAnimated
-                                ? MewmerTheme.whatsappGreen.withValues(alpha: 0.2)
-                                : MewmerTheme.cardSurface,
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => setDialogState(() => isAnimated = false),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                            decoration: BoxDecoration(
                               color: !isAnimated
-                                  ? MewmerTheme.whatsappGreen
-                                  : MewmerTheme.border,
-                              width: !isAnimated ? 1.5 : 1,
-                            ),
-                          ),
-                          child: Column(
-                            children: [
-                              Icon(
-                                Icons.photo_library_outlined,
-                                size: 22,
+                                  ? MewmerTheme.whatsappGreen.withValues(alpha: 0.2)
+                                  : MewmerTheme.cardSurface,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
                                 color: !isAnimated
                                     ? MewmerTheme.whatsappGreen
-                                    : MewmerTheme.textMuted,
+                                    : MewmerTheme.border,
+                                width: !isAnimated ? 1.5 : 1,
                               ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Static (Photos)',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
+                            ),
+                            child: Column(
+                              children: [
+                                Icon(
+                                  Icons.photo_library_outlined,
+                                  size: 22,
                                   color: !isAnimated
                                       ? MewmerTheme.whatsappGreen
                                       : MewmerTheme.textMuted,
                                 ),
-                              ),
-                            ],
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Static',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: !isAnimated
+                                        ? MewmerTheme.whatsappGreen
+                                        : MewmerTheme.textMuted,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () => setDialogState(() => isAnimated = true),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-                          decoration: BoxDecoration(
-                            color: isAnimated
-                                ? MewmerTheme.brandViolet.withValues(alpha: 0.2)
-                                : MewmerTheme.cardSurface,
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => setDialogState(() => isAnimated = true),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                            decoration: BoxDecoration(
                               color: isAnimated
-                                  ? MewmerTheme.brandViolet
-                                  : MewmerTheme.border,
-                              width: isAnimated ? 1.5 : 1,
-                            ),
-                          ),
-                          child: Column(
-                            children: [
-                              Icon(
-                                Icons.animation,
-                                size: 22,
+                                  ? MewmerTheme.brandViolet.withValues(alpha: 0.2)
+                                  : MewmerTheme.cardSurface,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
                                 color: isAnimated
                                     ? MewmerTheme.brandViolet
-                                    : MewmerTheme.textMuted,
+                                    : MewmerTheme.border,
+                                width: isAnimated ? 1.5 : 1,
                               ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Animated (GIFs)',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
+                            ),
+                            child: Column(
+                              children: [
+                                Icon(
+                                  Icons.animation,
+                                  size: 22,
                                   color: isAnimated
                                       ? MewmerTheme.brandViolet
                                       : MewmerTheme.textMuted,
                                 ),
-                              ),
-                            ],
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Animated',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: isAnimated
+                                        ? MewmerTheme.brandViolet
+                                        : MewmerTheme.textMuted,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  'WhatsApp strictly requires packs to be either 100% static or 100% animated.',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: MewmerTheme.textMuted.withValues(alpha: 0.8),
+                    ],
                   ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cancel', style: TextStyle(color: MewmerTheme.textMuted)),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                final name = controller.text.trim();
-                if (name.isNotEmpty) {
-                  await provider.createPack(name, isAnimated: isAnimated);
-                  if (!context.mounted) return;
-                  Navigator.pop(dialogContext);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('${isAnimated ? "Animated" : "Static"} pack "$name" created!'),
-                      backgroundColor: MewmerTheme.whatsappGreen,
+                  const SizedBox(height: 10),
+                  Text(
+                    'Packs must be all static or all animated.',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: MewmerTheme.textMuted.withValues(alpha: 0.8),
                     ),
-                  );
-                }
-              },
-              child: const Text('Create'),
+                  ),
+                ],
+              ),
             ),
-          ],
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: const Text('Cancel', style: TextStyle(color: MewmerTheme.textMuted)),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  final name = controller.text.trim();
+                  if (name.isNotEmpty) {
+                    await provider.createPack(name, isAnimated: isAnimated);
+                    if (!context.mounted) return;
+                    Navigator.pop(dialogContext);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('${isAnimated ? "Animated" : "Static"} pack "$name" created!'),
+                        backgroundColor: MewmerTheme.whatsappGreen,
+                      ),
+                    );
+                  }
+                },
+                child: const Text('Create'),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -343,6 +351,51 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  void _showNotLoggedInModal(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.55),
+      builder: (dialogContext) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        child: AlertDialog(
+          title: const Text(
+            'Not Signed In',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+          ),
+          content: const Text(
+            'Sign in to sync your sticker packs to the cloud, or open Settings to configure the server.',
+            style: TextStyle(fontSize: 13, color: MewmerTheme.textMuted),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ProfilePage()),
+                );
+              },
+              child: const Text(
+                'Settings',
+                style: TextStyle(color: MewmerTheme.textMuted),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const LoginPage()),
+                );
+              },
+              child: const Text('Sign In'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final stickerProvider = context.watch<StickerProvider>();
@@ -366,73 +419,36 @@ class _HomePageState extends State<HomePage> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const MewmerBrandHeader(iconSize: 36, fontSize: 24),
-                      Row(
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              color: MewmerTheme.cardSurface,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: MewmerTheme.border),
-                            ),
-                            child: IconButton(
-                              icon: Icon(
-                                cloudProvider.isAuthenticated
-                                    ? Icons.cloud_done_outlined
-                                    : Icons.cloud_outlined,
-                                color: cloudProvider.isAuthenticated
-                                    ? MewmerTheme.whatsappGreen
-                                    : MewmerTheme.textMuted,
-                                size: 20,
-                              ),
-                              tooltip: cloudProvider.isAuthenticated
-                                  ? 'My Cloud Packs'
-                                  : 'Cloud Sign In',
-                              onPressed: () {
-                                if (cloudProvider.isAuthenticated) {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => const CloudPacksPage(),
-                                    ),
-                                  );
-                                } else {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => const LoginPage(),
-                                    ),
-                                  ).then((loggedIn) {
-                                    if (loggedIn == true && context.mounted) {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (_) => const CloudPacksPage(),
-                                        ),
-                                      );
-                                    }
-                                  });
-                                }
-                              },
-                            ),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: MewmerTheme.cardSurface,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: MewmerTheme.border),
+                        ),
+                        child: IconButton(
+                          icon: Icon(
+                            cloudProvider.isAuthenticated
+                                ? Icons.person_rounded
+                                : Icons.person_outline_rounded,
+                            color: cloudProvider.isAuthenticated
+                                ? MewmerTheme.whatsappGreen
+                                : MewmerTheme.textPrimary,
+                            size: 20,
                           ),
-                          const SizedBox(width: 8),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: MewmerTheme.cardSurface,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: MewmerTheme.border),
-                            ),
-                            child: IconButton(
-                              icon: const Icon(
-                                Icons.create_new_folder_outlined,
-                                color: MewmerTheme.brandViolet,
-                                size: 20,
-                              ),
-                              tooltip: 'Create New Pack',
-                              onPressed: () => _showCreatePackDialog(context),
-                            ),
-                          ),
-                        ],
+                          tooltip: 'Account & Settings',
+                          onPressed: () {
+                            if (cloudProvider.isAuthenticated) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const ProfilePage(),
+                                ),
+                              );
+                            } else {
+                              _showNotLoggedInModal(context);
+                            }
+                          },
+                        ),
                       ),
                     ],
                   ),
@@ -761,8 +777,8 @@ class _HomePageState extends State<HomePage> {
                                     ),
                                   ),
                                   const SizedBox(height: 18),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.stretch,
                                     children: [
                                       ElevatedButton.icon(
                                         onPressed: isBusy
@@ -789,7 +805,7 @@ class _HomePageState extends State<HomePage> {
                                           ),
                                         ),
                                       ),
-                                      const SizedBox(width: 8),
+                                      const SizedBox(height: 10),
                                       OutlinedButton.icon(
                                         onPressed: isBusy ? null : _pickImage,
                                         icon: const Icon(Icons.photo_library_outlined, size: 18, color: MewmerTheme.textPrimary),
