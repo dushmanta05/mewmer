@@ -3,10 +3,10 @@
   "private": true,
   "scripts": {
     "dev": "bash scripts/dev.sh",
-    "dev:backend": "cd server && PORT=3030 go run main.go",
+    "dev:backend": "cd server && if [ -f .env ]; then set -a && . ./.env && set +a; fi && PORT=3030 go run main.go",
     "dev:frontend": "cd frontend && pnpm dev",
     "build:frontend": "cd frontend && pnpm build",
-    "build:backend": "cd server && go build -o mewmer-server .",
+    "build:backend": "cd server && if [ -f .env ]; then set -a && . ./.env && set +a; fi && go build -o mewmer-server .",
     "check": "pnpm check:frontend && pnpm check:backend",
     "check:frontend": "cd frontend && pnpm check && pnpm build",
     "check:backend": "cd server && gofmt -l . && go test ./... && go vet ./... && go build -o /dev/null .",

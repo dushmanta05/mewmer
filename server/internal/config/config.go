@@ -10,6 +10,7 @@ type Config struct {
 	Port             string
 	DatabaseURL      string
 	StorageDir       string
+	StorageType      string
 	MaxWorkers       int
 	CORSOrigin       string
 	SessionTTL       time.Duration
@@ -27,6 +28,7 @@ func Load() *Config {
 	port := getEnv("PORT", "3030")
 	dbURL := getEnv("DATABASE_URL", "postgres://dushmanta:password@localhost:5432/mewmer?sslmode=disable")
 	storageDir := getEnv("STORAGE_DIR", "./uploads")
+	storageType := getEnv("STORAGE_TYPE", "filesystem")
 	corsOrigin := getEnv("CORS_ORIGIN", "*")
 
 	maxWorkers := 2
@@ -52,6 +54,7 @@ func Load() *Config {
 		Port:             port,
 		DatabaseURL:      dbURL,
 		StorageDir:       storageDir,
+		StorageType:      storageType,
 		MaxWorkers:       maxWorkers,
 		CORSOrigin:       corsOrigin,
 		SessionTTL:       sessionTTL,
@@ -60,8 +63,8 @@ func Load() *Config {
 		R2AccountID:      os.Getenv("R2_ACCOUNT_ID"),
 		R2AccessKey:      os.Getenv("R2_ACCESS_KEY_ID"),
 		R2SecretKey:      os.Getenv("R2_SECRET_ACCESS_KEY"),
-		R2PublicBucket:   getEnv("R2_PUBLIC_BUCKET", ""),
-		R2PrivateBucket:  getEnv("R2_PRIVATE_BUCKET", ""),
+		R2PublicBucket:   getEnv("R2_PUBLIC_BUCKET", "mewmer-public-media"),
+		R2PrivateBucket:  getEnv("R2_PRIVATE_BUCKET", "mewmer-private-media"),
 		R2PublicEndpoint: getEnv("R2_PUBLIC_ENDPOINT", ""),
 	}
 }

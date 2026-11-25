@@ -13,7 +13,15 @@ UPDATE users SET display_name = username WHERE display_name IS NULL;
 ALTER TABLE users
     ALTER COLUMN display_name SET NOT NULL;
 
-UPDATE users SET role = 'admin' WHERE is_admin = true;
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'users' AND column_name = 'is_admin'
+    ) THEN
+        UPDATE users SET role = 'admin' WHERE is_admin = true;
+    END IF;
+END $$;
 
 ALTER TABLE users
     DROP COLUMN IF EXISTS is_admin;

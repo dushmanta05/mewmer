@@ -15,6 +15,7 @@ import (
 	"github.com/dushmanta05/mewmer/server/internal/middleware"
 	"github.com/dushmanta05/mewmer/server/internal/models"
 	"github.com/dushmanta05/mewmer/server/internal/processor"
+	"github.com/dushmanta05/mewmer/server/internal/storage"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
@@ -23,13 +24,15 @@ type Handler struct {
 	cfg        *config.Config
 	db         *database.DB
 	workerPool *processor.WorkerPool
+	store      storage.Store
 }
 
-func New(cfg *config.Config, db *database.DB, wp *processor.WorkerPool) *Handler {
+func New(cfg *config.Config, db *database.DB, wp *processor.WorkerPool, store storage.Store) *Handler {
 	return &Handler{
 		cfg:        cfg,
 		db:         db,
 		workerPool: wp,
+		store:      store,
 	}
 }
 

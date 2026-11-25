@@ -15,6 +15,7 @@ import (
 	"github.com/dushmanta05/mewmer/server/internal/handlers"
 	appMiddleware "github.com/dushmanta05/mewmer/server/internal/middleware"
 	"github.com/dushmanta05/mewmer/server/internal/processor"
+	"github.com/dushmanta05/mewmer/server/internal/storage"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
@@ -37,7 +38,22 @@ func main() {
 	workerPool := processor.NewWorkerPool(cfg.MaxWorkers, 100)
 	workerPool.Start(ctx)
 
-	// 3. Router & Middleware
+	// 3. Initialize Object Storage
+	store, err := storage.New(ctx, &storage.Config{
+		Type:           cfg.StorageType,
+		StorageDir:     cfg.StorageDir,
+		PublicBucket:   cfg.R2PublicBucket,
+		PrivateBucket:  cfg.R2PrivateBucket,
+		PublicEndpoint: cfg.R2PublicEndpoint,
+		R2AccountID:    cfg.R2AccountID,
+		R2AccessKey:    cfg.R2AccessKey,
+		R2SecretKey:    cfg.R2SecretKey,
+	})
+	if err != nil {
+		log.Fatalf("Storage initialization error: %v", err)
+	}
+
+	// 4. Router & Middleware
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
@@ -58,7 +74,7 @@ func main() {
 
 	r.Use(appMiddleware.Auth(db))
 
-	h := handlers.New(cfg, db, workerPool)
+	h := handlers.New(cfg, db, workerPool, store)
 	authHandler := handlers.NewAuthHandler(db, cfg)
 
 	// API Routes
@@ -70,6 +86,10 @@ func main() {
 			r.With(appMiddleware.RequireAuth).Post("/logout", authHandler.Logout)
 			r.With(appMiddleware.RequireAuth).Get("/me", authHandler.Me)
 		})
+
+		r.With(appMiddleware.RequireAdmin).Post("/templates", h.CreateTemplate)
+		r.Get("/templates", h.ListTemplates)
+		r.Get("/templates/{slug}", h.GetTemplate)
 
 		r.Get("/packs", h.ListPacks)
 		r.Get("/packs/{id}", h.GetPack)
