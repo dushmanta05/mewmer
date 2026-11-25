@@ -23,10 +23,10 @@ class TextItem {
     this.scale = 1.0,
     this.rotation = 0.0,
     this.fontSize = 24.0,
-    this.isMemeStyle = false,
+    this.isMemeStyle = true,
     this.outlineWidth = 4.0,
     this.outlineColor = Colors.black,
-    this.useCaps = false,
+    this.useCaps = true,
     this.hasShadow = false,
   });
 }

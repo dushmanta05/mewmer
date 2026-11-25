@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -8,6 +9,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:image/image.dart' as img;
 import '../models/sticker_provider.dart';
 import '../theme.dart';
+import 'meme_editor_page.dart';
 
 class PackDetailsPage extends StatefulWidget {
   final String packIdentifier;
@@ -127,25 +129,34 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
   Future<void> _deleteSelectedStickers(StickerProvider provider) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Stickers'),
-        content: Text(
-          'Delete ${_selectedStickers.length} sticker(s) from this pack?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel', style: TextStyle(color: MewmerTheme.textMuted)),
+      barrierColor: Colors.black.withValues(alpha: 0.55),
+      builder: (context) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        child: AlertDialog(
+          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          title: const Text(
+            'Delete Stickers',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
           ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: MewmerTheme.rose,
-              foregroundColor: Colors.white,
+          content: Text(
+            'Delete ${_selectedStickers.length} sticker(s) from this pack?',
+            style: const TextStyle(fontSize: 13, color: MewmerTheme.textMuted),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel', style: TextStyle(color: MewmerTheme.textMuted)),
             ),
-            child: const Text('Delete'),
-          ),
-        ],
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: MewmerTheme.rose,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Delete'),
+            ),
+          ],
+        ),
       ),
     );
 
@@ -164,25 +175,34 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
   Future<void> _deletePack(StickerProvider provider) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Pack'),
-        content: const Text(
-          'Delete this entire pack? Sticker files will remain in your recent collection.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel', style: TextStyle(color: MewmerTheme.textMuted)),
+      barrierColor: Colors.black.withValues(alpha: 0.55),
+      builder: (context) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        child: AlertDialog(
+          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          title: const Text(
+            'Delete Pack',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
           ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: MewmerTheme.rose,
-              foregroundColor: Colors.white,
+          content: const Text(
+            'Delete this entire pack? Sticker files will remain in your recent collection.',
+            style: TextStyle(fontSize: 13, color: MewmerTheme.textMuted),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel', style: TextStyle(color: MewmerTheme.textMuted)),
             ),
-            child: const Text('Delete'),
-          ),
-        ],
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: MewmerTheme.rose,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Delete'),
+            ),
+          ],
+        ),
       ),
     );
 
@@ -231,11 +251,41 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
             : null,
         actions: [
           if (_isSelectionMode)
-            IconButton(
-              icon: const Icon(Icons.delete_outline, color: MewmerTheme.rose),
-              onPressed: () => _deleteSelectedStickers(stickerProvider),
+            Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: TextButton.icon(
+                onPressed: () => _deleteSelectedStickers(stickerProvider),
+                icon: const Icon(Icons.delete_outline_rounded, size: 17, color: MewmerTheme.rose),
+                label: const Text(
+                  'Delete',
+                  style: TextStyle(
+                    color: MewmerTheme.rose,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
+                ),
+                style: TextButton.styleFrom(
+                  backgroundColor: MewmerTheme.rose.withValues(alpha: 0.14),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+              ),
             )
           else ...[
+            IconButton(
+              icon: const Icon(Icons.add_circle_outline_rounded, color: MewmerTheme.brandViolet),
+              tooltip: 'Add Sticker',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => MemeEditorPage(initialPackId: pack.identifier),
+                  ),
+                );
+              },
+            ),
             IconButton(
               icon: const Icon(Icons.delete_forever_outlined, color: MewmerTheme.muted),
               tooltip: 'Delete Pack',

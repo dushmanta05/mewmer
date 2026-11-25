@@ -55,8 +55,12 @@ class _DraggableTextState extends State<DraggableText> {
           Text(
             displayText,
             textAlign: TextAlign.center,
-            style: baseStyle.copyWith(
-              color: null,
+            style: TextStyle(
+              fontFamily: baseStyle.fontFamily,
+              fontFamilyFallback: baseStyle.fontFamilyFallback,
+              fontSize: baseStyle.fontSize,
+              fontWeight: baseStyle.fontWeight,
+              letterSpacing: baseStyle.letterSpacing,
               foreground: Paint()
                 ..style = PaintingStyle.stroke
                 ..strokeWidth = widget.item.outlineWidth
@@ -68,18 +72,7 @@ class _DraggableTextState extends State<DraggableText> {
           Text(
             displayText,
             textAlign: TextAlign.center,
-            style: baseStyle.copyWith(
-              color: widget.item.color,
-              shadows: widget.item.hasShadow
-                  ? [
-                      Shadow(
-                        offset: const Offset(2.0, 2.0),
-                        blurRadius: 3.0,
-                        color: Colors.black.withValues(alpha: 0.6),
-                      ),
-                    ]
-                  : null,
-            ),
+            style: baseStyle.copyWith(color: widget.item.color),
           ),
         ],
       );

@@ -13,12 +13,12 @@ import '../models/text_item.dart';
 import '../models/sticker_provider.dart';
 import '../widgets/draggable_text.dart';
 import '../widgets/cat_branding.dart';
-import '../widgets/save_to_cloud_dialog.dart';
 import '../theme.dart';
 
 class MemeEditorPage extends StatefulWidget {
   final File? imageFile;
-  const MemeEditorPage({super.key, this.imageFile});
+  final String? initialPackId;
+  const MemeEditorPage({super.key, this.imageFile, this.initialPackId});
 
   @override
   State<MemeEditorPage> createState() => _MemeEditorPageState();
@@ -111,16 +111,32 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text(
-                    'Keyboard GIF',
+                    'GIF',
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: 16,
                       fontWeight: FontWeight.w500,
                       color: MewmerTheme.textPrimary,
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.close, color: MewmerTheme.muted),
+                  TextButton(
                     onPressed: () => Navigator.pop(bottomSheetContext),
+                    style: TextButton.styleFrom(
+                      backgroundColor: MewmerTheme.brandViolet.withValues(alpha: 0.14),
+                      foregroundColor: MewmerTheme.brandViolet,
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
+                    child: const Text(
+                      'Close',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -169,14 +185,20 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
     MewmerTheme.rose,
   ];
 
-  final List<TextStyle> _fonts = [GoogleFonts.poppins(), GoogleFonts.caveat()];
+  final List<TextStyle> _fonts = [
+    GoogleFonts.anton(),
+    GoogleFonts.poppins(),
+    GoogleFonts.caveat(),
+  ];
 
   void _addText() {
     final newItem = TextItem(
       text: 'mewmer.com',
       position: const Offset(100, 100),
       color: Colors.white,
-      fontStyle: _fonts[1],
+      fontStyle: _fonts[0],
+      isMemeStyle: true,
+      useCaps: true,
     );
     setState(() {
       _textItems.add(newItem);
@@ -280,7 +302,7 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
     if (_currentImageFile == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please add an image or keyboard GIF first!'),
+          content: Text('Please add an image or GIF first!'),
           backgroundColor: MewmerTheme.amber,
         ),
       );
@@ -451,19 +473,32 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
     final stickerProvider = context.read<StickerProvider>();
     final compatiblePacks = stickerProvider.packs.where((pack) => pack.isAnimated == null || pack.isAnimated == isAnimated).toList();
 
-    String? selectedPackId = compatiblePacks.isNotEmpty ? compatiblePacks.first.identifier : null;
+    final hasInitial = widget.initialPackId != null &&
+        compatiblePacks.any((p) => p.identifier == widget.initialPackId);
+    String? selectedPackId = hasInitial
+        ? widget.initialPackId
+        : (compatiblePacks.isNotEmpty ? compatiblePacks.first.identifier : null);
     final textController = TextEditingController();
     bool createNew = compatiblePacks.isEmpty;
 
     await showDialog(
       context: context,
       barrierDismissible: false,
+      barrierColor: Colors.black.withValues(alpha: 0.55),
       builder: (dialogContext) {
-        return StatefulBuilder(
-          builder: (dialogContext, setDialogState) {
-            return AlertDialog(
-              title: const Text('Save to Sticker Pack'),
-              content: SingleChildScrollView(
+        return BackdropFilter(
+          filter: ui.ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          child: StatefulBuilder(
+            builder: (dialogContext, setDialogState) {
+              return AlertDialog(
+                insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                title: const Text(
+                  'Save to Sticker Pack',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                ),
+                content: SizedBox(
+                  width: 360,
+                  child: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -545,7 +580,7 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
                       TextField(
                         controller: textController,
                         decoration: const InputDecoration(
-                          hintText: 'Enter pack name',
+                          hintText: 'Mewmer Cat',
                           border: OutlineInputBorder(),
                           contentPadding: EdgeInsets.symmetric(
                             horizontal: 12,
@@ -558,25 +593,11 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
                   ],
                 ),
               ),
+              ),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(dialogContext),
-                  child: const Text('Cancel'),
-                ),
-                OutlinedButton.icon(
-                  onPressed: () async {
-                    Navigator.pop(dialogContext);
-                    final uploaded = await showSaveToCloudFlow(
-                      context,
-                      stickerFile: File(tempStickerPath),
-                      isAnimated: isAnimated,
-                    );
-                    if (uploaded && mounted) {
-                      Navigator.pop(context);
-                    }
-                  },
-                  icon: const Icon(Icons.cloud_upload_outlined, size: 16),
-                  label: const Text('Cloud'),
+                  child: const Text('Cancel', style: TextStyle(color: MewmerTheme.textMuted)),
                 ),
                 ElevatedButton(
                   onPressed: () async {
@@ -643,7 +664,8 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
                 ),
               ],
             );
-          },
+            },
+          ),
         );
       },
     );
@@ -757,28 +779,12 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
-                  ElevatedButton.icon(
-                    onPressed: _showKeyboardGifModal,
-                    icon: const Icon(Icons.gif_box_rounded, size: 18),
-                    label: const Text('Keyboard GIF'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: MewmerTheme.brandViolet,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
                   OutlinedButton.icon(
-                    onPressed: _addText,
-                    icon: const Icon(Icons.title_rounded, size: 18, color: MewmerTheme.textPrimary),
-                    label: const Text('Add Text', style: TextStyle(color: MewmerTheme.textPrimary)),
+                    onPressed: _showKeyboardGifModal,
+                    icon: const Icon(Icons.gif_box_rounded, size: 18, color: MewmerTheme.textPrimary),
+                    label: const Text('GIF', style: TextStyle(color: MewmerTheme.textPrimary)),
                     style: OutlinedButton.styleFrom(
+                      backgroundColor: MewmerTheme.cardHover,
                       side: const BorderSide(color: MewmerTheme.border),
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                       shape: RoundedRectangleBorder(
@@ -790,7 +796,21 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
                   OutlinedButton.icon(
                     onPressed: _pickFromGallery,
                     icon: const Icon(Icons.photo_library_outlined, size: 18, color: MewmerTheme.textPrimary),
-                    label: const Text('Gallery', style: TextStyle(color: MewmerTheme.textPrimary)),
+                    label: const Text('Image', style: TextStyle(color: MewmerTheme.textPrimary)),
+                    style: OutlinedButton.styleFrom(
+                      backgroundColor: MewmerTheme.cardHover,
+                      side: const BorderSide(color: MewmerTheme.border),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  OutlinedButton.icon(
+                    onPressed: _addText,
+                    icon: const Icon(Icons.title_rounded, size: 18, color: MewmerTheme.textPrimary),
+                    label: const Text('Add Text', style: TextStyle(color: MewmerTheme.textPrimary)),
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: MewmerTheme.border),
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -883,7 +903,7 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
                           ),
                           const SizedBox(height: 4),
                           const Text(
-                            'Tap Keyboard GIF or Gallery below to start',
+                            'Tap GIF or Image below to start',
                             style: TextStyle(
                               fontSize: 12,
                               color: MewmerTheme.textMuted,
@@ -1040,7 +1060,6 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
                       _selectedItem!.isMemeStyle = val;
                       if (val) {
                         _selectedItem!.useCaps = true;
-                        _selectedItem!.hasShadow = true;
                         _selectedItem!.color = Colors.white;
                         _selectedItem!.outlineColor = Colors.black;
                       }
@@ -1054,16 +1073,6 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
                   onSelected: (val) {
                     setState(() {
                       _selectedItem!.useCaps = val;
-                    });
-                  },
-                ),
-                const SizedBox(width: 8),
-                ChoiceChip(
-                  label: const Text('Drop Shadow'),
-                  selected: _selectedItem!.hasShadow,
-                  onSelected: (val) {
-                    setState(() {
-                      _selectedItem!.hasShadow = val;
                     });
                   },
                 ),

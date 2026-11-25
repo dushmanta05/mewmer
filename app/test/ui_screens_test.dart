@@ -300,9 +300,9 @@ void main() {
 
       expect(find.text('Canvas Ready'), findsOneWidget);
       expect(find.text('Save'), findsOneWidget);
-      expect(find.text('Keyboard GIF'), findsOneWidget);
+      expect(find.text('GIF'), findsOneWidget);
       expect(find.text('Add Text'), findsOneWidget);
-      expect(find.text('Gallery'), findsOneWidget);
+      expect(find.text('Image'), findsOneWidget);
       expect(find.text('Transparent'), findsOneWidget);
 
       await tester.tap(find.text('Transparent'));

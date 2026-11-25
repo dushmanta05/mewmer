@@ -73,7 +73,7 @@ class _HomePageState extends State<HomePage> {
             insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
             title: const Text(
               'Create Sticker Pack',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
             ),
             content: SizedBox(
               width: 360,
@@ -366,7 +366,7 @@ class _HomePageState extends State<HomePage> {
           insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
           title: const Text(
             'Not Signed In',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
           ),
           content: const SizedBox(
             width: 360,
@@ -480,40 +480,17 @@ class _HomePageState extends State<HomePage> {
                                     color: MewmerTheme.textPrimary,
                                   ),
                                 ),
-                                Row(
-                                  children: [
-                                    if (packs.isNotEmpty)
-                                      TextButton(
-                                        onPressed: () {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (_) => const AllPacksPage(),
-                                            ),
-                                          );
-                                        },
-                                        child: const Text(
-                                          'View All',
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w600,
-                                            color: MewmerTheme.textMuted,
-                                          ),
-                                        ),
-                                      ),
-                                    TextButton.icon(
-                                      onPressed: () => _showCreatePackDialog(context),
-                                      icon: const Icon(Icons.add, size: 15, color: MewmerTheme.brandViolet),
-                                      label: const Text(
-                                        'Add Pack',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold,
-                                          color: MewmerTheme.brandViolet,
-                                        ),
-                                      ),
+                                TextButton.icon(
+                                  onPressed: () => _showCreatePackDialog(context),
+                                  icon: const Icon(Icons.add, size: 15, color: MewmerTheme.brandViolet),
+                                  label: const Text(
+                                    'Add Pack',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: MewmerTheme.brandViolet,
                                     ),
-                                  ],
+                                  ),
                                 ),
                               ],
                             ),
@@ -679,6 +656,38 @@ class _HomePageState extends State<HomePage> {
                                 }).toList(),
                               ),
                             ),
+                          if (packs.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 20),
+                              child: SizedBox(
+                                width: double.infinity,
+                                child: OutlinedButton(
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => const AllPacksPage(),
+                                      ),
+                                    );
+                                  },
+                                  style: OutlinedButton.styleFrom(
+                                    side: const BorderSide(color: MewmerTheme.border),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(14),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                  ),
+                                  child: const Text(
+                                    'View All',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: MewmerTheme.textPrimary,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
                           const SizedBox(height: 24),
 
                           if (recentStickers.isNotEmpty) ...[
@@ -695,7 +704,7 @@ class _HomePageState extends State<HomePage> {
                             ),
                             const SizedBox(height: 10),
                             SizedBox(
-                              height: 110,
+                              height: 104,
                               child: ListView.builder(
                                 scrollDirection: Axis.horizontal,
                                 padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -705,27 +714,44 @@ class _HomePageState extends State<HomePage> {
                                   final file = File(sticker.imagePath);
 
                                   return GestureDetector(
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => MemeEditorPage(imageFile: file),
+                                        ),
+                                      );
+                                    },
                                     onLongPress: () async {
                                       final confirm = await showDialog<bool>(
                                         context: context,
-                                        builder: (context) => AlertDialog(
-                                          title: const Text('Delete Sticker'),
-                                          content: const Text(
-                                            'Delete this sticker permanently from storage and all packs?',
-                                          ),
-                                          actions: [
-                                            TextButton(
-                                              onPressed: () => Navigator.pop(context, false),
-                                              child: const Text('Cancel', style: TextStyle(color: MewmerTheme.textMuted)),
+                                        barrierColor: Colors.black.withValues(alpha: 0.55),
+                                        builder: (context) => BackdropFilter(
+                                          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                                          child: AlertDialog(
+                                            insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                                            title: const Text(
+                                              'Delete Sticker',
+                                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                                             ),
-                                            ElevatedButton(
-                                              onPressed: () => Navigator.pop(context, true),
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: MewmerTheme.rose,
+                                            content: const Text(
+                                              'Delete this sticker permanently from storage and all packs?',
+                                              style: TextStyle(fontSize: 13, color: MewmerTheme.textMuted),
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () => Navigator.pop(context, false),
+                                                child: const Text('Cancel', style: TextStyle(color: MewmerTheme.textMuted)),
                                               ),
-                                              child: const Text('Delete'),
-                                            ),
-                                          ],
+                                              ElevatedButton(
+                                                onPressed: () => Navigator.pop(context, true),
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: MewmerTheme.rose,
+                                                ),
+                                                child: const Text('Delete'),
+                                              ),
+                                            ],
+                                          ),
                                         ),
                                       );
                                       if (confirm == true) {
@@ -734,14 +760,20 @@ class _HomePageState extends State<HomePage> {
                                     },
                                     child: Container(
                                       margin: const EdgeInsets.symmetric(horizontal: 5),
-                                      width: 95,
+                                      width: 96,
+                                      height: 96,
+                                      padding: const EdgeInsets.all(4),
                                       decoration: BoxDecoration(
+                                        color: MewmerTheme.cardSurface,
                                         borderRadius: BorderRadius.circular(14),
-                                        image: DecorationImage(
-                                          image: FileImage(file),
-                                          fit: BoxFit.cover,
-                                        ),
                                         border: Border.all(color: MewmerTheme.border),
+                                      ),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(10),
+                                        child: Image.file(
+                                          file,
+                                          fit: BoxFit.contain,
+                                        ),
                                       ),
                                     ),
                                   );
