@@ -85,6 +85,7 @@ class CloudPack {
   final String trayImageUrl;
   final bool isAnimated;
   final String visibility;
+  final List<String> tags;
   final String userId;
   final int downloadsCount;
   final DateTime createdAt;
@@ -97,6 +98,7 @@ class CloudPack {
     required this.trayImageUrl,
     required this.isAnimated,
     required this.visibility,
+    this.tags = const [],
     required this.userId,
     required this.downloadsCount,
     required this.createdAt,
@@ -112,6 +114,7 @@ class CloudPack {
     String? trayImageUrl,
     bool? isAnimated,
     String? visibility,
+    List<String>? tags,
     String? userId,
     int? downloadsCount,
     DateTime? createdAt,
@@ -124,6 +127,7 @@ class CloudPack {
       trayImageUrl: trayImageUrl ?? this.trayImageUrl,
       isAnimated: isAnimated ?? this.isAnimated,
       visibility: visibility ?? this.visibility,
+      tags: tags ?? this.tags,
       userId: userId ?? this.userId,
       downloadsCount: downloadsCount ?? this.downloadsCount,
       createdAt: createdAt ?? this.createdAt,
@@ -133,6 +137,7 @@ class CloudPack {
 
   factory CloudPack.fromJson(Map<String, dynamic> json) {
     final rawStickers = json['stickers'] as List<dynamic>? ?? const [];
+    final rawTags = json['tags'] as List<dynamic>? ?? const [];
     return CloudPack(
       id: json['id'] as String? ?? '',
       title: json['title'] as String? ?? '',
@@ -140,6 +145,7 @@ class CloudPack {
       trayImageUrl: json['trayImageKey'] as String? ?? '',
       isAnimated: json['isAnimated'] as bool? ?? false,
       visibility: json['visibility'] as String? ?? 'private',
+      tags: rawTags.map((t) => t.toString()).toList(),
       userId: json['userId'] as String? ?? '',
       downloadsCount: (json['downloadsCount'] as num?)?.toInt() ?? 0,
       createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '') ??
@@ -149,4 +155,18 @@ class CloudPack {
           .toList(),
     );
   }
+}
+
+class PaginatedCloudPacks {
+  final List<CloudPack> packs;
+  final int page;
+  final int limit;
+  final int total;
+
+  const PaginatedCloudPacks({
+    required this.packs,
+    required this.page,
+    required this.limit,
+    required this.total,
+  });
 }

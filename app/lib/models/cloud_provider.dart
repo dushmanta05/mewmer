@@ -18,6 +18,11 @@ class CloudProvider extends ChangeNotifier {
   final Map<String, CloudPack> _packDetails = {};
   bool _isLoading = false;
   bool _isSyncing = false;
+  bool _isLoadingMore = false;
+  int _currentPage = 1;
+  int _totalPacks = 0;
+  static const int _pageSize = 10;
+  String _searchQuery = '';
   String? _errorMessage;
 
   CloudProvider({
@@ -32,8 +37,12 @@ class CloudProvider extends ChangeNotifier {
   CloudUser? get user => _user;
   bool get isAuthenticated => _token != null && _token!.isNotEmpty && _user != null;
   List<CloudPack> get packs => List.unmodifiable(_packs);
+  int get totalPacks => _totalPacks;
+  bool get hasMorePacks => _packs.length < _totalPacks;
   bool get isLoading => _isLoading;
   bool get isSyncing => _isSyncing;
+  bool get isLoadingMore => _isLoadingMore;
+  String get searchQuery => _searchQuery;
   String? get errorMessage => _errorMessage;
   String get baseUrl => _apiClient.baseUrl;
 
@@ -124,22 +133,36 @@ class CloudProvider extends ChangeNotifier {
     _token = null;
     _user = null;
     _packs = [];
+    _totalPacks = 0;
+    _currentPage = 1;
+    _searchQuery = '';
     _packDetails.clear();
     await _sessionStore.clearSession();
   }
 
-  Future<void> refreshPacks() async {
+  Future<void> refreshPacks({String? query}) async {
     final token = _token;
     if (token == null || token.isEmpty) return;
+
+    if (query != null) {
+      _searchQuery = query.trim();
+    }
 
     _isSyncing = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      final fetched = await _apiClient.listMyPacks(token);
-      _packs = fetched;
-      for (final pack in fetched) {
+      final result = await _apiClient.listMyPacks(
+        token,
+        query: _searchQuery,
+        page: 1,
+        limit: _pageSize,
+      );
+      _packs = result.packs;
+      _currentPage = result.page;
+      _totalPacks = result.total;
+      for (final pack in result.packs) {
         await _downloadTrayIfPresent(pack);
       }
       notifyListeners();
@@ -151,6 +174,42 @@ class CloudProvider extends ChangeNotifier {
       rethrow;
     } finally {
       _isSyncing = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> loadMorePacks() async {
+    final token = _token;
+    if (token == null || token.isEmpty) return;
+    if (_isLoadingMore || _isSyncing || !hasMorePacks) return;
+
+    _isLoadingMore = true;
+    notifyListeners();
+
+    try {
+      final nextPage = _currentPage + 1;
+      final result = await _apiClient.listMyPacks(
+        token,
+        query: _searchQuery,
+        page: nextPage,
+        limit: _pageSize,
+      );
+      final existingIds = _packs.map((p) => p.id).toSet();
+      final newPacks =
+          result.packs.where((p) => !existingIds.contains(p.id)).toList();
+      _packs = [..._packs, ...newPacks];
+      _currentPage = result.page;
+      _totalPacks = result.total;
+      for (final pack in newPacks) {
+        await _downloadTrayIfPresent(pack);
+      }
+    } on ApiException catch (e) {
+      if (e.statusCode == 401) {
+        await _clearLocalAuth();
+      }
+      _errorMessage = e.message;
+    } finally {
+      _isLoadingMore = false;
       notifyListeners();
     }
   }
@@ -193,6 +252,7 @@ class CloudProvider extends ChangeNotifier {
   Future<CloudPack> createPack({
     required String title,
     required File trayFile,
+    List<String> tags = const [],
   }) async {
     final token = _token;
     if (token == null || token.isEmpty) {
@@ -204,8 +264,10 @@ class CloudProvider extends ChangeNotifier {
       title: title,
       trayFile: trayFile,
       visibility: 'private',
+      tags: tags,
     );
     _packs.insert(0, created);
+    _totalPacks += 1;
     _packDetails[created.id] = created;
     await _downloadTrayIfPresent(created);
     notifyListeners();

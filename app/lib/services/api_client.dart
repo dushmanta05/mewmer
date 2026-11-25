@@ -117,9 +117,22 @@ class MewmerApiClient {
     } catch (_) {}
   }
 
-  Future<List<CloudPack>> listMyPacks(String token) async {
+  Future<PaginatedCloudPacks> listMyPacks(
+    String token, {
+    String? query,
+    int page = 1,
+    int limit = 10,
+  }) async {
+    final params = <String, String>{
+      'page': page.toString(),
+      'limit': limit.toString(),
+    };
+    if (query != null && query.trim().isNotEmpty) {
+      params['q'] = query.trim();
+    }
+    final uri = Uri.parse('$baseUrl/me/packs').replace(queryParameters: params);
     final response = await _http.get(
-      Uri.parse('$baseUrl/me/packs'),
+      uri,
       headers: _authHeaders(token),
     );
     final body = _decodeJsonMap(response);
@@ -130,9 +143,15 @@ class MewmerApiClient {
       );
     }
     final rawList = body['packs'] as List<dynamic>? ?? const [];
-    return rawList
+    final packs = rawList
         .map((p) => CloudPack.fromJson(p as Map<String, dynamic>))
         .toList();
+    return PaginatedCloudPacks(
+      packs: packs,
+      page: (body['page'] as num?)?.toInt() ?? page,
+      limit: (body['limit'] as num?)?.toInt() ?? limit,
+      total: (body['total'] as num?)?.toInt() ?? packs.length,
+    );
   }
 
   Future<CloudPack> getPack(String token, String packId) async {
@@ -155,6 +174,7 @@ class MewmerApiClient {
     required String title,
     required File trayFile,
     String visibility = 'private',
+    List<String> tags = const [],
   }) async {
     final request = http.MultipartRequest(
       'POST',
@@ -163,6 +183,9 @@ class MewmerApiClient {
     request.headers.addAll(_authHeaders(token));
     request.fields['title'] = title.trim();
     request.fields['visibility'] = visibility;
+    if (tags.isNotEmpty) {
+      request.fields['tags'] = tags.join(',');
+    }
     request.files.add(
       await http.MultipartFile.fromPath('tray', trayFile.path),
     );

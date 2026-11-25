@@ -72,6 +72,7 @@ class _SaveToCloudDialogState extends State<_SaveToCloudDialog> {
   bool _createNew = false;
   bool _isUploading = false;
   final _titleController = TextEditingController();
+  final _tagsController = TextEditingController();
   final _emojisController = TextEditingController(text: '✨');
 
   @override
@@ -91,17 +92,18 @@ class _SaveToCloudDialogState extends State<_SaveToCloudDialog> {
   @override
   void dispose() {
     _titleController.dispose();
+    _tagsController.dispose();
     _emojisController.dispose();
     super.dispose();
   }
 
-  List<String> _parseEmojis(String raw) {
+  List<String> _parseCommaList(String raw, {List<String> fallback = const []}) {
     final parts = raw
         .split(',')
         .map((e) => e.trim())
         .where((e) => e.isNotEmpty)
         .toList();
-    return parts.isEmpty ? const ['✨'] : parts;
+    return parts.isEmpty ? fallback : parts;
   }
 
   Future<void> _submit() async {
@@ -129,6 +131,7 @@ class _SaveToCloudDialogState extends State<_SaveToCloudDialog> {
         final created = await cloud.createPack(
           title: _titleController.text.trim(),
           trayFile: trayFile,
+          tags: _parseCommaList(_tagsController.text),
         );
         targetPackId = created.id;
       } else {
@@ -139,7 +142,7 @@ class _SaveToCloudDialogState extends State<_SaveToCloudDialog> {
         packId: targetPackId,
         stickerFile: widget.stickerFile,
         isAnimated: widget.isAnimated,
-        emojis: _parseEmojis(_emojisController.text),
+        emojis: _parseCommaList(_emojisController.text, fallback: const ['✨']),
       );
 
       if (!mounted) return;
@@ -237,6 +240,15 @@ class _SaveToCloudDialogState extends State<_SaveToCloudDialog> {
                 decoration: const InputDecoration(
                   labelText: 'New Cloud Pack Title',
                   hintText: 'e.g. Reaction Cats',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _tagsController,
+                enabled: !_isUploading,
+                decoration: const InputDecoration(
+                  labelText: 'Tags (comma-separated)',
+                  hintText: 'meme, funny, reactions',
                 ),
               ),
             ],

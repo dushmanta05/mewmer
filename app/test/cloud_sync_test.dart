@@ -392,5 +392,103 @@ void main() {
       expect(provider.packs, isEmpty);
       expect(provider.localTrayPath('p_new'), isNull);
     });
+
+    test('paginates packs on loadMorePacks and passes search query q', () async {
+      final seenQueries = <String>[];
+      final mockHttp = MockClient((request) async {
+        if (request.url.path == '/api/v1/auth/login') {
+          return http.Response(
+            json.encode({
+              'user': {
+                'id': 'u1',
+                'email': 'admin@mewmer.com',
+                'username': 'admin',
+                'displayName': 'Admin',
+                'role': 'admin',
+              },
+              'token': 'tok_123',
+            }),
+            200,
+          );
+        }
+        if (request.url.path == '/api/v1/me/packs') {
+          seenQueries.add(request.url.query);
+          final page = int.parse(request.url.queryParameters['page'] ?? '1');
+          final q = request.url.queryParameters['q'] ?? '';
+          if (q == 'cat') {
+            return http.Response(
+              json.encode({
+                'packs': [
+                  {
+                    'id': 'p_cat',
+                    'title': 'Cat Pack',
+                    'publisher': 'Admin · mewmer.com',
+                    'trayImageKey': '',
+                    'isAnimated': false,
+                    'visibility': 'private',
+                    'tags': ['cat', 'funny'],
+                    'userId': 'u1',
+                    'downloadsCount': 0,
+                    'createdAt': '2026-01-01T00:00:00Z',
+                  }
+                ],
+                'page': 1,
+                'limit': 10,
+                'total': 1,
+              }),
+              200,
+              headers: {'content-type': 'application/json; charset=utf-8'},
+            );
+          }
+          return http.Response(
+            json.encode({
+              'packs': [
+                {
+                  'id': 'p_$page',
+                  'title': 'Pack $page',
+                  'publisher': 'Admin · mewmer.com',
+                  'trayImageKey': '',
+                  'isAnimated': false,
+                  'visibility': 'private',
+                  'tags': ['meme'],
+                  'userId': 'u1',
+                  'downloadsCount': 0,
+                  'createdAt': '2026-01-01T00:00:00Z',
+                }
+              ],
+              'page': page,
+              'limit': 10,
+              'total': 2,
+            }),
+            200,
+            headers: {'content-type': 'application/json; charset=utf-8'},
+          );
+        }
+        return http.Response('Not found', 404);
+      });
+
+      final apiClient = MewmerApiClient(httpClient: mockHttp);
+      final provider = CloudProvider(
+        apiClient: apiClient,
+        sessionStore: InMemorySessionStore(),
+        mediaCache: MediaCacheService(
+          apiClient: apiClient,
+          directoryProvider: () async => tempDir,
+        ),
+      );
+
+      await provider.login(email: 'admin@mewmer.com', password: 'secret');
+      expect(provider.packs.length, 1);
+      expect(provider.hasMorePacks, isTrue);
+
+      await provider.loadMorePacks();
+      expect(provider.packs.length, 2);
+      expect(provider.hasMorePacks, isFalse);
+
+      await provider.refreshPacks(query: 'cat');
+      expect(provider.packs.length, 1);
+      expect(provider.packs.first.tags, ['cat', 'funny']);
+      expect(seenQueries.last, contains('q=cat'));
+    });
   });
 }
