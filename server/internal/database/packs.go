@@ -25,7 +25,7 @@ func (db *DB) CreatePack(ctx context.Context, p *models.StickerPack) error {
 	).Scan(&p.CreatedAt, &p.UpdatedAt)
 }
 
-func (db *DB) GetPacksByUser(ctx context.Context, userID string) ([]models.StickerPack, error) {
+func (db *DB) GetPacksByUser(ctx context.Context, userID, search string) ([]models.StickerPack, error) {
 	if db.Pool == nil {
 		return nil, fmt.Errorf("database not connected")
 	}
@@ -33,10 +33,10 @@ func (db *DB) GetPacksByUser(ctx context.Context, userID string) ([]models.Stick
 	query := `
 		SELECT id, title, publisher, tray_image_key, is_animated, visibility, user_id, downloads_count, created_at, updated_at
 		FROM sticker_packs
-		WHERE user_id = $1
+		WHERE user_id = $1 AND title ILIKE $2
 		ORDER BY created_at DESC
 	`
-	rows, err := db.Pool.Query(ctx, query, userID)
+	rows, err := db.Pool.Query(ctx, query, userID, "%"+search+"%")
 	if err != nil {
 		return nil, err
 	}

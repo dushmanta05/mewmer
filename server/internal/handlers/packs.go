@@ -19,7 +19,8 @@ const maxTraySize = 50 << 10
 
 func (h *Handler) ListMyPacks(w http.ResponseWriter, r *http.Request) {
 	user := middleware.User(r.Context())
-	packs, err := h.db.GetPacksByUser(r.Context(), user.ID)
+	search := r.URL.Query().Get("q")
+	packs, err := h.db.GetPacksByUser(r.Context(), user.ID, search)
 	if err != nil {
 		errorResponse(w, http.StatusInternalServerError, "failed to query packs")
 		return

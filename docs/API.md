@@ -94,9 +94,11 @@ Packs and stickers are owned by the authenticated user. Media is stored in the p
 ### List my packs
 
 ```bash
-curl http://localhost:3030/api/v1/me/packs \
+curl "http://localhost:3030/api/v1/me/packs?q=my+pack" \
   -H "Authorization: Bearer <token>"
 ```
+
+The `q` parameter is optional and searches pack titles case-insensitively.
 
 ### Create a pack
 
