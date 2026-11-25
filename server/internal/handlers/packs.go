@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -20,9 +21,18 @@ const maxTraySize = 50 << 10
 func (h *Handler) ListMyPacks(w http.ResponseWriter, r *http.Request) {
 	user := middleware.User(r.Context())
 	search := r.URL.Query().Get("q")
-	packs, err := h.db.GetPacksByUser(r.Context(), user.ID, search)
+	page, limit := parsePagination(r, 10)
+	offset := (page - 1) * limit
+
+	packs, err := h.db.GetPacksByUser(r.Context(), user.ID, search, limit, offset)
 	if err != nil {
 		errorResponse(w, http.StatusInternalServerError, "failed to query packs")
+		return
+	}
+
+	total, err := h.db.CountPacksByUser(r.Context(), user.ID, search)
+	if err != nil {
+		errorResponse(w, http.StatusInternalServerError, "failed to count packs")
 		return
 	}
 
@@ -32,6 +42,9 @@ func (h *Handler) ListMyPacks(w http.ResponseWriter, r *http.Request) {
 
 	jsonResponse(w, http.StatusOK, map[string]interface{}{
 		"packs": packs,
+		"page":  page,
+		"limit": limit,
+		"total": total,
 	})
 }
 
@@ -153,4 +166,19 @@ func normalizeVisibility(v string) string {
 	default:
 		return "private"
 	}
+}
+
+func parsePagination(r *http.Request, defaultLimit int) (page, limit int) {
+	page, _ = strconv.Atoi(r.URL.Query().Get("page"))
+	if page < 1 {
+		page = 1
+	}
+	limit, _ = strconv.Atoi(r.URL.Query().Get("limit"))
+	if limit < 1 {
+		limit = defaultLimit
+	}
+	if limit > 50 {
+		limit = 50
+	}
+	return page, limit
 }

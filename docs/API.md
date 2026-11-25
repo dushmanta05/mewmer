@@ -94,11 +94,23 @@ Packs and stickers are owned by the authenticated user. Media is stored in the p
 ### List my packs
 
 ```bash
-curl "http://localhost:3030/api/v1/me/packs?q=my+pack" \
+curl "http://localhost:3030/api/v1/me/packs?q=my+pack&page=1&limit=10" \
   -H "Authorization: Bearer <token>"
 ```
 
-The `q` parameter is optional and searches pack titles case-insensitively.
+- `q` — optional title search (case-insensitive).
+- `page` — defaults to `1`.
+- `limit` — defaults to `10`, maximum `50`.
+
+Response:
+```json
+{
+  "packs": [...],
+  "page": 1,
+  "limit": 10,
+  "total": 42
+}
+```
 
 ### Create a pack
 

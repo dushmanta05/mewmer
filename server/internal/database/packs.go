@@ -25,7 +25,22 @@ func (db *DB) CreatePack(ctx context.Context, p *models.StickerPack) error {
 	).Scan(&p.CreatedAt, &p.UpdatedAt)
 }
 
-func (db *DB) GetPacksByUser(ctx context.Context, userID, search string) ([]models.StickerPack, error) {
+func (db *DB) CountPacksByUser(ctx context.Context, userID, search string) (int, error) {
+	if db.Pool == nil {
+		return 0, fmt.Errorf("database not connected")
+	}
+
+	query := `
+		SELECT COUNT(*)
+		FROM sticker_packs
+		WHERE user_id = $1 AND title ILIKE $2
+	`
+	var total int
+	err := db.Pool.QueryRow(ctx, query, userID, "%"+search+"%").Scan(&total)
+	return total, err
+}
+
+func (db *DB) GetPacksByUser(ctx context.Context, userID, search string, limit, offset int) ([]models.StickerPack, error) {
 	if db.Pool == nil {
 		return nil, fmt.Errorf("database not connected")
 	}
@@ -35,8 +50,9 @@ func (db *DB) GetPacksByUser(ctx context.Context, userID, search string) ([]mode
 		FROM sticker_packs
 		WHERE user_id = $1 AND title ILIKE $2
 		ORDER BY created_at DESC
+		LIMIT $3 OFFSET $4
 	`
-	rows, err := db.Pool.Query(ctx, query, userID, "%"+search+"%")
+	rows, err := db.Pool.Query(ctx, query, userID, "%"+search+"%", limit, offset)
 	if err != nil {
 		return nil, err
 	}
