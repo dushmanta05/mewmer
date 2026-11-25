@@ -7,6 +7,7 @@
     "dev:frontend": "cd frontend && pnpm dev",
     "dev:app": "bash scripts/dev-app.sh",
     "adb:reverse": "adb reverse tcp:3030 tcp:3030",
+    "icons:app": "python3 scripts/generate-app-icons.py && cd app && dart run flutter_launcher_icons",
     "build:frontend": "cd frontend && pnpm build",
     "build:backend": "cd server && if [ -f .env ]; then set -a && . ./.env && set +a; fi && go build -o mewmer-server .",
     "build:app": "cd app && flutter build apk",
