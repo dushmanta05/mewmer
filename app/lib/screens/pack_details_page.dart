@@ -253,30 +253,29 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
           if (_isSelectionMode)
             Padding(
               padding: const EdgeInsets.only(right: 12),
-              child: TextButton.icon(
+              child: TextButton(
                 onPressed: () => _deleteSelectedStickers(stickerProvider),
-                icon: const Icon(Icons.delete_outline_rounded, size: 17, color: MewmerTheme.rose),
-                label: const Text(
-                  'Delete',
-                  style: TextStyle(
-                    color: MewmerTheme.rose,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 13,
-                  ),
-                ),
                 style: TextButton.styleFrom(
                   backgroundColor: MewmerTheme.rose.withValues(alpha: 0.14),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  foregroundColor: MewmerTheme.rose,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+                child: const Text(
+                  'Delete',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
                   ),
                 ),
               ),
             )
           else ...[
-            IconButton(
-              icon: const Icon(Icons.add_circle_outline_rounded, color: MewmerTheme.brandViolet),
-              tooltip: 'Add Sticker',
+            TextButton.icon(
               onPressed: () {
                 Navigator.push(
                   context,
@@ -285,11 +284,48 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
                   ),
                 );
               },
+              icon: const Icon(Icons.add_rounded, size: 16, color: MewmerTheme.brandViolet),
+              label: const Text(
+                'Add',
+                style: TextStyle(
+                  color: MewmerTheme.brandViolet,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
+              ),
+              style: TextButton.styleFrom(
+                backgroundColor: MewmerTheme.brandViolet.withValues(alpha: 0.14),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
             ),
-            IconButton(
-              icon: const Icon(Icons.delete_forever_outlined, color: MewmerTheme.muted),
-              tooltip: 'Delete Pack',
-              onPressed: () => _deletePack(stickerProvider),
+            const SizedBox(width: 8),
+            Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: TextButton(
+                onPressed: () => _deletePack(stickerProvider),
+                style: TextButton.styleFrom(
+                  backgroundColor: MewmerTheme.rose.withValues(alpha: 0.14),
+                  foregroundColor: MewmerTheme.rose,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+                child: const Text(
+                  'Delete',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
             ),
           ],
         ],
@@ -444,6 +480,16 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
                             onTap: () {
                               if (_isSelectionMode) {
                                 _toggleStickerSelection(path);
+                              } else {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => MemeEditorPage(
+                                      imageFile: file,
+                                      initialPackId: pack.identifier,
+                                    ),
+                                  ),
+                                );
                               }
                             },
                             onLongPress: () => _toggleStickerSelection(path),

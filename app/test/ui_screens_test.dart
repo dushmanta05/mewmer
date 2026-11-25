@@ -134,6 +134,7 @@ void main() {
       expect(find.text('Epsilon'), findsOneWidget);
       expect(find.text('Alpha'), findsNothing);
 
+      await tester.ensureVisible(find.text('View All'));
       await tester.tap(find.text('View All'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));

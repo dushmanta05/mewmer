@@ -467,6 +467,8 @@ class _HomePageState extends State<HomePage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          _buildCreateStickerCard(context, isBusy),
+                          const SizedBox(height: 16),
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 20),
                             child: Row(
@@ -782,100 +784,7 @@ class _HomePageState extends State<HomePage> {
                             ),
                             const SizedBox(height: 28),
                           ],
-
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                            child: Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
-                              decoration: BoxDecoration(
-                                color: MewmerTheme.cardSurface,
-                                borderRadius: BorderRadius.circular(24),
-                                border: Border.all(color: MewmerTheme.border),
-                              ),
-                              child: Column(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(14),
-                                    decoration: BoxDecoration(
-                                      color: MewmerTheme.brandViolet.withValues(alpha: 0.12),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(
-                                      Icons.add_photo_alternate_outlined,
-                                      size: 36,
-                                      color: MewmerTheme.brandViolet,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Text(
-                                    'Create New Sticker',
-                                    style: GoogleFonts.spaceGrotesk(
-                                      fontSize: 17,
-                                      fontWeight: FontWeight.bold,
-                                      color: MewmerTheme.textPrimary,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  const Text(
-                                    'Import photos or GIFs and caption them.',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: MewmerTheme.textMuted,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 18),
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                                    children: [
-                                      ElevatedButton.icon(
-                                        onPressed: isBusy
-                                            ? null
-                                            : () {
-                                                Navigator.push(
-                                                  context,
-                                                  MaterialPageRoute(
-                                                    builder: (context) => const MemeEditorPage(),
-                                                  ),
-                                                );
-                                              },
-                                        icon: const Icon(Icons.gif_box_rounded, size: 18),
-                                        label: const Text('Open Studio'),
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: MewmerTheme.brandViolet,
-                                          foregroundColor: Colors.white,
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 18,
-                                            vertical: 14,
-                                          ),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(14),
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 10),
-                                      OutlinedButton.icon(
-                                        onPressed: isBusy ? null : _pickImage,
-                                        icon: const Icon(Icons.photo_library_outlined, size: 18, color: MewmerTheme.textPrimary),
-                                        label: const Text('From Gallery', style: TextStyle(color: MewmerTheme.textPrimary)),
-                                        style: OutlinedButton.styleFrom(
-                                          side: const BorderSide(color: MewmerTheme.border),
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 16,
-                                            vertical: 14,
-                                          ),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(14),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 12),
                         ],
                       ),
                     ),
@@ -891,6 +800,101 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildCreateStickerCard(BuildContext context, bool isBusy) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 22, horizontal: 20),
+        decoration: BoxDecoration(
+          color: MewmerTheme.cardSurface,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: MewmerTheme.border),
+        ),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: MewmerTheme.brandViolet.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.add_photo_alternate_outlined,
+                size: 32,
+                color: MewmerTheme.brandViolet,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Create New Sticker',
+              style: GoogleFonts.spaceGrotesk(
+                fontSize: 17,
+                fontWeight: FontWeight.bold,
+                color: MewmerTheme.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'Import photos or GIFs and caption them.',
+              style: TextStyle(
+                fontSize: 12,
+                color: MewmerTheme.textMuted,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: isBusy
+                      ? null
+                      : () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const MemeEditorPage(),
+                            ),
+                          );
+                        },
+                  icon: const Icon(Icons.gif_box_rounded, size: 18),
+                  label: const Text('Open Studio'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: MewmerTheme.brandViolet,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 14,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                OutlinedButton.icon(
+                  onPressed: isBusy ? null : _pickImage,
+                  icon: const Icon(Icons.photo_library_outlined, size: 18, color: MewmerTheme.textPrimary),
+                  label: const Text('From Gallery', style: TextStyle(color: MewmerTheme.textPrimary)),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: MewmerTheme.border),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
