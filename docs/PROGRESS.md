@@ -107,9 +107,7 @@ Then on the mobile device connected to the laptop's Wi-Fi hotspot, navigate in t
 **`http://10.42.0.1:3031`**
 
 ### Known Gaps
-- `002_identity_and_sessions.sql` and `003_meme_templates.sql` have been applied.
-- Admin user exists (`admin@mewmer.com` / `changeme123` in local dev).
-- Cloudflare R2 abstraction is in place; filesystem mode is active locally and R2 mode activates when `STORAGE_TYPE=r2` and credentials are set.
+- Backend core (auth, templates, sticker cloud) is implemented and verified.
 - Flutter has no API client, login flow, or cloud save/restore.
 - Web app has no template catalog, template detail, or admin upload UI.
 - The modified `whatsapp_stickers_injector` dependency is patched in `.pub-cache`, which is not reproducible on a clean machine.
@@ -134,11 +132,13 @@ Then on the mobile device connected to the laptop's Wi-Fi hotspot, navigate in t
   - Migration `003_meme_templates.sql`.
   - Admin-only template upload and public list/detail endpoints.
   - Verified end-to-end with login, upload, list, and static file serving.
-- [ ] **Sticker Cloud Backend (`server/`)**:
+- [x] **Sticker Cloud Backend (`server/`)**:
   - Authenticated owner endpoints for packs and stickers.
-  - Replace old unauthenticated upload routes.
+  - Replaced old unauthenticated upload routes.
+  - Verified end-to-end with pack creation, sticker upload, list, and retrieval.
 - [ ] **Flutter Cloud Sync (`app/`)**:
   - API client, secure session store, login screen, cloud save/restore.
+  - *Assigned to a separate agent.*
 - [ ] **Web Template Flow (`frontend/`)**:
   - Admin login, template upload, public catalog/detail pages, studio preloading.
 
@@ -159,4 +159,4 @@ Then on the mobile device connected to the laptop's Wi-Fi hotspot, navigate in t
 
 ## Immediate Next Task
 
-Implement **Sticker Cloud Backend** and begin **Flutter Cloud Sync**.
+Build the **web template flow** (`/templates`, `/templates/[slug]`, admin upload UI, and studio template preloading). Flutter sync is being handled separately.
