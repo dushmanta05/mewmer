@@ -21,7 +21,10 @@ dependencies:
     google_fonts: ^8.1.0
     provider: ^6.1.5+1
     flutter_image_compress: ^2.4.0
-    whatsapp_stickers_injector: ^1.1.3
+    whatsapp_stickers_injector:
+        path: packages/whatsapp_stickers_injector
+    http: ^1.2.2
+    flutter_secure_storage: ^9.2.2
     flutter_launcher_icons: ^0.14.4
 
 dev_dependencies:
