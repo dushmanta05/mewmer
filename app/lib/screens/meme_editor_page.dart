@@ -13,6 +13,7 @@ import '../models/text_item.dart';
 import '../models/sticker_provider.dart';
 import '../widgets/draggable_text.dart';
 import '../widgets/cat_branding.dart';
+import '../widgets/save_to_cloud_dialog.dart';
 import '../theme.dart';
 
 class MemeEditorPage extends StatefulWidget {
@@ -589,6 +590,21 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
                 TextButton(
                   onPressed: () => Navigator.pop(dialogContext),
                   child: const Text('Cancel'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    Navigator.pop(dialogContext);
+                    final uploaded = await showSaveToCloudFlow(
+                      context,
+                      stickerFile: File(tempStickerPath),
+                      isAnimated: isAnimated,
+                    );
+                    if (uploaded && mounted) {
+                      Navigator.pop(context);
+                    }
+                  },
+                  icon: const Icon(Icons.cloud_upload_outlined, size: 16),
+                  label: const Text('Cloud'),
                 ),
                 ElevatedButton(
                   onPressed: () async {
