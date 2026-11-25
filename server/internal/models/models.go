@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/json"
 	"time"
 )
 
@@ -49,4 +50,32 @@ type ProcessingJob struct {
 	OutW       int
 	OutH       int
 	ErrChan    chan error
+}
+
+type User struct {
+	ID           string          `json:"id"`
+	Email        string          `json:"email"`
+	Username     string          `json:"username"`
+	DisplayName  string          `json:"displayName"`
+	PasswordHash string          `json:"-"`
+	Role         string          `json:"role"`
+	AvatarKey    *string         `json:"avatarKey,omitempty"`
+	Bio          *string         `json:"bio,omitempty"`
+	Links        json.RawMessage `json:"links"`
+	CreatedAt    time.Time       `json:"createdAt"`
+	UpdatedAt    time.Time       `json:"updatedAt"`
+}
+
+type Session struct {
+	ID         string     `json:"id"`
+	UserID     string     `json:"userId"`
+	TokenHash  string     `json:"-"`
+	CreatedAt  time.Time  `json:"createdAt"`
+	ExpiresAt  time.Time  `json:"expiresAt"`
+	LastUsedAt *time.Time `json:"lastUsedAt,omitempty"`
+}
+
+type LoginRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }

@@ -7,6 +7,10 @@
     "dev:frontend": "cd frontend && pnpm dev",
     "build:frontend": "cd frontend && pnpm build",
     "build:backend": "cd server && go build -o mewmer-server .",
-    "check": "cd frontend && pnpm check && cd ../server && go vet ./..."
+    "check": "pnpm check:frontend && pnpm check:backend",
+    "check:frontend": "cd frontend && pnpm check && pnpm build",
+    "check:backend": "cd server && gofmt -l . && go test ./... && go vet ./... && go build -o /dev/null .",
+    "migrate": "cd server && if [ -f .env ]; then set -a && . ./.env && set +a; fi && for f in migrations/*.sql; do psql \"$DATABASE_URL\" -f \"$f\"; done",
+    "create:admin": "cd server && if [ -f .env ]; then set -a && . ./.env && set +a; fi && go run ./cmd/create-admin"
   }
 }

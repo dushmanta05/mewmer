@@ -10,13 +10,14 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
-	"github.com/go-chi/cors"
 	"github.com/dushmanta05/mewmer/server/internal/config"
 	"github.com/dushmanta05/mewmer/server/internal/database"
 	"github.com/dushmanta05/mewmer/server/internal/handlers"
+	appMiddleware "github.com/dushmanta05/mewmer/server/internal/middleware"
 	"github.com/dushmanta05/mewmer/server/internal/processor"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
 )
 
 func main() {
@@ -46,6 +47,7 @@ func main() {
 
 	// CORS configuration for Astro frontend
 	r.Use(cors.Handler(cors.Options{
+
 		AllowedOrigins:   []string{"http://localhost:3031", "http://localhost:4321", "http://localhost:3000", "https://mewmer.com", "http://10.42.0.1:3031", "http://172.16.25.221:3031"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
@@ -54,16 +56,25 @@ func main() {
 		MaxAge:           300,
 	}))
 
+	r.Use(appMiddleware.Auth(db))
+
 	h := handlers.New(cfg, db, workerPool)
+	authHandler := handlers.NewAuthHandler(db, cfg)
 
 	// API Routes
 	r.Get("/health", h.Health)
 
 	r.Route("/api/v1", func(r chi.Router) {
+		r.Route("/auth", func(r chi.Router) {
+			r.Post("/login", authHandler.Login)
+			r.With(appMiddleware.RequireAuth).Post("/logout", authHandler.Logout)
+			r.With(appMiddleware.RequireAuth).Get("/me", authHandler.Me)
+		})
+
 		r.Get("/packs", h.ListPacks)
 		r.Get("/packs/{id}", h.GetPack)
-		r.Post("/packs", h.CreatePack)
-		r.Post("/stickers/upload", h.UploadSticker)
+		r.With(appMiddleware.RequireAuth).Post("/packs", h.CreatePack)
+		r.With(appMiddleware.RequireAuth).Post("/stickers/upload", h.UploadSticker)
 		r.Post("/stickers/process-animated", h.ProcessAnimated)
 	})
 

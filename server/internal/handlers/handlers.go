@@ -10,12 +10,13 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/google/uuid"
 	"github.com/dushmanta05/mewmer/server/internal/config"
 	"github.com/dushmanta05/mewmer/server/internal/database"
+	"github.com/dushmanta05/mewmer/server/internal/middleware"
 	"github.com/dushmanta05/mewmer/server/internal/models"
 	"github.com/dushmanta05/mewmer/server/internal/processor"
+	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 )
 
 type Handler struct {
@@ -252,6 +253,10 @@ func (h *Handler) CreatePack(w http.ResponseWriter, r *http.Request) {
 		TrayImageURL: trayURL,
 		IsAnimated:   req.IsAnimated,
 		IsPublic:     isPublic,
+	}
+
+	if u := middleware.User(r.Context()); u != nil {
+		pack.UserID = &u.ID
 	}
 
 	if err := h.db.CreatePack(r.Context(), pack, req.StickerURLs); err != nil {
