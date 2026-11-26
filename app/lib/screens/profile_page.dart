@@ -116,7 +116,7 @@ class ProfilePage extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  user.email,
+                                  '@${user.username}',
                                   style: const TextStyle(
                                     fontSize: 13,
                                     color: MewmerTheme.textMuted,
@@ -145,15 +145,7 @@ class ProfilePage extends StatelessWidget {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 16),
-                      Text(
-                        '@${user.username}',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: MewmerTheme.textMuted,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 14),
                       Text(
                         '$syncedPacks / $totalPacks packs synced · $pendingPacks pending',
                         style: const TextStyle(
