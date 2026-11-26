@@ -247,7 +247,7 @@ class _SaveToCloudDialogState extends State<_SaveToCloudDialog> {
                 controller: _tagsController,
                 enabled: !_isUploading,
                 decoration: const InputDecoration(
-                  labelText: 'Tags (comma-separated)',
+                  labelText: 'Tags',
                   hintText: 'meme, funny, reactions',
                 ),
               ),
@@ -257,7 +257,7 @@ class _SaveToCloudDialogState extends State<_SaveToCloudDialog> {
               controller: _emojisController,
               enabled: !_isUploading,
               decoration: const InputDecoration(
-                labelText: 'Emojis (comma-separated)',
+                labelText: 'Emojis',
                 hintText: '😂,👍',
               ),
             ),

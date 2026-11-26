@@ -245,6 +245,7 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
                       decoration: const InputDecoration(
                         labelText: 'Pack Name',
                         hintText: 'Mewmer Cat',
+                        border: OutlineInputBorder(),
                       ),
                     ),
                     const SizedBox(height: 14),
@@ -252,8 +253,10 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
                       controller: tagsController,
                       enabled: !isSaving,
                       decoration: const InputDecoration(
-                        labelText: 'Tags (comma-separated)',
-                        hintText: 'meme, funny, reactions',
+                        labelText: 'Tags',
+                        hintText: 'meme, funny, cats',
+                        helperText: 'Separate with commas (max 5)',
+                        border: OutlineInputBorder(),
                       ),
                     ),
                     if (pack.stickerPaths.isNotEmpty) ...[
@@ -266,7 +269,15 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
                           color: MewmerTheme.textPrimary,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Tap a sticker to use as the pack icon.',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: MewmerTheme.textMuted,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
                       SizedBox(
                         height: 64,
                         child: ListView.separated(
@@ -352,9 +363,21 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
                           }
                           final parsedTags = tagsController.text
                               .split(',')
-                              .map((e) => e.trim())
+                              .map((e) => e.trim().toLowerCase())
                               .where((e) => e.isNotEmpty)
+                              .toSet()
                               .toList();
+                          if (parsedTags.length > 5) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Maximum 5 tags allowed'),
+                                  backgroundColor: MewmerTheme.rose,
+                                ),
+                              );
+                            }
+                            return;
+                          }
                           await stickerProvider.updatePackDetails(
                             pack.identifier,
                             name: newName,
@@ -485,26 +508,11 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
               ),
             )
           else ...[
-            TextButton.icon(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => MemeEditorPage(initialPackId: pack.identifier),
-                  ),
-                );
-              },
-              icon: const Icon(Icons.add_rounded, size: 16, color: MewmerTheme.brandViolet),
-              label: const Text(
-                'Add',
-                style: TextStyle(
-                  color: MewmerTheme.brandViolet,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
-                ),
-              ),
-              style: TextButton.styleFrom(
-                backgroundColor: MewmerTheme.brandViolet.withValues(alpha: 0.14),
+            OutlinedButton(
+              onPressed: () => _showEditPackDialog(pack),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: MewmerTheme.textPrimary,
+                side: const BorderSide(color: MewmerTheme.border),
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 minimumSize: Size.zero,
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -512,12 +520,15 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
                   borderRadius: BorderRadius.circular(20),
                 ),
               ),
+              child: const Text(
+                'Edit',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
+              ),
             ),
-            IconButton(
-              icon: const Icon(Icons.edit_outlined, size: 20, color: MewmerTheme.textMuted),
-              tooltip: 'Edit Pack',
-              onPressed: () => _showEditPackDialog(pack),
-            ),
+            const SizedBox(width: 8),
             Padding(
               padding: const EdgeInsets.only(right: 12),
               child: TextButton(
@@ -607,27 +618,17 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
                               color: MewmerTheme.textPrimary,
                             ),
                           ),
-                          const SizedBox(height: 6),
-                          if (pack.tags.isEmpty)
-                            GestureDetector(
-                              onTap: () => _showEditPackDialog(pack),
-                              child: const Text(
-                                '+ Add tags',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: MewmerTheme.textMuted,
-                                ),
-                              ),
-                            )
-                          else
+                          if (pack.tags.isNotEmpty) ...[
+                            const SizedBox(height: 8),
                             Wrap(
                               spacing: 6,
                               runSpacing: 4,
                               children: pack.tags
+                                  .take(5)
                                   .map(
                                     (t) => Container(
                                       padding: const EdgeInsets.symmetric(
-                                        horizontal: 6,
+                                        horizontal: 7,
                                         vertical: 2,
                                       ),
                                       decoration: BoxDecoration(
@@ -645,12 +646,51 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
                                   )
                                   .toList(),
                             ),
+                          ],
                         ],
                         ),
                       ),
                       const SizedBox(width: 10),
                       PackSyncBadge(pack: pack, showLabel: true),
                     ],
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 2, 16, 6),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              MemeEditorPage(initialPackId: pack.identifier),
+                        ),
+                      );
+                    },
+                    icon: const Icon(
+                      Icons.add_rounded,
+                      size: 18,
+                      color: MewmerTheme.brandViolet,
+                    ),
+                    label: const Text(
+                      'Add Sticker',
+                      style: TextStyle(
+                        color: MewmerTheme.brandViolet,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(
+                        color: MewmerTheme.brandViolet.withValues(alpha: 0.4),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 11),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
                   ),
                 ),
               ),
