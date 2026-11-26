@@ -124,6 +124,7 @@ curl -X POST http://localhost:3030/api/v1/packs \
 ```
 
 - `visibility` is optional and defaults to `private` (`private`, `unlisted`, `public`).
+- `isAnimated` is optional (`true` or `false`, defaults to `false`).
 - `tags` is optional; supply comma-separated values.
 - The tray icon must be a 96×96 PNG or WebP under 50 KB.
 
