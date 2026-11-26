@@ -1217,9 +1217,20 @@ class WebPMuxer {
     builder.addAll([0, 0, 0, 0]);
     builder.addAll(utf8Encode('WEBP'));
 
+    final List<Uint8List> framePayloads = frameWebPs
+        .map(extractWebPFramePayload)
+        .toList();
+    final bool anyHasAlpha = framePayloads.any(_hasAlphaPayload);
+    if (anyHasAlpha &&
+        framePayloads.isNotEmpty &&
+        !_hasAlphaPayload(framePayloads[0]) &&
+        _startsWithFourCC(framePayloads[0], 'VP8 ')) {
+      framePayloads[0] = _prependOpaqueAlphaChunk(framePayloads[0]);
+    }
+
     builder.addAll(utf8Encode('VP8X'));
     builder.addAll(uint32ToBytes(10));
-    builder.add(0x12);
+    builder.add(anyHasAlpha ? 0x12 : 0x02);
     builder.addAll([0, 0, 0]);
     builder.addAll(uint24ToBytes(511));
     builder.addAll(uint24ToBytes(511));
@@ -1229,10 +1240,9 @@ class WebPMuxer {
     builder.addAll([0, 0, 0, 0]);
     builder.addAll(uint16ToBytes(0));
 
-    for (int i = 0; i < frameWebPs.length; i++) {
-      final frameBytes = frameWebPs[i];
+    for (int i = 0; i < framePayloads.length; i++) {
       final durationMs = durationsMs[i];
-      final framePayload = extractWebPFramePayload(frameBytes);
+      final framePayload = framePayloads[i];
 
       final int anmfPayloadSize = 16 + framePayload.length;
 
@@ -1291,6 +1301,30 @@ class WebPMuxer {
       offset += totalChunkSize;
     }
     return Uint8List.fromList(payload);
+  }
+
+  static const List<int> _opaqueAlphaChunk = [
+    65, 76, 80, 72,
+    28, 0, 0, 0,
+    1, 7, 80, 255, 136, 8, 8, 4, 146, 253, 189, 103, 40, 162, 255, 25,
+    255, 249, 207, 127, 254, 243, 159, 255, 252, 231, 255, 0,
+  ];
+
+  static bool _startsWithFourCC(Uint8List payload, String fourCC) {
+    if (payload.length < 4) return false;
+    return String.fromCharCodes(payload.sublist(0, 4)) == fourCC;
+  }
+
+  static bool _hasAlphaPayload(Uint8List payload) {
+    return _startsWithFourCC(payload, 'ALPH') ||
+        _startsWithFourCC(payload, 'VP8L');
+  }
+
+  static Uint8List _prependOpaqueAlphaChunk(Uint8List vp8Payload) {
+    final result = Uint8List(_opaqueAlphaChunk.length + vp8Payload.length);
+    result.setRange(0, _opaqueAlphaChunk.length, _opaqueAlphaChunk);
+    result.setRange(_opaqueAlphaChunk.length, result.length, vp8Payload);
+    return result;
   }
 
   static List<int> utf8Encode(String str) => str.codeUnits;

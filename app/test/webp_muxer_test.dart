@@ -34,5 +34,25 @@ void main() {
       final frame = await codec.getNextFrame();
       expect(frame.image.width, 512);
     }
+
+    final vp8Chunk = frame0.sublist(66);
+    final vp8OnlyFrame = Uint8List.fromList([
+      ...WebPMuxer.utf8Encode('RIFF'),
+      ...WebPMuxer.uint32ToBytes(4 + vp8Chunk.length),
+      ...WebPMuxer.utf8Encode('WEBP'),
+      ...vp8Chunk,
+    ]);
+    final mixedMuxed = WebPMuxer.assembleAnimatedWebP(
+      [vp8OnlyFrame, frame0, vp8OnlyFrame],
+      [100, 100, 100],
+    );
+    final mixedCodec = await ui.instantiateImageCodec(mixedMuxed);
+    expect(mixedCodec.frameCount, 3);
+    for (int i = 0; i < 3; i++) {
+      final frame = await mixedCodec.getNextFrame();
+      expect(frame.image.width, 512);
+      frame.image.dispose();
+    }
+    mixedCodec.dispose();
   });
 }
