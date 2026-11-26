@@ -581,77 +581,95 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                          Row(
-                            children: [
-                              Text(
-                                pack.publisher,
-                                style: const TextStyle(
-                                  color: MewmerTheme.brandViolet,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: pack.isActuallyAnimated
-                                      ? MewmerTheme.brandViolet.withValues(alpha: 0.2)
-                                      : MewmerTheme.whatsappGreen.withValues(alpha: 0.15),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Text(
-                                  pack.typeLabel,
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 3,
+                                  ),
+                                  decoration: BoxDecoration(
                                     color: pack.isActuallyAnimated
-                                        ? MewmerTheme.brandViolet
-                                        : MewmerTheme.whatsappGreen,
+                                        ? MewmerTheme.brandViolet.withValues(alpha: 0.2)
+                                        : MewmerTheme.whatsappGreen.withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    pack.typeLabel,
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: pack.isActuallyAnimated
+                                          ? MewmerTheme.brandViolet
+                                          : MewmerTheme.whatsappGreen,
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            '${stickers.length} / 30 stickers',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                              color: MewmerTheme.textPrimary,
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 3,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: MewmerTheme.cardHover,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: MewmerTheme.border),
+                                  ),
+                                  child: RichText(
+                                    text: TextSpan(
+                                      children: [
+                                        TextSpan(
+                                          text: '${stickers.length}',
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12,
+                                            color: MewmerTheme.textPrimary,
+                                          ),
+                                        ),
+                                        const TextSpan(
+                                          text: ' / 30 stickers',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: MewmerTheme.textMuted,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                          if (pack.tags.isNotEmpty) ...[
-                            const SizedBox(height: 8),
-                            Wrap(
-                              spacing: 6,
-                              runSpacing: 4,
-                              children: pack.tags
-                                  .take(5)
-                                  .map(
-                                    (t) => Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 7,
-                                        vertical: 2,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: MewmerTheme.cardHover,
-                                        borderRadius: BorderRadius.circular(6),
-                                      ),
-                                      child: Text(
-                                        '#$t',
-                                        style: const TextStyle(
-                                          fontSize: 10,
-                                          color: MewmerTheme.textMuted,
+                            if (pack.tags.isNotEmpty) ...[
+                              const SizedBox(height: 10),
+                              Wrap(
+                                spacing: 6,
+                                runSpacing: 4,
+                                children: pack.tags
+                                    .take(5)
+                                    .map(
+                                      (t) => Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 7,
+                                          vertical: 2,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: MewmerTheme.cardHover,
+                                          borderRadius: BorderRadius.circular(6),
+                                        ),
+                                        child: Text(
+                                          '#$t',
+                                          style: const TextStyle(
+                                            fontSize: 10,
+                                            color: MewmerTheme.textMuted,
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                  )
-                                  .toList(),
-                            ),
+                                    )
+                                    .toList(),
+                              ),
+                            ],
                           ],
-                        ],
                         ),
                       ),
                       const SizedBox(width: 10),
