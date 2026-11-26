@@ -585,13 +585,6 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
                                 });
                               },
                       ),
-                      if (stickerProvider.packs.length > compatiblePacks.length) ...[
-                        const SizedBox(height: 6),
-                        Text(
-                          '${stickerProvider.packs.length - compatiblePacks.length} pack(s) hidden (${isAnimated ? "Static" : "Animated"} packs cannot mix with ${isAnimated ? "animated" : "static"} stickers)',
-                          style: const TextStyle(fontSize: 11, color: MewmerTheme.amber),
-                        ),
-                      ],
                       const SizedBox(height: 16),
                       Row(
                         children: [
