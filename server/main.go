@@ -14,7 +14,6 @@ import (
 	"github.com/dushmanta05/mewmer/server/internal/database"
 	"github.com/dushmanta05/mewmer/server/internal/handlers"
 	appMiddleware "github.com/dushmanta05/mewmer/server/internal/middleware"
-	"github.com/dushmanta05/mewmer/server/internal/processor"
 	"github.com/dushmanta05/mewmer/server/internal/storage"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -27,18 +26,12 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	// 1. Initialize PostgreSQL Connection Pool
 	db, err := database.Connect(ctx, cfg.DatabaseURL)
 	if err != nil {
 		log.Fatalf("Database connection error: %v", err)
 	}
 	defer db.Close()
 
-	// 2. Initialize Media Processor Worker Pool
-	workerPool := processor.NewWorkerPool(cfg.MaxWorkers, 100)
-	workerPool.Start(ctx)
-
-	// 3. Initialize Object Storage
 	store, err := storage.New(ctx, &storage.Config{
 		Type:           cfg.StorageType,
 		StorageDir:     cfg.StorageDir,
@@ -53,7 +46,6 @@ func main() {
 		log.Fatalf("Storage initialization error: %v", err)
 	}
 
-	// 4. Router & Middleware
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
@@ -61,9 +53,7 @@ func main() {
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Timeout(60 * time.Second))
 
-	// CORS configuration for Astro frontend
 	r.Use(cors.Handler(cors.Options{
-
 		AllowedOrigins:   []string{"http://localhost:3031", "http://localhost:4321", "http://localhost:3000", "https://mewmer.com", "http://10.42.0.1:3031", "http://172.16.25.221:3031"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
@@ -74,10 +64,9 @@ func main() {
 
 	r.Use(appMiddleware.Auth(db))
 
-	h := handlers.New(cfg, db, workerPool, store)
+	h := handlers.New(cfg, db, store)
 	authHandler := handlers.NewAuthHandler(db, cfg)
 
-	// API Routes
 	r.Get("/health", h.Health)
 
 	r.Route("/api/v1", func(r chi.Router) {
@@ -97,10 +86,8 @@ func main() {
 		r.With(appMiddleware.RequireAuth).Delete("/packs/{id}", h.DeletePack)
 		r.With(appMiddleware.RequireAuth).Post("/packs/{id}/stickers", h.CreateSticker)
 		r.With(appMiddleware.RequireAuth).Delete("/stickers/{id}", h.DeleteSticker)
-		r.Post("/stickers/process-animated", h.ProcessAnimated)
 	})
 
-	// Static file server for uploaded/converted stickers
 	_ = os.MkdirAll(cfg.StorageDir, 0755)
 	workDir, _ := os.Getwd()
 	filesDir := http.Dir(fmt.Sprintf("%s/%s", workDir, cfg.StorageDir))

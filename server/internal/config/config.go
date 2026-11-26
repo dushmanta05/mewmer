@@ -2,7 +2,6 @@ package config
 
 import (
 	"os"
-	"strconv"
 	"time"
 )
 
@@ -11,7 +10,6 @@ type Config struct {
 	DatabaseURL      string
 	StorageDir       string
 	StorageType      string
-	MaxWorkers       int
 	CORSOrigin       string
 	SessionTTL       time.Duration
 	SecureCookie     bool
@@ -31,13 +29,6 @@ func Load() *Config {
 	storageType := getEnv("STORAGE_TYPE", "filesystem")
 	corsOrigin := getEnv("CORS_ORIGIN", "*")
 
-	maxWorkers := 2
-	if workersStr := os.Getenv("MAX_WORKERS"); workersStr != "" {
-		if val, err := strconv.Atoi(workersStr); err == nil && val > 0 {
-			maxWorkers = val
-		}
-	}
-
 	sessionTTL := 7 * 24 * time.Hour
 	if ttlStr := os.Getenv("SESSION_TTL"); ttlStr != "" {
 		if val, err := time.ParseDuration(ttlStr); err == nil && val > 0 {
@@ -55,7 +46,6 @@ func Load() *Config {
 		DatabaseURL:      dbURL,
 		StorageDir:       storageDir,
 		StorageType:      storageType,
-		MaxWorkers:       maxWorkers,
 		CORSOrigin:       corsOrigin,
 		SessionTTL:       sessionTTL,
 		SecureCookie:     secureCookie,

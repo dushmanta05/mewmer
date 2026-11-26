@@ -62,17 +62,3 @@ type Sticker struct {
 	CreatedAt  time.Time `json:"createdAt"`
 	UpdatedAt  time.Time `json:"updatedAt"`
 }
-
-type ProcessingJob struct {
-	ID         string
-	InputPath  string
-	OutputPath string
-	IsAnimated bool
-	CropX      int
-	CropY      int
-	CropW      int
-	CropH      int
-	OutW       int
-	OutH       int
-	ErrChan    chan error
-}
