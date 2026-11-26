@@ -9,6 +9,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:image/image.dart' as img;
 import '../models/sticker_provider.dart';
 import '../theme.dart';
+import '../widgets/pack_sync_badge.dart';
 import 'meme_editor_page.dart';
 
 class PackDetailsPage extends StatefulWidget {
@@ -393,40 +394,47 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
                           ),
                         ],
                       ),
-                      if (!canExport)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                          decoration: BoxDecoration(
-                            color: MewmerTheme.amber.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: MewmerTheme.amber.withValues(alpha: 0.3)),
-                          ),
-                          child: Text(
-                            'Need ${3 - stickers.length} more',
-                            style: const TextStyle(
-                              color: MewmerTheme.amber,
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          if (!canExport)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: MewmerTheme.amber.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: MewmerTheme.amber.withValues(alpha: 0.3)),
+                              ),
+                              child: Text(
+                                'Need ${3 - stickers.length} more',
+                                style: const TextStyle(
+                                  color: MewmerTheme.amber,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            )
+                          else
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: MewmerTheme.whatsappGreen.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: MewmerTheme.whatsappGreen.withValues(alpha: 0.3)),
+                              ),
+                              child: const Text(
+                                'Ready for WhatsApp',
+                                style: TextStyle(
+                                  color: MewmerTheme.whatsappGreen,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ),
-                          ),
-                        )
-                      else
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                          decoration: BoxDecoration(
-                            color: MewmerTheme.whatsappGreen.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: MewmerTheme.whatsappGreen.withValues(alpha: 0.3)),
-                          ),
-                          child: const Text(
-                            'Ready for WhatsApp',
-                            style: TextStyle(
-                              color: MewmerTheme.whatsappGreen,
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
+                          const SizedBox(height: 6),
+                          PackSyncBadge(pack: pack, showLabel: true),
+                        ],
+                      ),
                     ],
                   ),
                 ),

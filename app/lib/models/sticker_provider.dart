@@ -28,9 +28,16 @@ class StickerPack {
   String? trayImagePath;
   final DateTime createdAt;
   bool? isAnimated;
+  String? cloudPackId;
+  final Map<String, String> syncedStickers;
+  final List<String> tags;
 
   bool get isActuallyAnimated => isAnimated == true;
   String get typeLabel => isActuallyAnimated ? 'Animated' : 'Static';
+  bool get isCloudLinked => cloudPackId != null && cloudPackId!.isNotEmpty;
+  int get pendingSyncCount =>
+      stickerPaths.where((p) => !syncedStickers.containsKey(p)).length;
+  bool get hasPendingSync => !isCloudLinked || pendingSyncCount > 0;
 
   StickerPack({
     required this.identifier,
@@ -40,7 +47,11 @@ class StickerPack {
     this.trayImagePath,
     required this.createdAt,
     this.isAnimated,
-  });
+    this.cloudPackId,
+    Map<String, String>? syncedStickers,
+    List<String>? tags,
+  })  : syncedStickers = syncedStickers ?? {},
+        tags = tags ?? [];
 
   Map<String, dynamic> toJson() => {
     'identifier': identifier,
@@ -50,17 +61,31 @@ class StickerPack {
     'trayImagePath': trayImagePath,
     'createdAt': createdAt.toIso8601String(),
     'isAnimated': isAnimated,
+    'cloudPackId': cloudPackId,
+    'syncedStickers': syncedStickers,
+    'tags': tags,
   };
 
-  factory StickerPack.fromJson(Map<String, dynamic> json) => StickerPack(
-    identifier: json['identifier'] as String,
-    name: json['name'] as String,
-    publisher: json['publisher'] as String,
-    stickerPaths: List<String>.from(json['stickerPaths'] as List),
-    trayImagePath: json['trayImagePath'] as String?,
-    createdAt: DateTime.parse(json['createdAt'] as String),
-    isAnimated: json['isAnimated'] as bool?,
-  );
+  factory StickerPack.fromJson(Map<String, dynamic> json) {
+    final rawSynced = json['syncedStickers'] as Map<String, dynamic>? ?? const {};
+    final synced = <String, String>{};
+    rawSynced.forEach((k, v) {
+      if (v is String) synced[k] = v;
+    });
+    final rawTags = json['tags'] as List<dynamic>? ?? const [];
+    return StickerPack(
+      identifier: json['identifier'] as String,
+      name: json['name'] as String,
+      publisher: json['publisher'] as String,
+      stickerPaths: List<String>.from(json['stickerPaths'] as List),
+      trayImagePath: json['trayImagePath'] as String?,
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      isAnimated: json['isAnimated'] as bool?,
+      cloudPackId: json['cloudPackId'] as String?,
+      syncedStickers: synced,
+      tags: rawTags.map((e) => e.toString()).toList(),
+    );
+  }
 }
 
 class StickerProvider extends ChangeNotifier {
@@ -265,5 +290,63 @@ class StickerProvider extends ChangeNotifier {
       await saveToStorage();
       notifyListeners();
     }
+  }
+
+  Future<void> markPackSynced(
+    String packIdentifier,
+    String cloudPackId,
+    Map<String, String> newlySyncedStickers,
+  ) async {
+    final packIndex = _packs.indexWhere((p) => p.identifier == packIdentifier);
+    if (packIndex != -1) {
+      _packs[packIndex].cloudPackId = cloudPackId;
+      _packs[packIndex].syncedStickers.addAll(newlySyncedStickers);
+      await saveToStorage();
+      notifyListeners();
+    }
+  }
+
+  Future<void> upsertCloudPack({
+    required String cloudPackId,
+    required String name,
+    required String publisher,
+    required bool isAnimated,
+    required List<String> tags,
+    required DateTime createdAt,
+    String? trayImagePath,
+    required List<String> localStickerPaths,
+    required Map<String, String> syncedStickers,
+  }) async {
+    final idx = _packs.indexWhere((p) => p.cloudPackId == cloudPackId);
+    if (idx == -1) {
+      _packs.add(
+        StickerPack(
+          identifier: 'cloud_$cloudPackId',
+          name: name,
+          publisher: publisher,
+          stickerPaths: localStickerPaths,
+          trayImagePath: trayImagePath,
+          createdAt: createdAt,
+          isAnimated: isAnimated,
+          cloudPackId: cloudPackId,
+          syncedStickers: syncedStickers,
+          tags: tags,
+        ),
+      );
+    } else {
+      final pack = _packs[idx];
+      pack.name = name;
+      if (trayImagePath != null) {
+        pack.trayImagePath = trayImagePath;
+      }
+      for (final path in localStickerPaths) {
+        if (!pack.stickerPaths.contains(path)) {
+          pack.stickerPaths.add(path);
+        }
+      }
+      pack.syncedStickers.addAll(syncedStickers);
+    }
+    await saveToStorage();
+    notifyListeners();
   }
 }

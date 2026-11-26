@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../models/cloud_provider.dart';
+import '../models/sticker_provider.dart';
 import '../theme.dart';
-import 'cloud_packs_page.dart';
 import 'login_page.dart';
 
 class ProfilePage extends StatelessWidget {
@@ -21,7 +21,11 @@ class ProfilePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cloud = context.watch<CloudProvider>();
+    final stickerProvider = context.watch<StickerProvider>();
     final user = cloud.user;
+    final totalPacks = stickerProvider.packs.length;
+    final pendingPacks = stickerProvider.packs.where((p) => p.hasPendingSync).length;
+    final syncedPacks = totalPacks - pendingPacks;
 
     return Scaffold(
       backgroundColor: MewmerTheme.background,
@@ -149,21 +153,52 @@ class ProfilePage extends StatelessWidget {
                           color: MewmerTheme.textMuted,
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 12),
+                      Text(
+                        '$syncedPacks / $totalPacks packs synced · $pendingPacks pending',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: MewmerTheme.textMuted,
+                        ),
+                      ),
+                      const SizedBox(height: 14),
                       SizedBox(
                         width: double.infinity,
                         height: 46,
                         child: ElevatedButton.icon(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const CloudPacksPage(),
-                              ),
-                            );
-                          },
-                          icon: const Icon(Icons.cloud_done_outlined, size: 18),
-                          label: const Text('My Cloud Packs'),
+                          onPressed: cloud.isSyncing
+                              ? null
+                              : () async {
+                                  try {
+                                    await cloud.syncAll(stickerProvider);
+                                    if (!context.mounted) return;
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('All packs synced with cloud'),
+                                        backgroundColor: MewmerTheme.whatsappGreen,
+                                      ),
+                                    );
+                                  } catch (e) {
+                                    if (!context.mounted) return;
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('Sync failed: $e'),
+                                        backgroundColor: MewmerTheme.rose,
+                                      ),
+                                    );
+                                  }
+                                },
+                          icon: cloud.isSyncing
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Icon(Icons.sync_rounded, size: 18),
+                          label: Text(cloud.isSyncing ? 'Syncing...' : 'Sync All Now'),
                         ),
                       ),
                       const SizedBox(height: 10),

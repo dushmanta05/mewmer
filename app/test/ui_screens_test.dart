@@ -271,7 +271,7 @@ void main() {
       expect(find.text('Admin Cat'), findsOneWidget);
       expect(find.text('admin@mewmer.com'), findsOneWidget);
       expect(find.text('@admin'), findsOneWidget);
-      expect(find.text('My Cloud Packs'), findsOneWidget);
+      expect(find.text('Sync All Now'), findsOneWidget);
       expect(find.text('Mewmer v0.0.1+1'), findsOneWidget);
     });
 

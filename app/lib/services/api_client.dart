@@ -175,6 +175,7 @@ class MewmerApiClient {
     required String title,
     required File trayFile,
     String visibility = 'private',
+    bool isAnimated = false,
     List<String> tags = const [],
   }) async {
     final request = http.MultipartRequest(
@@ -184,6 +185,7 @@ class MewmerApiClient {
     request.headers.addAll(_authHeaders(token));
     request.fields['title'] = title.trim();
     request.fields['visibility'] = visibility;
+    request.fields['isAnimated'] = isAnimated.toString();
     if (tags.isNotEmpty) {
       request.fields['tags'] = tags.join(',');
     }

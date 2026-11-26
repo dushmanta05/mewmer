@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:image/image.dart' as img;
 import 'package:path_provider/path_provider.dart';
 import '../models/cloud_models.dart';
+import '../models/sticker_provider.dart';
 import '../services/api_client.dart';
 import '../services/media_cache_service.dart';
 import '../services/session_store.dart';
@@ -11,6 +12,7 @@ class CloudProvider extends ChangeNotifier {
   final MewmerApiClient _apiClient;
   final SessionStore _sessionStore;
   final MediaCacheService _mediaCache;
+  final Future<Directory> Function()? _tempDirProvider;
 
   CloudUser? _user;
   String? _token;
@@ -19,6 +21,7 @@ class CloudProvider extends ChangeNotifier {
   bool _isLoading = false;
   bool _isSyncing = false;
   bool _isLoadingMore = false;
+  final Set<String> _syncingPackIds = {};
   int _currentPage = 1;
   int _totalPacks = 0;
   static const int _pageSize = 10;
@@ -29,10 +32,12 @@ class CloudProvider extends ChangeNotifier {
     MewmerApiClient? apiClient,
     SessionStore? sessionStore,
     MediaCacheService? mediaCache,
+    Future<Directory> Function()? tempDirProvider,
   })  : _apiClient = apiClient ?? MewmerApiClient(),
         _sessionStore = sessionStore ?? SecureSessionStore(),
         _mediaCache = mediaCache ??
-            MediaCacheService(apiClient: apiClient ?? MewmerApiClient());
+            MediaCacheService(apiClient: apiClient ?? MewmerApiClient()),
+        _tempDirProvider = tempDirProvider;
 
   CloudUser? get user => _user;
   bool get isAuthenticated => _token != null && _token!.isNotEmpty && _user != null;
@@ -42,6 +47,8 @@ class CloudProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isSyncing => _isSyncing;
   bool get isLoadingMore => _isLoadingMore;
+  bool isPackSyncing(String packIdentifier) =>
+      _syncingPackIds.contains(packIdentifier);
   String get searchQuery => _searchQuery;
   String? get errorMessage => _errorMessage;
   String get baseUrl => _apiClient.baseUrl;
@@ -252,6 +259,7 @@ class CloudProvider extends ChangeNotifier {
   Future<CloudPack> createPack({
     required String title,
     required File trayFile,
+    bool isAnimated = false,
     List<String> tags = const [],
   }) async {
     final token = _token;
@@ -264,6 +272,7 @@ class CloudProvider extends ChangeNotifier {
       title: title,
       trayFile: trayFile,
       visibility: 'private',
+      isAnimated: isAnimated,
       tags: tags,
     );
     _packs.insert(0, created);
@@ -298,6 +307,9 @@ class CloudProvider extends ChangeNotifier {
     return uploaded;
   }
 
+  Future<Directory> _getTempDir() =>
+      _tempDirProvider != null ? _tempDirProvider() : getTemporaryDirectory();
+
   Future<File> buildTrayIconFromSticker(File stickerFile) async {
     final bytes = await stickerFile.readAsBytes();
     final decoded = img.decodeImage(bytes);
@@ -313,12 +325,144 @@ class CloudProvider extends ChangeNotifier {
     img.compositeImage(staticFrame, firstFrame);
     final trayResized = img.copyResize(staticFrame, width: 96, height: 96);
     final trayPngBytes = Uint8List.fromList(img.encodePng(trayResized));
-    final tempDir = await getTemporaryDirectory();
+    final tempDir = await _getTempDir();
     final trayFile = File(
       '${tempDir.path}/cloud_tray_${DateTime.now().millisecondsSinceEpoch}.png',
     );
     await trayFile.writeAsBytes(trayPngBytes);
     return trayFile;
+  }
+
+  Future<File> _buildFallbackTrayIcon() async {
+    final blank = img.Image(width: 96, height: 96, numChannels: 4);
+    img.fill(blank, color: img.ColorRgba8(139, 92, 246, 255));
+    final trayPngBytes = Uint8List.fromList(img.encodePng(blank));
+    final tempDir = await _getTempDir();
+    final trayFile = File(
+      '${tempDir.path}/cloud_tray_default_${DateTime.now().millisecondsSinceEpoch}.png',
+    );
+    await trayFile.writeAsBytes(trayPngBytes);
+    return trayFile;
+  }
+
+  Future<void> syncLocalPack(
+    StickerProvider localProvider,
+    StickerPack pack,
+  ) async {
+    final token = _token;
+    if (token == null || token.isEmpty) {
+      throw const ApiException(401, 'Not signed in');
+    }
+    if (_syncingPackIds.contains(pack.identifier)) return;
+
+    _syncingPackIds.add(pack.identifier);
+    notifyListeners();
+
+    try {
+      String? cloudId = pack.cloudPackId;
+      if (cloudId == null || cloudId.isEmpty) {
+        File trayFile;
+        if (pack.trayImagePath != null && File(pack.trayImagePath!).existsSync()) {
+          trayFile = File(pack.trayImagePath!);
+        } else if (pack.stickerPaths.isNotEmpty &&
+            File(pack.stickerPaths.first).existsSync()) {
+          trayFile = await buildTrayIconFromSticker(File(pack.stickerPaths.first));
+        } else {
+          trayFile = await _buildFallbackTrayIcon();
+        }
+        final created = await createPack(
+          title: pack.name,
+          trayFile: trayFile,
+          isAnimated: pack.isActuallyAnimated,
+          tags: pack.tags,
+        );
+        cloudId = created.id;
+      }
+
+      final newlySynced = <String, String>{};
+      for (final localPath in pack.stickerPaths) {
+        if (pack.syncedStickers.containsKey(localPath)) continue;
+        final file = File(localPath);
+        if (!await file.exists()) continue;
+        final uploaded = await _apiClient.uploadSticker(
+          token,
+          packId: cloudId,
+          stickerFile: file,
+          isAnimated: pack.isActuallyAnimated,
+        );
+        await _downloadStickerIfPresent(cloudId, uploaded);
+        newlySynced[localPath] = uploaded.id;
+      }
+
+      await localProvider.markPackSynced(pack.identifier, cloudId, newlySynced);
+    } finally {
+      _syncingPackIds.remove(pack.identifier);
+      notifyListeners();
+    }
+  }
+
+  Future<void> syncAll(StickerProvider localProvider) async {
+    final token = _token;
+    if (token == null || token.isEmpty) {
+      throw const ApiException(401, 'Not signed in');
+    }
+
+    _isSyncing = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final pendingLocal = localProvider.packs
+          .where((p) => p.hasPendingSync)
+          .toList();
+      for (final pack in pendingLocal) {
+        await syncLocalPack(localProvider, pack);
+      }
+
+      int page = 1;
+      final remotePacks = <CloudPack>[];
+      while (true) {
+        final res = await _apiClient.listMyPacks(token, page: page, limit: 50);
+        remotePacks.addAll(res.packs);
+        if (remotePacks.length >= res.total || res.packs.isEmpty) break;
+        page += 1;
+      }
+
+      for (final summary in remotePacks) {
+        final alreadyLinked = localProvider.packs.any(
+          (p) => p.cloudPackId == summary.id,
+        );
+        if (alreadyLinked) continue;
+
+        final detail = await fetchPackDetails(summary.id);
+        final trayPath = localTrayPath(detail.id);
+        final localPaths = <String>[];
+        final syncedMap = <String, String>{};
+        for (final s in detail.stickers) {
+          final path = localStickerPath(s.id);
+          if (path != null) {
+            localPaths.add(path);
+            syncedMap[path] = s.id;
+          }
+        }
+        await localProvider.upsertCloudPack(
+          cloudPackId: detail.id,
+          name: detail.title,
+          publisher: detail.publisher,
+          isAnimated: detail.isAnimated,
+          tags: detail.tags,
+          createdAt: detail.createdAt,
+          trayImagePath: trayPath,
+          localStickerPaths: localPaths,
+          syncedStickers: syncedMap,
+        );
+      }
+      _packs = remotePacks;
+      _totalPacks = remotePacks.length;
+    } finally {
+      _isSyncing = false;
+      notifyListeners();
+    }
   }
 
   Future<void> deletePack(String packId) async {

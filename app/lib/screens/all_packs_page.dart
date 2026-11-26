@@ -2,8 +2,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import '../models/cloud_provider.dart';
 import '../models/sticker_provider.dart';
 import '../theme.dart';
+import '../widgets/pack_sync_badge.dart';
 import 'pack_details_page.dart';
 
 class AllPacksPage extends StatefulWidget {
@@ -64,6 +66,7 @@ class _AllPacksPageState extends State<AllPacksPage> {
   @override
   Widget build(BuildContext context) {
     final stickerProvider = context.watch<StickerProvider>();
+    final cloud = context.watch<CloudProvider>();
     final trimmed = _query.trim().toLowerCase();
     final filtered = trimmed.isEmpty
         ? stickerProvider.packs
@@ -78,6 +81,67 @@ class _AllPacksPageState extends State<AllPacksPage> {
           'All Sticker Packs',
           style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.bold),
         ),
+        actions: [
+          if (cloud.isAuthenticated)
+            Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: TextButton.icon(
+                onPressed: cloud.isSyncing
+                    ? null
+                    : () async {
+                        try {
+                          await cloud.syncAll(stickerProvider);
+                          if (!context.mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('All packs synced with cloud'),
+                              backgroundColor: MewmerTheme.whatsappGreen,
+                            ),
+                          );
+                        } catch (e) {
+                          if (!context.mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Sync failed: $e'),
+                              backgroundColor: MewmerTheme.rose,
+                            ),
+                          );
+                        }
+                      },
+                icon: cloud.isSyncing
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: MewmerTheme.brandViolet,
+                        ),
+                      )
+                    : const Icon(
+                        Icons.sync_rounded,
+                        size: 16,
+                        color: MewmerTheme.brandViolet,
+                      ),
+                label: Text(
+                  cloud.isSyncing ? 'Syncing' : 'Sync All',
+                  style: const TextStyle(
+                    color: MewmerTheme.brandViolet,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                  ),
+                ),
+                style: TextButton.styleFrom(
+                  backgroundColor: MewmerTheme.brandViolet.withValues(alpha: 0.14),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
       body: Column(
         children: [
@@ -163,15 +227,23 @@ class _AllPacksPageState extends State<AllPacksPage> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      pack.name,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 15,
-                                        color: MewmerTheme.textPrimary,
-                                      ),
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            pack.name,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 15,
+                                              color: MewmerTheme.textPrimary,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        PackSyncBadge(pack: pack),
+                                      ],
                                     ),
                                     const SizedBox(height: 4),
                                     Row(

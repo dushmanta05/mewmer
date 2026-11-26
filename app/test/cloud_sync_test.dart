@@ -3,8 +3,10 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:image/image.dart' as img;
 import 'package:mewmer/models/cloud_models.dart';
 import 'package:mewmer/models/cloud_provider.dart';
+import 'package:mewmer/models/sticker_provider.dart';
 import 'package:mewmer/services/api_client.dart';
 import 'package:mewmer/services/media_cache_service.dart';
 import 'package:mewmer/services/session_store.dart';
@@ -236,6 +238,7 @@ void main() {
           apiClient: apiClient,
           directoryProvider: () async => tempDir,
         ),
+        tempDirProvider: () async => tempDir,
       );
 
       await expectLater(
@@ -366,6 +369,7 @@ void main() {
           apiClient: apiClient,
           directoryProvider: () async => tempDir,
         ),
+        tempDirProvider: () async => tempDir,
       );
 
       await provider.login(email: 'admin@mewmer.com', password: 'secret');
@@ -475,6 +479,7 @@ void main() {
           apiClient: apiClient,
           directoryProvider: () async => tempDir,
         ),
+        tempDirProvider: () async => tempDir,
       );
 
       await provider.login(email: 'admin@mewmer.com', password: 'secret');
@@ -489,6 +494,177 @@ void main() {
       expect(provider.packs.length, 1);
       expect(provider.packs.first.tags, ['cat', 'funny']);
       expect(seenQueries.last, contains('q=cat'));
+    });
+
+    test('syncAll pushes pending local pack and pulls remote pack', () async {
+      final localSticker = File('${tempDir.path}/local_s1.webp');
+      await localSticker.writeAsBytes(
+        img.encodePng(img.Image(width: 4, height: 4)),
+      );
+
+      final localProvider = StickerProvider(
+        metadataFileProvider: () async =>
+            File('${tempDir.path}/stickers_metadata.json'),
+      );
+      await localProvider.init();
+      await localProvider.createPack('Local Pending', isAnimated: false);
+      final localPackId = localProvider.packs.first.identifier;
+      await localProvider.addStickerToPack(
+        localPackId,
+        localSticker.path,
+        isAnimated: false,
+      );
+      expect(localProvider.packs.first.hasPendingSync, isTrue);
+      expect(localProvider.packs.first.pendingSyncCount, 1);
+
+      final mockHttp = MockClient((request) async {
+        if (request.url.path == '/api/v1/auth/login') {
+          return http.Response(
+            json.encode({
+              'user': {
+                'id': 'u1',
+                'email': 'admin@mewmer.com',
+                'username': 'admin',
+                'displayName': 'Admin',
+                'role': 'admin',
+              },
+              'token': 'tok_123',
+            }),
+            200,
+          );
+        }
+        if (request.url.path == '/api/v1/packs' && request.method == 'POST') {
+          return http.Response(
+            json.encode({
+              'id': 'cloud_1',
+              'title': 'Local Pending',
+              'publisher': 'Admin · mewmer.com',
+              'trayImageKey': '',
+              'isAnimated': false,
+              'visibility': 'private',
+              'tags': [],
+              'userId': 'u1',
+              'downloadsCount': 0,
+              'createdAt': '2026-01-01T00:00:00Z',
+            }),
+            201,
+          );
+        }
+        if (request.url.path == '/api/v1/packs/cloud_1/stickers' &&
+            request.method == 'POST') {
+          return http.Response(
+            json.encode({
+              'id': 'cs_1',
+              'packId': 'cloud_1',
+              'userId': 'u1',
+              'imageKey': 'https://cdn.example.com/cs_1.webp',
+              'emojis': ['✨'],
+              'byteSize': 4,
+              'width': 512,
+              'height': 512,
+              'isAnimated': false,
+              'sortOrder': 1,
+              'createdAt': '2026-01-01T00:00:00Z',
+            }),
+            201,
+            headers: {'content-type': 'application/json; charset=utf-8'},
+          );
+        }
+        if (request.url.path == '/api/v1/me/packs') {
+          return http.Response(
+            json.encode({
+              'packs': [
+                {
+                  'id': 'cloud_1',
+                  'title': 'Local Pending',
+                  'publisher': 'Admin · mewmer.com',
+                  'trayImageKey': '',
+                  'isAnimated': false,
+                  'visibility': 'private',
+                  'tags': [],
+                  'userId': 'u1',
+                  'downloadsCount': 0,
+                  'createdAt': '2026-01-01T00:00:00Z',
+                },
+                {
+                  'id': 'remote_2',
+                  'title': 'From Web',
+                  'publisher': 'Admin · mewmer.com',
+                  'trayImageKey': '',
+                  'isAnimated': false,
+                  'visibility': 'private',
+                  'tags': ['web'],
+                  'userId': 'u1',
+                  'downloadsCount': 0,
+                  'createdAt': '2026-01-01T00:00:00Z',
+                }
+              ],
+              'page': 1,
+              'limit': 50,
+              'total': 2,
+            }),
+            200,
+          );
+        }
+        if (request.url.path == '/api/v1/packs/remote_2') {
+          return http.Response(
+            json.encode({
+              'id': 'remote_2',
+              'title': 'From Web',
+              'publisher': 'Admin · mewmer.com',
+              'trayImageKey': '',
+              'isAnimated': false,
+              'visibility': 'private',
+              'tags': ['web'],
+              'userId': 'u1',
+              'downloadsCount': 0,
+              'createdAt': '2026-01-01T00:00:00Z',
+              'stickers': [
+                {
+                  'id': 'rs_1',
+                  'packId': 'remote_2',
+                  'userId': 'u1',
+                  'imageKey': 'https://cdn.example.com/rs_1.webp',
+                  'emojis': ['✨'],
+                  'byteSize': 4,
+                  'width': 512,
+                  'height': 512,
+                  'isAnimated': false,
+                  'sortOrder': 1,
+                  'createdAt': '2026-01-01T00:00:00Z',
+                }
+              ],
+            }),
+            200,
+            headers: {'content-type': 'application/json; charset=utf-8'},
+          );
+        }
+        if (request.url.path == '/cs_1.webp' || request.url.path == '/rs_1.webp') {
+          return http.Response.bytes([1, 2, 3, 4], 200);
+        }
+        return http.Response('Not found', 404);
+      });
+
+      final apiClient = MewmerApiClient(httpClient: mockHttp);
+      final provider = CloudProvider(
+        apiClient: apiClient,
+        sessionStore: InMemorySessionStore(),
+        mediaCache: MediaCacheService(
+          apiClient: apiClient,
+          directoryProvider: () async => tempDir,
+        ),
+        tempDirProvider: () async => tempDir,
+      );
+
+      await provider.login(email: 'admin@mewmer.com', password: 'secret');
+      await provider.syncAll(localProvider);
+
+      expect(localProvider.packs.length, 2);
+      expect(localProvider.packs.first.hasPendingSync, isFalse);
+      expect(localProvider.packs.first.cloudPackId, 'cloud_1');
+      expect(localProvider.packs.last.name, 'From Web');
+      expect(localProvider.packs.last.hasPendingSync, isFalse);
+      expect(localProvider.packs.last.stickerPaths.length, 1);
     });
   });
 }
