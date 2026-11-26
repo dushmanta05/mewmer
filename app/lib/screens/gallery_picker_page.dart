@@ -232,7 +232,9 @@ class _GalleryPickerPageState extends State<GalleryPickerPage> {
                         const SizedBox(height: 20),
                         ElevatedButton(
                           onPressed: () async {
-                            await PhotoManager.openSetting();
+                            try {
+                              await PhotoManager.openSetting();
+                            } catch (_) {}
                           },
                           child: const Text('Open Settings'),
                         ),

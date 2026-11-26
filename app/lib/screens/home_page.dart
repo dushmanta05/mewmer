@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:photo_manager/photo_manager.dart';
 import 'package:provider/provider.dart';
 import 'package:whatsapp_stickers_injector/whatsapp_stickers.dart';
 import 'package:path_provider/path_provider.dart';
@@ -29,6 +30,27 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   bool _isExporting = false;
   bool _isPickingImage = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _requestMediaPermissionOnStart();
+    });
+  }
+
+  Future<void> _requestMediaPermissionOnStart() async {
+    try {
+      await PhotoManager.requestPermissionExtend(
+        requestOption: const PermissionRequestOption(
+          androidPermission: AndroidPermission(
+            type: RequestType.image,
+            mediaLocation: false,
+          ),
+        ),
+      );
+    } catch (_) {}
+  }
 
   Future<void> _pickImage() async {
     if (_isPickingImage) return;
