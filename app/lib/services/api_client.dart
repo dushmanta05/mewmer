@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
+import '../config/env.dart';
 import '../models/cloud_models.dart';
 
 class ApiException implements Exception {
@@ -32,7 +33,7 @@ class MewmerApiClient {
   MewmerApiClient({
     String? baseUrl,
     http.Client? httpClient,
-  })  : baseUrl = _normalizeBaseUrl(baseUrl ?? defaultBaseUrl),
+  })  : baseUrl = _normalizeBaseUrl(baseUrl ?? apiBaseUrl),
         _http = httpClient ?? http.Client();
 
   static String _normalizeBaseUrl(String url) {
