@@ -390,12 +390,18 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 Navigator.pop(dialogContext);
-                Navigator.push(
+                final loggedIn = await Navigator.push<bool>(
                   context,
                   MaterialPageRoute(builder: (_) => const LoginPage()),
                 );
+                if (loggedIn == true && context.mounted) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const ProfilePage()),
+                  );
+                }
               },
               child: const Text('Sign In'),
             ),
