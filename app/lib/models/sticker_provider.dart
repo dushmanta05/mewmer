@@ -30,6 +30,7 @@ class StickerPack {
   bool? isAnimated;
   String? cloudPackId;
   bool cloudDownloaded;
+  bool pendingMetadataSync;
   final Map<String, String> syncedStickers;
   final List<String> pendingDeleteStickerIds;
   final List<String> tags;
@@ -42,7 +43,8 @@ class StickerPack {
   bool get hasPendingSync =>
       !isCloudLinked ||
       pendingSyncCount > 0 ||
-      pendingDeleteStickerIds.isNotEmpty;
+      pendingDeleteStickerIds.isNotEmpty ||
+      pendingMetadataSync;
 
   StickerPack({
     required this.identifier,
@@ -54,6 +56,7 @@ class StickerPack {
     this.isAnimated,
     this.cloudPackId,
     this.cloudDownloaded = true,
+    this.pendingMetadataSync = false,
     Map<String, String>? syncedStickers,
     List<String>? pendingDeleteStickerIds,
     List<String>? tags,
@@ -73,6 +76,7 @@ class StickerPack {
     'isAnimated': isAnimated,
     'cloudPackId': cloudPackId,
     'cloudDownloaded': cloudDownloaded,
+    'pendingMetadataSync': pendingMetadataSync,
     'syncedStickers': syncedStickers,
     'pendingDeleteStickerIds': pendingDeleteStickerIds,
     'tags': tags,
@@ -97,6 +101,7 @@ class StickerPack {
       isAnimated: json['isAnimated'] as bool?,
       cloudPackId: json['cloudPackId'] as String?,
       cloudDownloaded: json['cloudDownloaded'] as bool? ?? true,
+      pendingMetadataSync: json['pendingMetadataSync'] as bool? ?? false,
       syncedStickers: synced,
       pendingDeleteStickerIds:
           rawPendingDeletes.map((e) => e.toString()).toList(),
@@ -348,10 +353,34 @@ class StickerProvider extends ChangeNotifier {
     final packIndex = _packs.indexWhere((p) => p.identifier == packIdentifier);
     if (packIndex != -1) {
       _packs[packIndex].cloudPackId = cloudPackId;
+      _packs[packIndex].pendingMetadataSync = false;
       _packs[packIndex].syncedStickers.addAll(newlySyncedStickers);
       await saveToStorage();
       notifyListeners();
     }
+  }
+
+  Future<void> updatePackDetails(
+    String packIdentifier, {
+    required String name,
+    required List<String> tags,
+    String? trayImagePath,
+  }) async {
+    final packIndex = _packs.indexWhere((p) => p.identifier == packIdentifier);
+    if (packIndex == -1) return;
+    final pack = _packs[packIndex];
+    pack.name = name;
+    pack.tags
+      ..clear()
+      ..addAll(tags);
+    if (trayImagePath != null) {
+      pack.trayImagePath = trayImagePath;
+    }
+    if (pack.isCloudLinked) {
+      pack.pendingMetadataSync = true;
+    }
+    await saveToStorage();
+    notifyListeners();
   }
 
   Future<void> clearPendingStickerDeletes(

@@ -205,6 +205,42 @@ class MewmerApiClient {
     return CloudPack.fromJson(body);
   }
 
+  Future<CloudPack> updatePack(
+    String token, {
+    required String packId,
+    String? title,
+    List<String>? tags,
+    File? trayFile,
+  }) async {
+    final request = http.MultipartRequest(
+      'PATCH',
+      Uri.parse('$baseUrl/packs/$packId'),
+    );
+    request.headers.addAll(_authHeaders(token));
+    if (title != null && title.trim().isNotEmpty) {
+      request.fields['title'] = title.trim();
+    }
+    if (tags != null) {
+      request.fields['tags'] = tags.join(',');
+    }
+    if (trayFile != null) {
+      request.files.add(
+        await http.MultipartFile.fromPath('tray', trayFile.path),
+      );
+    }
+
+    final streamed = await _http.send(request);
+    final response = await http.Response.fromStream(streamed);
+    final body = _decodeJsonMap(response);
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw ApiException(
+        response.statusCode,
+        body['error'] as String? ?? 'Failed to update pack',
+      );
+    }
+    return CloudPack.fromJson(body);
+  }
+
   Future<CloudSticker> uploadSticker(
     String token, {
     required String packId,

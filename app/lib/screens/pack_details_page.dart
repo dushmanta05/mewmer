@@ -77,36 +77,42 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
     setState(() => _isExporting = true);
 
     try {
-      final tempDir = await getTemporaryDirectory();
+      String trayPath;
+      if (pack.trayImagePath != null && File(pack.trayImagePath!).existsSync()) {
+        trayPath = pack.trayImagePath!;
+      } else {
+        final tempDir = await getTemporaryDirectory();
 
-      final firstStickerBytes = await File(pack.stickerPaths[0]).readAsBytes();
-      img.Image? decoded = img.decodeImage(firstStickerBytes);
-      if (decoded == null) throw 'Could not decode sticker for tray icon';
+        final firstStickerBytes = await File(pack.stickerPaths[0]).readAsBytes();
+        img.Image? decoded = img.decodeImage(firstStickerBytes);
+        if (decoded == null) throw 'Could not decode sticker for tray icon';
 
-      final bool isAnimated = decoded.numFrames > 1;
-      final img.Image firstFrame = isAnimated ? decoded.frames[0] : decoded;
-      final img.Image staticFrame = img.Image(
-        width: firstFrame.width,
-        height: firstFrame.height,
-        numChannels: 4,
-      );
-      img.compositeImage(staticFrame, firstFrame);
+        final bool isAnimated = decoded.numFrames > 1;
+        final img.Image firstFrame = isAnimated ? decoded.frames[0] : decoded;
+        final img.Image staticFrame = img.Image(
+          width: firstFrame.width,
+          height: firstFrame.height,
+          numChannels: 4,
+        );
+        img.compositeImage(staticFrame, firstFrame);
 
-      img.Image trayResized = img.copyResize(staticFrame, width: 96, height: 96);
-      final Uint8List trayPngBytes = Uint8List.fromList(
-        img.encodePng(trayResized),
-      );
+        img.Image trayResized = img.copyResize(staticFrame, width: 96, height: 96);
+        final Uint8List trayPngBytes = Uint8List.fromList(
+          img.encodePng(trayResized),
+        );
 
-      final String trayFileName =
-          't_${pack.identifier}_${DateTime.now().millisecondsSinceEpoch}.png';
-      final trayFile = File('${tempDir.path}/$trayFileName');
-      await trayFile.writeAsBytes(trayPngBytes);
+        final String trayFileName =
+            't_${pack.identifier}_${DateTime.now().millisecondsSinceEpoch}.png';
+        final trayFile = File('${tempDir.path}/$trayFileName');
+        await trayFile.writeAsBytes(trayPngBytes);
+        trayPath = trayFile.path;
+      }
 
       var stickerPack = WhatsappStickers(
         identifier: pack.identifier,
         name: pack.name,
         publisher: pack.publisher,
-        trayImageFileName: WhatsappStickerImage.fromFile(trayFile.path),
+        trayImageFileName: WhatsappStickerImage.fromFile(trayPath),
         publisherWebsite: 'https://mewmer.com',
         privacyPolicyWebsite: 'https://mewmer.com/privacy',
         licenseAgreementWebsite: 'https://mewmer.com/license',
@@ -204,6 +210,172 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
         const SnackBar(content: Text('Stickers removed from pack.')),
       );
     }
+  }
+
+  Future<void> _showEditPackDialog(StickerPack pack) async {
+    final stickerProvider = context.read<StickerProvider>();
+    final cloud = context.read<CloudProvider>();
+    final nameController = TextEditingController(text: pack.name);
+    final tagsController = TextEditingController(text: pack.tags.join(', '));
+    String? selectedStickerForTray;
+    bool isSaving = false;
+
+    await showDialog(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.55),
+      builder: (dialogContext) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        child: StatefulBuilder(
+          builder: (context, setDialogState) => AlertDialog(
+            insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+            title: const Text(
+              'Edit Pack',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+            ),
+            content: SizedBox(
+              width: 360,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextField(
+                      controller: nameController,
+                      enabled: !isSaving,
+                      decoration: const InputDecoration(
+                        labelText: 'Pack Name',
+                        hintText: 'Mewmer Cat',
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    TextField(
+                      controller: tagsController,
+                      enabled: !isSaving,
+                      decoration: const InputDecoration(
+                        labelText: 'Tags (comma-separated)',
+                        hintText: 'meme, funny, reactions',
+                      ),
+                    ),
+                    if (pack.stickerPaths.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Tray Icon',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: MewmerTheme.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        height: 64,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: pack.stickerPaths.length,
+                          separatorBuilder: (_, _) => const SizedBox(width: 8),
+                          itemBuilder: (context, idx) {
+                            final path = pack.stickerPaths[idx];
+                            final isSelected = selectedStickerForTray == path;
+                            return GestureDetector(
+                              onTap: isSaving
+                                  ? null
+                                  : () => setDialogState(
+                                        () => selectedStickerForTray = path,
+                                      ),
+                              child: Container(
+                                width: 64,
+                                height: 64,
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: MewmerTheme.cardHover,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: isSelected
+                                        ? MewmerTheme.brandViolet
+                                        : MewmerTheme.border,
+                                    width: isSelected ? 2 : 1,
+                                  ),
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.file(
+                                    File(path),
+                                    fit: BoxFit.contain,
+                                    errorBuilder: (_, _, _) => const Icon(
+                                      Icons.broken_image_outlined,
+                                      color: MewmerTheme.muted,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: isSaving ? null : () => Navigator.pop(dialogContext),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(color: MewmerTheme.textMuted),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: isSaving
+                    ? null
+                    : () async {
+                        final newName = nameController.text.trim();
+                        if (newName.isEmpty) return;
+                        setDialogState(() => isSaving = true);
+                        try {
+                          String? trayPath;
+                          if (selectedStickerForTray != null) {
+                            final built = await cloud.buildTrayIconFromSticker(
+                              File(selectedStickerForTray!),
+                            );
+                            final appDir =
+                                await getApplicationDocumentsDirectory();
+                            final trayDir = Directory('${appDir.path}/trays');
+                            if (!await trayDir.exists()) {
+                              await trayDir.create(recursive: true);
+                            }
+                            final persisted = File(
+                              '${trayDir.path}/tray_${pack.identifier}_${DateTime.now().millisecondsSinceEpoch}.png',
+                            );
+                            await built.copy(persisted.path);
+                            trayPath = persisted.path;
+                          }
+                          final parsedTags = tagsController.text
+                              .split(',')
+                              .map((e) => e.trim())
+                              .where((e) => e.isNotEmpty)
+                              .toList();
+                          await stickerProvider.updatePackDetails(
+                            pack.identifier,
+                            name: newName,
+                            tags: parsedTags,
+                            trayImagePath: trayPath,
+                          );
+                          if (!dialogContext.mounted) return;
+                          Navigator.pop(dialogContext);
+                        } finally {
+                          if (dialogContext.mounted) {
+                            setDialogState(() => isSaving = false);
+                          }
+                        }
+                      },
+                child: Text(isSaving ? 'Saving...' : 'Save'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> _deletePack(StickerProvider provider) async {
@@ -341,7 +513,11 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
                 ),
               ),
             ),
-            const SizedBox(width: 8),
+            IconButton(
+              icon: const Icon(Icons.edit_outlined, size: 20, color: MewmerTheme.textMuted),
+              tooltip: 'Edit Pack',
+              onPressed: () => _showEditPackDialog(pack),
+            ),
             Padding(
               padding: const EdgeInsets.only(right: 12),
               child: TextButton(
@@ -384,10 +560,12 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
                           Row(
                             children: [
                               Text(
@@ -429,8 +607,48 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
                               color: MewmerTheme.textPrimary,
                             ),
                           ),
+                          const SizedBox(height: 6),
+                          if (pack.tags.isEmpty)
+                            GestureDetector(
+                              onTap: () => _showEditPackDialog(pack),
+                              child: const Text(
+                                '+ Add tags',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: MewmerTheme.textMuted,
+                                ),
+                              ),
+                            )
+                          else
+                            Wrap(
+                              spacing: 6,
+                              runSpacing: 4,
+                              children: pack.tags
+                                  .map(
+                                    (t) => Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 6,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: MewmerTheme.cardHover,
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Text(
+                                        '#$t',
+                                        style: const TextStyle(
+                                          fontSize: 10,
+                                          color: MewmerTheme.textMuted,
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                  .toList(),
+                            ),
                         ],
+                        ),
                       ),
+                      const SizedBox(width: 10),
                       PackSyncBadge(pack: pack, showLabel: true),
                     ],
                   ),

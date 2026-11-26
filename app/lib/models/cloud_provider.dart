@@ -391,6 +391,18 @@ class CloudProvider extends ChangeNotifier {
           tags: pack.tags,
         );
         cloudId = created.id;
+      } else if (pack.pendingMetadataSync) {
+        final trayFile = pack.trayImagePath != null &&
+                File(pack.trayImagePath!).existsSync()
+            ? File(pack.trayImagePath!)
+            : null;
+        await _apiClient.updatePack(
+          token,
+          packId: cloudId,
+          title: pack.name,
+          tags: pack.tags,
+          trayFile: trayFile,
+        );
       }
 
       if (pack.pendingDeleteStickerIds.isNotEmpty) {

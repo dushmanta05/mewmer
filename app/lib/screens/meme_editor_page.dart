@@ -556,13 +556,24 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
                       ),
                       const SizedBox(height: 8),
                       DropdownButtonFormField<String>(
+                        key: ValueKey('pack_dropdown_${selectedPackId ?? 'none'}'),
                         isExpanded: true,
                         initialValue: selectedPackId,
+                        dropdownColor: MewmerTheme.cardSurface,
+                        borderRadius: BorderRadius.circular(14),
+                        menuMaxHeight: 280,
+                        icon: const Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          color: MewmerTheme.textMuted,
+                        ),
+                        style: const TextStyle(
+                          color: MewmerTheme.textPrimary,
+                          fontSize: 14,
+                        ),
                         decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
                           contentPadding: EdgeInsets.symmetric(
                             horizontal: 12,
-                            vertical: 8,
+                            vertical: 10,
                           ),
                         ),
                         items: compatiblePacks.map((pack) {
@@ -570,7 +581,7 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
                           return DropdownMenuItem<String>(
                             value: pack.identifier,
                             child: Text(
-                              '${pack.name} (${pack.stickerPaths.length} stickers - $typeLabel)',
+                              '${pack.name} ($typeLabel)',
                               overflow: TextOverflow.ellipsis,
                             ),
                           );
