@@ -62,6 +62,10 @@ func (h *Handler) CreatePack(w http.ResponseWriter, r *http.Request) {
 
 	visibility := normalizeVisibility(r.FormValue("visibility"))
 	tags := parseTags(r.FormValue("tags"))
+	if len(tags) > 5 {
+		errorResponse(w, http.StatusBadRequest, "maximum 5 tags allowed")
+		return
+	}
 	isAnimated, _ := strconv.ParseBool(r.FormValue("isAnimated"))
 
 	file, _, err := r.FormFile("tray")
@@ -150,7 +154,12 @@ func (h *Handler) UpdatePack(w http.ResponseWriter, r *http.Request) {
 		existing.Title = title
 	}
 	if r.Form.Has("tags") {
-		existing.Tags = parseTags(r.FormValue("tags"))
+		tags := parseTags(r.FormValue("tags"))
+		if len(tags) > 5 {
+			errorResponse(w, http.StatusBadRequest, "maximum 5 tags allowed")
+			return
+		}
+		existing.Tags = tags
 	}
 
 	oldTrayKey := existing.TrayImageKey
