@@ -435,11 +435,9 @@ class _HomePageState extends State<HomePage> {
                     children: [
                       const MewmerBrandHeader(iconSize: 36, fontSize: 24),
                       IconButton(
-                        icon: Icon(
+                        icon: const Icon(
                           Icons.account_circle,
-                          color: cloudProvider.isAuthenticated
-                              ? MewmerTheme.whatsappGreen
-                              : MewmerTheme.brandViolet,
+                          color: MewmerTheme.brandViolet,
                           size: 28,
                         ),
                         tooltip: 'Account',
