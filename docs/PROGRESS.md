@@ -13,7 +13,7 @@ This document tracks all completed milestones, current system status, mobile tes
   - **Keyboard pack injection**: Mobile app (`app/`) using native Android/iOS ContentProvider via `whatsapp_stickers_injector`.
 - Unified stack:
   - **Frontend**: Astro 5 + Svelte 5 + Tailwind CSS + `pnpm`.
-  - **Backend**: Go 1.23+ (Chi router, PGX connection pool, bounded FFmpeg worker pool).
+  - **Backend**: Go 1.23+ (Chi router, PGX connection pool).
   - **Database**: PostgreSQL 17 with `uuid-ossp` and `pg_trgm` extensions.
   - **Cloud Storage**: Cloudflare R2 for binary media; PostgreSQL stores metadata and object keys.
   - **Mobile**: Flutter app for WhatsApp injection, local file storage, and Gboard GIF insertion.
@@ -34,7 +34,7 @@ This document tracks all completed milestones, current system status, mobile tes
   - Studio Canvas Header Toolbar: Dedicated status header toolbar positioned outside the canvas frame containing dimensions badge, GIF tag, aspect ratio label, and contextual action guides (`RotateCw`, `Maximize2`, `Move` via `@lucide/svelte`).
   - Custom Stepper Pixel Dimension Controls: Replaced browser default number spin buttons with custom Obsidian Dark `[-]` and `[+]` ±50px steppers (`Minus` / `Plus`), aspect ratio lock with `Lock` / `Unlock` icons, and one-tap quick size presets.
   - Razor-sharp Vector Canvas Handles: Replaced blurry OS emoji glyphs on `<canvas>` with custom anti-aliased 2D vector path primitives matching Lucide `RotateCw` and `Maximize2` iconography with drop shadow.
-  - Animated GIF cropping: Real-time animated GIF playback within cropped aspect ratio viewport on web, with backend worker pool FFmpeg cropping pipeline and mobile frame-by-frame crop boundary clamping.
+  - Animated GIF cropping: Real-time animated GIF playback within cropped aspect ratio viewport on web, with mobile frame-by-frame crop boundary clamping.
   - Full responsive layout: Mobile-first layout with canvas pinned on top, 2-row adaptive headers and source/crop info preventing text collisions on mobile devices, single-line tabs, 2-column mobile aspect ratio grid, authentic curved vector rotation handle on canvas, and elimination of all Svelte 5 `$state` compiler warnings.
   - Streamlined Font Selector & Canvas Handle Consistency: Simplified font family dropdown to show only typeface preview and name; rendered the exact Lucide `RotateCw` SVG icon directly on the canvas text rotate handle using `Path2D`.
   - Compact Studio Headers & Mobile Responsive Polish: Renamed tab to "Crop", uppercase "OUTPUT" header, shortened aspect ratio button to "Locked" / "Unlocked", reduced footer spacing, aligned "Create. Caption. Chaos." under brand title, normalized caption input size, and made navbar context-aware with live studio badge.
@@ -50,10 +50,10 @@ This document tracks all completed milestones, current system status, mobile tes
   - `internal/database`: PostgreSQL pool repository with user/session/pack operations.
   - `internal/auth`: Argon2id password hashing and opaque session-token generation.
   - `internal/middleware`: Chi authentication and admin-role middleware.
-  - `internal/handlers`: Endpoints for `/health`, `/api/v1/auth/*`, `/api/v1/packs`, `/api/v1/stickers/upload`, and `/api/v1/stickers/process-animated`.
+  - `internal/handlers`: Endpoints for `/health`, `/api/v1/auth/*`, `/api/v1/templates`, `/api/v1/packs`, and `/api/v1/stickers`.
   - `cmd/create-admin`: CLI tool to seed the first admin account.
-  - `internal/processor`: Concurrency-safe Goroutine worker pool wrapping FFmpeg for GIF/video to animated WebP transcoding.
   - Static file delivery via Chi router on `/uploads/*`.
+  - Removed the server-side FFmpeg worker pool; animated WebP generation is handled entirely in Flutter, so the backend only validates, stores, and serves media.
 - Added `002_identity_and_sessions.sql` migration for user profiles, roles, links, and sessions.
 - Verified `gofmt`, `go test ./...`, `go vet ./...`, and `go build` clean.
 
@@ -109,6 +109,7 @@ Then on the mobile device connected to the laptop's Wi-Fi hotspot, navigate in t
 ### Known Gaps
 - Backend core (auth, templates, sticker cloud) is implemented and verified.
 - Web app has no template catalog, template detail, or admin upload UI.
+- Production deployment guide is available in `docs/PRODUCTION.md`; no private packs exist yet, so no private media migration is needed.
 
 ---
 

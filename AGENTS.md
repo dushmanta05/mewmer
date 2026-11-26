@@ -34,11 +34,11 @@ Prefer a clearer name or a smaller function over a comment explaining a murky on
 - **Svelte 5**: Use for interactive islands (sticker editor canvas, quick-generator, pack viewers).
 - **Client vs. Server Generation**:
   - **Static stickers (photos, captions, text)**: Generate 100% in the client browser using HTML5 Canvas (`canvas.toBlob('image/webp', 0.85)`). Keep server CPU usage zero for static sticker creation.
-  - **Animated stickers (GIF/Video)**: Offload conversion to the Go backend FFmpeg worker pool or process in Flutter mobile app.
+  - **Animated stickers (GIF/Video)**: Generate in the Flutter mobile app; the backend only stores and serves validated WebP media.
 
 ### Backend (Go + Chi + PGX):
 - Go 1.24+ with standard library and minimal dependencies (`go-chi/chi/v5`, `jackc/pgx/v5`, `golang.org/x/image/webp`, plus the AWS SDK only for R2 S3-compatible operations).
-- CPU-intensive tasks (FFmpeg) **must** run through the bounded worker pool (`internal/processor/processor.go`) to prevent VPS overload. Never execute FFmpeg synchronously inside an HTTP request handler.
+- The backend does not run FFmpeg. All sticker generation (static and animated WebP) happens on the client; the backend validates, stores, and serves media.
 - Local database: PostgreSQL 17 (`mewmer`).
 - Migrations in `server/migrations/`.
 - **Cloud Storage**: All binary media lives in Cloudflare R2. PostgreSQL stores metadata and R2 object keys only. Use two buckets:
@@ -163,7 +163,7 @@ mewmer/
 │   ├── astro.config.mjs
 │   └── package.json
 ├── server/              # Go 1.23+ backend
-│   ├── internal/        # Handlers, database, processor worker pool, storage, auth
+│   ├── internal/        # Handlers, database, storage, auth
 │   ├── migrations/      # PostgreSQL migrations
 │   └── main.go
 ├── scripts/             # Dev scripts (dev.sh)

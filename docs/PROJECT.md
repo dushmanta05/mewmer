@@ -54,9 +54,9 @@ Mewmer (`mewmer.com`) is an open-source, privacy-first web and mobile platform f
 | :--- | :--- | :--- |
 | **Web Frontend** | Astro 5 + Svelte 5 + Tailwind CSS | Islands architecture, zero-JS page shells, 100/100 Core Web Vitals, SSR/SSG. |
 | **Package Manager** | `pnpm` | Mandatory package manager across all frontend tooling. |
-| **Backend** | Go (Golang 1.24+) | Chi v5 router, PGX v5 connection pool, native bounded Goroutine worker pool. |
+| **Backend** | Go (Golang 1.24+) | Chi v5 router, PGX v5 connection pool. |
 | **Media Storage** | Cloudflare R2 | Public bucket for templates/public memes; private bucket for stickers/packs. |
-| **Media Processing**| Browser Canvas + Native FFmpeg | Static stickers generated client-side; animated GIF/video transcoding handled by Go FFmpeg worker pool. |
+| **Media Processing**| Browser Canvas / Flutter | Static and animated stickers generated client-side; backend validates, stores, and serves compliant WebP media. |
 | **Database** | PostgreSQL 17 | Relational database with `uuid-ossp` and `pg_trgm` extensions for fast trigram search. |
 | **Mobile App** | Flutter (`app/`) | Android & iOS native app for WhatsApp pack injection (`whatsapp_stickers_injector`), local file storage, and Gboard GIF insertion. |
 
@@ -303,7 +303,6 @@ CREATE INDEX idx_stickers_user_id ON stickers(user_id);
 - `GET /api/v1/packs/{id}` — Pack details and sticker list (owner or public).
 - `POST /api/v1/packs` — Create new owned sticker pack with 96×96 tray icon.
 - `POST /api/v1/packs/{id}/stickers` — Upload client-rendered 512×512 WebP sticker into an owned pack.
-- `POST /api/v1/stickers/process-animated` — Transcode GIF/video to animated WebP via FFmpeg worker pool (< 500 KB).
 
 ### System & Moderation Endpoints
 - `GET /health` — Service healthcheck.
@@ -326,3 +325,7 @@ CREATE INDEX idx_stickers_user_id ON stickers(user_id);
 4. **Sticker Cloud Save (Flutter)**:
    - Admin logs in, generates a compliant sticker, and explicitly saves it to an owned cloud pack.
    - Media is validated and stored in private R2; the pack can later be retrieved and injected into WhatsApp.
+
+## 10. Production Deployment
+
+See `docs/PRODUCTION.md` for step-by-step instructions on provisioning a VPS, installing Go and PostgreSQL, configuring Cloudflare R2, running migrations, creating the first admin, and serving the API behind Nginx with HTTPS.

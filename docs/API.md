@@ -1,6 +1,11 @@
 # Mewmer API Usage
 
-Base URL for local development: `http://localhost:3030/api/v1`
+Base URLs:
+
+- Local development: `http://localhost:3030/api/v1`
+- Production: `https://api.mewmer.com/api/v1` (replace `api.mewmer.com` with your real domain)
+
+See `docs/PRODUCTION.md` for full backend deployment steps.
 
 All authenticated endpoints accept the session via either:
 - An HTTP-only cookie named `session` (set automatically on login), or
