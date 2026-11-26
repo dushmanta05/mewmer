@@ -2,13 +2,13 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:whatsapp_stickers_injector/whatsapp_stickers.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:image/image.dart' as img;
 import 'all_packs_page.dart';
+import 'gallery_picker_page.dart';
 import 'login_page.dart';
 import 'meme_editor_page.dart';
 import 'pack_details_page.dart';
@@ -27,7 +27,6 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final ImagePicker _picker = ImagePicker();
   bool _isExporting = false;
   bool _isPickingImage = false;
 
@@ -37,12 +36,15 @@ class _HomePageState extends State<HomePage> {
     setState(() => _isPickingImage = true);
 
     try {
-      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+      final File? image = await Navigator.push<File>(
+        context,
+        MaterialPageRoute(builder: (_) => const GalleryPickerPage()),
+      );
       if (image != null && mounted) {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => MemeEditorPage(imageFile: File(image.path)),
+            builder: (context) => MemeEditorPage(imageFile: image),
           ),
         );
       }

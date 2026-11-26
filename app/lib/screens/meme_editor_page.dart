@@ -6,7 +6,6 @@ import 'package:screenshot/screenshot.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:image/image.dart' as img;
 import '../models/text_item.dart';
@@ -15,6 +14,7 @@ import '../widgets/draggable_text.dart';
 import '../widgets/cat_branding.dart';
 import '../widgets/mewmer_toast.dart';
 import '../theme.dart';
+import 'gallery_picker_page.dart';
 
 class MemeEditorPage extends StatefulWidget {
   final File? imageFile;
@@ -73,14 +73,22 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
   }
 
   Future<void> _pickFromGallery() async {
-    final picker = ImagePicker();
-    final XFile? file = await picker.pickImage(source: ImageSource.gallery);
-    if (file != null && mounted) {
-      setState(() {
-        _currentImageFile = File(file.path);
-        _imageScale = 1.0;
-        _imageOffset = Offset.zero;
-      });
+    try {
+      final File? file = await Navigator.push<File>(
+        context,
+        MaterialPageRoute(builder: (_) => const GalleryPickerPage()),
+      );
+      if (file != null && mounted) {
+        setState(() {
+          _currentImageFile = file;
+          _imageScale = 1.0;
+          _imageOffset = Offset.zero;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        MewmerToast.error(context, 'Error picking image: $e');
+      }
     }
   }
 
