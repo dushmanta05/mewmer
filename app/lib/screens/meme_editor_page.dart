@@ -1286,7 +1286,7 @@ class WebPMuxer {
       final int padding = size % 2 == 1 ? 1 : 0;
       final int totalChunkSize = 8 + size + padding;
 
-      if (offset + totalChunkSize > bytes.length) break;
+      if (offset + 8 + size > bytes.length) break;
 
       if (tag == 'VP8 ' || tag == 'VP8L' || tag == 'ALPH') {
         payload.addAll(bytes.sublist(offset, offset + 8 + size));
