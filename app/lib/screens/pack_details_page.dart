@@ -431,47 +431,7 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
                           ),
                         ],
                       ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          if (!canExport)
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                              decoration: BoxDecoration(
-                                color: MewmerTheme.amber.withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: MewmerTheme.amber.withValues(alpha: 0.3)),
-                              ),
-                              child: Text(
-                                'Need ${3 - stickers.length} more',
-                                style: const TextStyle(
-                                  color: MewmerTheme.amber,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            )
-                          else
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                              decoration: BoxDecoration(
-                                color: MewmerTheme.whatsappGreen.withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: MewmerTheme.whatsappGreen.withValues(alpha: 0.3)),
-                              ),
-                              child: const Text(
-                                'Ready for WhatsApp',
-                                style: TextStyle(
-                                  color: MewmerTheme.whatsappGreen,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          const SizedBox(height: 6),
-                          PackSyncBadge(pack: pack, showLabel: true),
-                        ],
-                      ),
+                      PackSyncBadge(pack: pack, showLabel: true),
                     ],
                   ),
                 ),

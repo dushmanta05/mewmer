@@ -54,47 +54,67 @@ class PackSyncBadge extends StatelessWidget {
     }
 
     if (!pack.hasPendingSync) {
+      if (!showLabel) {
+        return const Icon(
+          Icons.cloud_done_outlined,
+          size: 16,
+          color: MewmerTheme.whatsappGreen,
+        );
+      }
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
           color: MewmerTheme.whatsappGreen.withValues(alpha: 0.14),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(10),
         ),
-        child: Row(
+        child: const Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
+            Icon(
               Icons.cloud_done_outlined,
               size: 14,
               color: MewmerTheme.whatsappGreen,
             ),
-            if (showLabel) ...[
-              const SizedBox(width: 4),
-              const Text(
-                'Synced',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: MewmerTheme.whatsappGreen,
-                ),
+            SizedBox(width: 5),
+            Text(
+              'Synced',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: MewmerTheme.whatsappGreen,
               ),
-            ],
+            ),
           ],
         ),
       );
     }
 
+    if (!showLabel) {
+      return InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: () => _syncPack(context),
+        child: const Padding(
+          padding: EdgeInsets.all(2),
+          child: Icon(
+            Icons.cloud_upload_outlined,
+            size: 16,
+            color: MewmerTheme.amber,
+          ),
+        ),
+      );
+    }
+
     final pending = pack.pendingSyncCount;
-    final label = pending > 0 ? '$pending pending' : 'Sync';
+    final label = pending > 0 ? 'Sync ($pending)' : 'Sync';
 
     return InkWell(
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(10),
       onTap: () => _syncPack(context),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
           color: MewmerTheme.amber.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(10),
           border: Border.all(color: MewmerTheme.amber.withValues(alpha: 0.3)),
         ),
         child: Row(
@@ -105,17 +125,15 @@ class PackSyncBadge extends StatelessWidget {
               size: 14,
               color: MewmerTheme.amber,
             ),
-            if (showLabel || pending > 0) ...[
-              const SizedBox(width: 4),
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  color: MewmerTheme.amber,
-                ),
+            const SizedBox(width: 5),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: MewmerTheme.amber,
               ),
-            ],
+            ),
           ],
         ),
       ),
