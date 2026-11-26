@@ -662,9 +662,15 @@ void main() {
       expect(localProvider.packs.length, 2);
       expect(localProvider.packs.first.hasPendingSync, isFalse);
       expect(localProvider.packs.first.cloudPackId, 'cloud_1');
-      expect(localProvider.packs.last.name, 'From Web');
-      expect(localProvider.packs.last.hasPendingSync, isFalse);
-      expect(localProvider.packs.last.stickerPaths.length, 1);
+      final remotePack = localProvider.packs.last;
+      expect(remotePack.name, 'From Web');
+      expect(remotePack.hasPendingSync, isFalse);
+      expect(remotePack.cloudDownloaded, isFalse);
+      expect(remotePack.stickerPaths, isEmpty);
+
+      await provider.downloadPackStickers(localProvider, remotePack);
+      expect(remotePack.cloudDownloaded, isTrue);
+      expect(remotePack.stickerPaths.length, 1);
     });
 
     test('syncAll deletes locally removed stickers and packs on server', () async {

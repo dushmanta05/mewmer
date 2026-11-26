@@ -29,6 +29,7 @@ class StickerPack {
   final DateTime createdAt;
   bool? isAnimated;
   String? cloudPackId;
+  bool cloudDownloaded;
   final Map<String, String> syncedStickers;
   final List<String> pendingDeleteStickerIds;
   final List<String> tags;
@@ -47,17 +48,20 @@ class StickerPack {
     required this.identifier,
     required this.name,
     required this.publisher,
-    required this.stickerPaths,
+    required List<String> stickerPaths,
     this.trayImagePath,
     required this.createdAt,
     this.isAnimated,
     this.cloudPackId,
+    this.cloudDownloaded = true,
     Map<String, String>? syncedStickers,
     List<String>? pendingDeleteStickerIds,
     List<String>? tags,
-  })  : syncedStickers = syncedStickers ?? {},
-        pendingDeleteStickerIds = pendingDeleteStickerIds ?? [],
-        tags = tags ?? [];
+  })  : stickerPaths = List<String>.from(stickerPaths),
+        syncedStickers = Map<String, String>.from(syncedStickers ?? const {}),
+        pendingDeleteStickerIds =
+            List<String>.from(pendingDeleteStickerIds ?? const []),
+        tags = List<String>.from(tags ?? const []);
 
   Map<String, dynamic> toJson() => {
     'identifier': identifier,
@@ -68,6 +72,7 @@ class StickerPack {
     'createdAt': createdAt.toIso8601String(),
     'isAnimated': isAnimated,
     'cloudPackId': cloudPackId,
+    'cloudDownloaded': cloudDownloaded,
     'syncedStickers': syncedStickers,
     'pendingDeleteStickerIds': pendingDeleteStickerIds,
     'tags': tags,
@@ -91,6 +96,7 @@ class StickerPack {
       createdAt: DateTime.parse(json['createdAt'] as String),
       isAnimated: json['isAnimated'] as bool?,
       cloudPackId: json['cloudPackId'] as String?,
+      cloudDownloaded: json['cloudDownloaded'] as bool? ?? true,
       syncedStickers: synced,
       pendingDeleteStickerIds:
           rawPendingDeletes.map((e) => e.toString()).toList(),
@@ -376,6 +382,7 @@ class StickerProvider extends ChangeNotifier {
     required List<String> tags,
     required DateTime createdAt,
     String? trayImagePath,
+    bool cloudDownloaded = false,
     required List<String> localStickerPaths,
     required Map<String, String> syncedStickers,
   }) async {
@@ -391,6 +398,7 @@ class StickerProvider extends ChangeNotifier {
           createdAt: createdAt,
           isAnimated: isAnimated,
           cloudPackId: cloudPackId,
+          cloudDownloaded: cloudDownloaded,
           syncedStickers: syncedStickers,
           tags: tags,
         ),
@@ -401,6 +409,9 @@ class StickerProvider extends ChangeNotifier {
       if (trayImagePath != null) {
         pack.trayImagePath = trayImagePath;
       }
+      if (cloudDownloaded) {
+        pack.cloudDownloaded = true;
+      }
       for (final path in localStickerPaths) {
         if (!pack.stickerPaths.contains(path)) {
           pack.stickerPaths.add(path);
@@ -408,6 +419,29 @@ class StickerProvider extends ChangeNotifier {
       }
       pack.syncedStickers.addAll(syncedStickers);
     }
+    await saveToStorage();
+    notifyListeners();
+  }
+
+  Future<void> markPackHydrated(
+    String packIdentifier, {
+    required List<String> localStickerPaths,
+    required Map<String, String> syncedStickers,
+    String? trayImagePath,
+  }) async {
+    final idx = _packs.indexWhere((p) => p.identifier == packIdentifier);
+    if (idx == -1) return;
+    final pack = _packs[idx];
+    if (trayImagePath != null) {
+      pack.trayImagePath = trayImagePath;
+    }
+    for (final path in localStickerPaths) {
+      if (!pack.stickerPaths.contains(path)) {
+        pack.stickerPaths.add(path);
+      }
+    }
+    pack.syncedStickers.addAll(syncedStickers);
+    pack.cloudDownloaded = true;
     await saveToStorage();
     notifyListeners();
   }

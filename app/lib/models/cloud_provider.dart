@@ -8,6 +8,15 @@ import '../services/api_client.dart';
 import '../services/media_cache_service.dart';
 import '../services/session_store.dart';
 
+class PackDownloadProgress {
+  final int downloaded;
+  final int total;
+
+  const PackDownloadProgress({required this.downloaded, required this.total});
+
+  double? get fraction => total > 0 ? downloaded / total : null;
+}
+
 class CloudProvider extends ChangeNotifier {
   final MewmerApiClient _apiClient;
   final SessionStore _sessionStore;
@@ -22,6 +31,7 @@ class CloudProvider extends ChangeNotifier {
   bool _isSyncing = false;
   bool _isLoadingMore = false;
   final Set<String> _syncingPackIds = {};
+  final Map<String, PackDownloadProgress> _downloadProgress = {};
   int _currentPage = 1;
   int _totalPacks = 0;
   static const int _pageSize = 10;
@@ -49,6 +59,10 @@ class CloudProvider extends ChangeNotifier {
   bool get isLoadingMore => _isLoadingMore;
   bool isPackSyncing(String packIdentifier) =>
       _syncingPackIds.contains(packIdentifier);
+  bool isPackDownloading(String packIdentifier) =>
+      _downloadProgress.containsKey(packIdentifier);
+  PackDownloadProgress? packDownloadProgress(String packIdentifier) =>
+      _downloadProgress[packIdentifier];
   String get searchQuery => _searchQuery;
   String? get errorMessage => _errorMessage;
   String get baseUrl => _apiClient.baseUrl;
@@ -468,38 +482,84 @@ class CloudProvider extends ChangeNotifier {
       }
 
       for (final summary in remotePacks) {
+        await _downloadTrayIfPresent(summary);
         final alreadyLinked = localProvider.packs.any(
           (p) => p.cloudPackId == summary.id,
         );
         if (alreadyLinked) continue;
 
-        final detail = await fetchPackDetails(summary.id);
-        final trayPath = localTrayPath(detail.id);
-        final localPaths = <String>[];
-        final syncedMap = <String, String>{};
-        for (final s in detail.stickers) {
-          final path = localStickerPath(s.id);
-          if (path != null) {
-            localPaths.add(path);
-            syncedMap[path] = s.id;
-          }
-        }
+        final trayPath = localTrayPath(summary.id);
         await localProvider.upsertCloudPack(
-          cloudPackId: detail.id,
-          name: detail.title,
-          publisher: detail.publisher,
-          isAnimated: detail.isAnimated,
-          tags: detail.tags,
-          createdAt: detail.createdAt,
+          cloudPackId: summary.id,
+          name: summary.title,
+          publisher: summary.publisher,
+          isAnimated: summary.isAnimated,
+          tags: summary.tags,
+          createdAt: summary.createdAt,
           trayImagePath: trayPath,
-          localStickerPaths: localPaths,
-          syncedStickers: syncedMap,
+          cloudDownloaded: false,
+          localStickerPaths: const [],
+          syncedStickers: const {},
         );
       }
       _packs = remotePacks;
       _totalPacks = remotePacks.length;
     } finally {
       _isSyncing = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> downloadPackStickers(
+    StickerProvider localProvider,
+    StickerPack pack,
+  ) async {
+    final token = _token;
+    final cloudId = pack.cloudPackId;
+    if (token == null || token.isEmpty || cloudId == null || cloudId.isEmpty) {
+      return;
+    }
+    if (_downloadProgress.containsKey(pack.identifier)) return;
+
+    _downloadProgress[pack.identifier] =
+        const PackDownloadProgress(downloaded: 0, total: 0);
+    notifyListeners();
+
+    try {
+      final detail = await _apiClient.getPack(token, cloudId);
+      _packDetails[cloudId] = detail;
+      await _downloadTrayIfPresent(detail);
+
+      final total = detail.stickers.length;
+      _downloadProgress[pack.identifier] =
+          PackDownloadProgress(downloaded: 0, total: total);
+      notifyListeners();
+
+      final localPaths = <String>[];
+      final syncedMap = <String, String>{};
+      int count = 0;
+
+      for (final sticker in detail.stickers) {
+        await _downloadStickerIfPresent(cloudId, sticker);
+        final localPath = localStickerPath(sticker.id);
+        if (localPath != null) {
+          localPaths.add(localPath);
+          syncedMap[localPath] = sticker.id;
+        }
+        count += 1;
+        _downloadProgress[pack.identifier] =
+            PackDownloadProgress(downloaded: count, total: total);
+        notifyListeners();
+      }
+
+      await localProvider.markPackHydrated(
+        pack.identifier,
+        localStickerPaths: localPaths,
+        syncedStickers: syncedMap,
+        trayImagePath: localTrayPath(cloudId),
+      );
+    } finally {
+      _downloadProgress.remove(pack.identifier);
       notifyListeners();
     }
   }

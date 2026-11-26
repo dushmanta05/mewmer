@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:whatsapp_stickers_injector/whatsapp_stickers.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:image/image.dart' as img;
+import '../models/cloud_provider.dart';
 import '../models/sticker_provider.dart';
 import '../theme.dart';
 import '../widgets/pack_sync_badge.dart';
@@ -25,6 +26,38 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
   final Set<String> _selectedStickers = {};
   bool _isSelectionMode = false;
   bool _isExporting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _downloadIfNeeded();
+    });
+  }
+
+  Future<void> _downloadIfNeeded() async {
+    final stickerProvider = context.read<StickerProvider>();
+    final cloud = context.read<CloudProvider>();
+    final pack = stickerProvider.packs
+        .where((p) => p.identifier == widget.packIdentifier)
+        .firstOrNull;
+    if (pack != null &&
+        pack.isCloudLinked &&
+        !pack.cloudDownloaded &&
+        cloud.isAuthenticated) {
+      try {
+        await cloud.downloadPackStickers(stickerProvider, pack);
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to download stickers: $e'),
+            backgroundColor: MewmerTheme.rose,
+          ),
+        );
+      }
+    }
+  }
 
   Future<void> _exportToWhatsApp(BuildContext context, StickerPack pack) async {
     if (_isExporting) return;
@@ -220,6 +253,7 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
   @override
   Widget build(BuildContext context) {
     final stickerProvider = context.watch<StickerProvider>();
+    final cloud = context.watch<CloudProvider>();
     final packIndex = stickerProvider.packs.indexWhere(
       (p) => p.identifier == widget.packIdentifier,
     );
@@ -234,6 +268,9 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
     final pack = stickerProvider.packs[packIndex];
     final stickers = pack.stickerPaths;
     final canExport = stickers.length >= 3;
+    final isDownloading = cloud.isPackDownloading(pack.identifier) ||
+        (pack.isCloudLinked && !pack.cloudDownloaded);
+    final downloadProgress = cloud.packDownloadProgress(pack.identifier);
 
     return Scaffold(
       backgroundColor: MewmerTheme.background,
@@ -561,27 +598,78 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
                   color: MewmerTheme.cardSurface,
                   border: Border(top: BorderSide(color: MewmerTheme.border)),
                 ),
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: ElevatedButton.icon(
-                    onPressed: canExport && !_isExporting ? () => _exportToWhatsApp(context, pack) : null,
-                    icon: const Icon(Icons.chat_bubble_outline_rounded, size: 20),
-                    label: Text(
-                      canExport ? 'Add to WhatsApp' : 'Add at least 3 stickers to export',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: MewmerTheme.whatsappGreen,
-                      foregroundColor: Colors.white,
-                      disabledBackgroundColor: MewmerTheme.cardHover,
-                      disabledForegroundColor: MewmerTheme.textMuted,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                child: isDownloading
+                    ? Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: MewmerTheme.brandViolet,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Text(
+                                downloadProgress != null &&
+                                        downloadProgress.total > 0
+                                    ? 'Downloading stickers (${downloadProgress.downloaded}/${downloadProgress.total})...'
+                                    : 'Downloading pack stickers...',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: MewmerTheme.textPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (downloadProgress != null &&
+                              downloadProgress.fraction != null) ...[
+                            const SizedBox(height: 10),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(4),
+                              child: LinearProgressIndicator(
+                                value: downloadProgress.fraction,
+                                minHeight: 5,
+                                backgroundColor: MewmerTheme.cardHover,
+                                color: MewmerTheme.brandViolet,
+                              ),
+                            ),
+                          ],
+                        ],
+                      )
+                    : SizedBox(
+                        width: double.infinity,
+                        height: 52,
+                        child: ElevatedButton.icon(
+                          onPressed: canExport && !_isExporting
+                              ? () => _exportToWhatsApp(context, pack)
+                              : null,
+                          icon: const Icon(Icons.chat_bubble_outline_rounded, size: 20),
+                          label: Text(
+                            canExport
+                                ? 'Add to WhatsApp'
+                                : 'Add at least 3 stickers to export',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: MewmerTheme.whatsappGreen,
+                            foregroundColor: Colors.white,
+                            disabledBackgroundColor: MewmerTheme.cardHover,
+                            disabledForegroundColor: MewmerTheme.textMuted,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                ),
               ),
             ],
           ),
