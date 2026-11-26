@@ -666,5 +666,113 @@ void main() {
       expect(localProvider.packs.last.hasPendingSync, isFalse);
       expect(localProvider.packs.last.stickerPaths.length, 1);
     });
+
+    test('syncAll deletes locally removed stickers and packs on server', () async {
+      final deletedStickers = <String>[];
+      final deletedPacks = <String>[];
+
+      final localSticker = File('${tempDir.path}/del_s1.webp');
+      await localSticker.writeAsBytes(
+        img.encodePng(img.Image(width: 4, height: 4)),
+      );
+
+      final localProvider = StickerProvider(
+        metadataFileProvider: () async =>
+            File('${tempDir.path}/stickers_metadata_del.json'),
+      );
+      await localProvider.init();
+      await localProvider.createPack('Pack A', isAnimated: false);
+      final packAId = localProvider.packs.first.identifier;
+      await localProvider.addStickerToPack(
+        packAId,
+        localSticker.path,
+        isAnimated: false,
+      );
+      await localProvider.markPackSynced(packAId, 'cloud_a', {
+        localSticker.path: 'cs_a1',
+      });
+
+      await localProvider.createPack('Pack B', isAnimated: false);
+      final packBId = localProvider.packs.first.identifier;
+      await localProvider.markPackSynced(packBId, 'cloud_b', {});
+
+      await localProvider.removeStickerFromPack(packAId, localSticker.path);
+      await localProvider.deletePack(packBId);
+
+      expect(localProvider.packs.first.hasPendingSync, isTrue);
+      expect(localProvider.pendingDeleteCloudPackIds, ['cloud_b']);
+
+      final mockHttp = MockClient((request) async {
+        if (request.url.path == '/api/v1/auth/login') {
+          return http.Response(
+            json.encode({
+              'user': {
+                'id': 'u1',
+                'email': 'admin@mewmer.com',
+                'username': 'admin',
+                'displayName': 'Admin',
+                'role': 'admin',
+              },
+              'token': 'tok_123',
+            }),
+            200,
+          );
+        }
+        if (request.url.path == '/api/v1/stickers/cs_a1' &&
+            request.method == 'DELETE') {
+          deletedStickers.add('cs_a1');
+          return http.Response(json.encode({'status': 'deleted'}), 200);
+        }
+        if (request.url.path == '/api/v1/packs/cloud_b' &&
+            request.method == 'DELETE') {
+          deletedPacks.add('cloud_b');
+          return http.Response(json.encode({'status': 'deleted'}), 200);
+        }
+        if (request.url.path == '/api/v1/me/packs') {
+          return http.Response(
+            json.encode({
+              'packs': [
+                {
+                  'id': 'cloud_a',
+                  'title': 'Pack A',
+                  'publisher': 'Admin · mewmer.com',
+                  'trayImageKey': '',
+                  'isAnimated': false,
+                  'visibility': 'private',
+                  'tags': [],
+                  'userId': 'u1',
+                  'downloadsCount': 0,
+                  'createdAt': '2026-01-01T00:00:00Z',
+                }
+              ],
+              'page': 1,
+              'limit': 50,
+              'total': 1,
+            }),
+            200,
+          );
+        }
+        return http.Response('Not found', 404);
+      });
+
+      final apiClient = MewmerApiClient(httpClient: mockHttp);
+      final provider = CloudProvider(
+        apiClient: apiClient,
+        sessionStore: InMemorySessionStore(),
+        mediaCache: MediaCacheService(
+          apiClient: apiClient,
+          directoryProvider: () async => tempDir,
+        ),
+        tempDirProvider: () async => tempDir,
+      );
+
+      await provider.login(email: 'admin@mewmer.com', password: 'secret');
+      await provider.syncAll(localProvider);
+
+      expect(deletedStickers, ['cs_a1']);
+      expect(deletedPacks, ['cloud_b']);
+      expect(localProvider.pendingDeleteCloudPackIds, isEmpty);
+      expect(localProvider.packs.single.hasPendingSync, isFalse);
+    });
   });
 }

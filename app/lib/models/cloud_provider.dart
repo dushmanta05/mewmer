@@ -379,6 +379,27 @@ class CloudProvider extends ChangeNotifier {
         cloudId = created.id;
       }
 
+      if (pack.pendingDeleteStickerIds.isNotEmpty) {
+        final deletedIds = <String>[];
+        for (final stickerId in List<String>.from(pack.pendingDeleteStickerIds)) {
+          try {
+            await _apiClient.deleteSticker(token, stickerId);
+            await _mediaCache.removeByKey('sticker:$stickerId');
+            deletedIds.add(stickerId);
+          } on ApiException catch (e) {
+            if (e.statusCode == 404) {
+              deletedIds.add(stickerId);
+            } else {
+              rethrow;
+            }
+          }
+        }
+        await localProvider.clearPendingStickerDeletes(
+          pack.identifier,
+          deletedIds,
+        );
+      }
+
       final newlySynced = <String, String>{};
       for (final localPath in pack.stickerPaths) {
         if (pack.syncedStickers.containsKey(localPath)) continue;
@@ -412,6 +433,24 @@ class CloudProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      if (localProvider.pendingDeleteCloudPackIds.isNotEmpty) {
+        final deletedPackIds = <String>[];
+        for (final packId
+            in List<String>.from(localProvider.pendingDeleteCloudPackIds)) {
+          try {
+            await deletePack(packId);
+            deletedPackIds.add(packId);
+          } on ApiException catch (e) {
+            if (e.statusCode == 404) {
+              deletedPackIds.add(packId);
+            } else {
+              rethrow;
+            }
+          }
+        }
+        await localProvider.clearPendingPackDeletes(deletedPackIds);
+      }
+
       final pendingLocal = localProvider.packs
           .where((p) => p.hasPendingSync)
           .toList();

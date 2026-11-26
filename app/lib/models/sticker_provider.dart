@@ -30,6 +30,7 @@ class StickerPack {
   bool? isAnimated;
   String? cloudPackId;
   final Map<String, String> syncedStickers;
+  final List<String> pendingDeleteStickerIds;
   final List<String> tags;
 
   bool get isActuallyAnimated => isAnimated == true;
@@ -37,7 +38,10 @@ class StickerPack {
   bool get isCloudLinked => cloudPackId != null && cloudPackId!.isNotEmpty;
   int get pendingSyncCount =>
       stickerPaths.where((p) => !syncedStickers.containsKey(p)).length;
-  bool get hasPendingSync => !isCloudLinked || pendingSyncCount > 0;
+  bool get hasPendingSync =>
+      !isCloudLinked ||
+      pendingSyncCount > 0 ||
+      pendingDeleteStickerIds.isNotEmpty;
 
   StickerPack({
     required this.identifier,
@@ -49,8 +53,10 @@ class StickerPack {
     this.isAnimated,
     this.cloudPackId,
     Map<String, String>? syncedStickers,
+    List<String>? pendingDeleteStickerIds,
     List<String>? tags,
   })  : syncedStickers = syncedStickers ?? {},
+        pendingDeleteStickerIds = pendingDeleteStickerIds ?? [],
         tags = tags ?? [];
 
   Map<String, dynamic> toJson() => {
@@ -63,6 +69,7 @@ class StickerPack {
     'isAnimated': isAnimated,
     'cloudPackId': cloudPackId,
     'syncedStickers': syncedStickers,
+    'pendingDeleteStickerIds': pendingDeleteStickerIds,
     'tags': tags,
   };
 
@@ -72,6 +79,8 @@ class StickerPack {
     rawSynced.forEach((k, v) {
       if (v is String) synced[k] = v;
     });
+    final rawPendingDeletes =
+        json['pendingDeleteStickerIds'] as List<dynamic>? ?? const [];
     final rawTags = json['tags'] as List<dynamic>? ?? const [];
     return StickerPack(
       identifier: json['identifier'] as String,
@@ -83,6 +92,8 @@ class StickerPack {
       isAnimated: json['isAnimated'] as bool?,
       cloudPackId: json['cloudPackId'] as String?,
       syncedStickers: synced,
+      pendingDeleteStickerIds:
+          rawPendingDeletes.map((e) => e.toString()).toList(),
       tags: rawTags.map((e) => e.toString()).toList(),
     );
   }
@@ -92,6 +103,7 @@ class StickerProvider extends ChangeNotifier {
   final Future<File> Function()? _metadataFileProvider;
   final List<Sticker> _recentStickers = [];
   final List<StickerPack> _packs = [];
+  final List<String> _pendingDeleteCloudPackIds = [];
   bool _isLoading = true;
 
   StickerProvider({Future<File> Function()? metadataFileProvider})
@@ -99,6 +111,8 @@ class StickerProvider extends ChangeNotifier {
 
   List<Sticker> get recentStickers => List.unmodifiable(_recentStickers);
   List<StickerPack> get packs => List.unmodifiable(_packs);
+  List<String> get pendingDeleteCloudPackIds =>
+      List.unmodifiable(_pendingDeleteCloudPackIds);
   bool get isLoading => _isLoading;
 
   Future<void> init() async {
@@ -137,6 +151,13 @@ class StickerProvider extends ChangeNotifier {
             _packs.add(StickerPack.fromJson(item));
           }
         }
+
+        _pendingDeleteCloudPackIds.clear();
+        if (data['pendingDeleteCloudPackIds'] != null) {
+          for (var id in data['pendingDeleteCloudPackIds']) {
+            _pendingDeleteCloudPackIds.add(id.toString());
+          }
+        }
       }
     } catch (e) {
       debugPrint('Error loading stickers metadata: $e');
@@ -152,6 +173,7 @@ class StickerProvider extends ChangeNotifier {
       final data = {
         'recentStickers': _recentStickers.map((s) => s.toJson()).toList(),
         'packs': _packs.map((p) => p.toJson()).toList(),
+        'pendingDeleteCloudPackIds': _pendingDeleteCloudPackIds,
       };
       await file.writeAsString(json.encode(data));
     } catch (e) {
@@ -248,16 +270,31 @@ class StickerProvider extends ChangeNotifier {
   Future<void> removeStickerFromPack(String packIdentifier, String path) async {
     final packIndex = _packs.indexWhere((p) => p.identifier == packIdentifier);
     if (packIndex != -1) {
-      _packs[packIndex].stickerPaths.remove(path);
+      final pack = _packs[packIndex];
+      pack.stickerPaths.remove(path);
+      final cloudStickerId = pack.syncedStickers.remove(path);
+      if (cloudStickerId != null &&
+          !pack.pendingDeleteStickerIds.contains(cloudStickerId)) {
+        pack.pendingDeleteStickerIds.add(cloudStickerId);
+      }
       await saveToStorage();
       notifyListeners();
     }
   }
 
   Future<void> deletePack(String packIdentifier) async {
-    _packs.removeWhere((p) => p.identifier == packIdentifier);
-    await saveToStorage();
-    notifyListeners();
+    final packIndex = _packs.indexWhere((p) => p.identifier == packIdentifier);
+    if (packIndex != -1) {
+      final cloudId = _packs[packIndex].cloudPackId;
+      if (cloudId != null &&
+          cloudId.isNotEmpty &&
+          !_pendingDeleteCloudPackIds.contains(cloudId)) {
+        _pendingDeleteCloudPackIds.add(cloudId);
+      }
+      _packs.removeAt(packIndex);
+      await saveToStorage();
+      notifyListeners();
+    }
   }
 
   Future<void> deleteRecentSticker(String path) async {
@@ -265,6 +302,11 @@ class StickerProvider extends ChangeNotifier {
 
     for (var pack in _packs) {
       pack.stickerPaths.remove(path);
+      final cloudStickerId = pack.syncedStickers.remove(path);
+      if (cloudStickerId != null &&
+          !pack.pendingDeleteStickerIds.contains(cloudStickerId)) {
+        pack.pendingDeleteStickerIds.add(cloudStickerId);
+      }
     }
 
     try {
@@ -304,6 +346,26 @@ class StickerProvider extends ChangeNotifier {
       await saveToStorage();
       notifyListeners();
     }
+  }
+
+  Future<void> clearPendingStickerDeletes(
+    String packIdentifier,
+    List<String> deletedIds,
+  ) async {
+    final packIndex = _packs.indexWhere((p) => p.identifier == packIdentifier);
+    if (packIndex != -1) {
+      _packs[packIndex]
+          .pendingDeleteStickerIds
+          .removeWhere((id) => deletedIds.contains(id));
+      await saveToStorage();
+      notifyListeners();
+    }
+  }
+
+  Future<void> clearPendingPackDeletes(List<String> deletedPackIds) async {
+    _pendingDeleteCloudPackIds.removeWhere((id) => deletedPackIds.contains(id));
+    await saveToStorage();
+    notifyListeners();
   }
 
   Future<void> upsertCloudPack({
