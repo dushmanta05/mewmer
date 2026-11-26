@@ -16,7 +16,6 @@ import 'profile_page.dart';
 import '../models/cloud_provider.dart';
 import '../models/sticker_provider.dart';
 import '../widgets/cat_branding.dart';
-import '../widgets/pack_sync_badge.dart';
 import '../theme.dart';
 
 class HomePage extends StatefulWidget {
@@ -594,23 +593,15 @@ class _HomePageState extends State<HomePage> {
                                               child: Column(
                                                 crossAxisAlignment: CrossAxisAlignment.start,
                                                 children: [
-                                                  Row(
-                                                    children: [
-                                                      Expanded(
-                                                        child: Text(
-                                                          pack.name,
-                                                          maxLines: 1,
-                                                          overflow: TextOverflow.ellipsis,
-                                                          style: const TextStyle(
-                                                            fontWeight: FontWeight.bold,
-                                                            fontSize: 15,
-                                                            color: MewmerTheme.textPrimary,
-                                                          ),
-                                                        ),
-                                                      ),
-                                                      const SizedBox(width: 6),
-                                                      PackSyncBadge(pack: pack),
-                                                    ],
+                                                  Text(
+                                                    pack.name,
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
+                                                    style: const TextStyle(
+                                                      fontWeight: FontWeight.bold,
+                                                      fontSize: 15,
+                                                      color: MewmerTheme.textPrimary,
+                                                    ),
                                                   ),
                                                   const SizedBox(height: 4),
                                                   Row(

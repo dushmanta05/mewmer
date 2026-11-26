@@ -104,6 +104,7 @@ class PackSyncBadge extends StatelessWidget {
       );
     }
 
+    const Color syncSky = Color(0xFF38BDF8);
     final pending = pack.pendingSyncCount;
     final label = pending > 0 ? 'Sync ($pending)' : 'Sync';
 
@@ -113,9 +114,9 @@ class PackSyncBadge extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
-          color: MewmerTheme.amber.withValues(alpha: 0.15),
+          color: syncSky.withValues(alpha: 0.14),
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: MewmerTheme.amber.withValues(alpha: 0.3)),
+          border: Border.all(color: syncSky.withValues(alpha: 0.3)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -123,7 +124,7 @@ class PackSyncBadge extends StatelessWidget {
             const Icon(
               Icons.cloud_upload_outlined,
               size: 14,
-              color: MewmerTheme.amber,
+              color: syncSky,
             ),
             const SizedBox(width: 5),
             Text(
@@ -131,7 +132,7 @@ class PackSyncBadge extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: MewmerTheme.amber,
+                color: syncSky,
               ),
             ),
           ],

@@ -5,7 +5,6 @@ import 'package:provider/provider.dart';
 import '../models/cloud_provider.dart';
 import '../models/sticker_provider.dart';
 import '../theme.dart';
-import '../widgets/pack_sync_badge.dart';
 import 'pack_details_page.dart';
 
 class AllPacksPage extends StatefulWidget {
@@ -227,23 +226,15 @@ class _AllPacksPageState extends State<AllPacksPage> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            pack.name,
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 15,
-                                              color: MewmerTheme.textPrimary,
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 6),
-                                        PackSyncBadge(pack: pack),
-                                      ],
+                                    Text(
+                                      pack.name,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 15,
+                                        color: MewmerTheme.textPrimary,
+                                      ),
                                     ),
                                     const SizedBox(height: 4),
                                     Row(
