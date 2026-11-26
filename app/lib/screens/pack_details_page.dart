@@ -105,6 +105,7 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
         name: pack.name,
         publisher: pack.publisher,
         trayImageFileName: WhatsappStickerImage.fromFile(trayPath),
+        animatedStickerPack: pack.isAnimated ?? false,
         publisherWebsite: 'https://mewmer.com',
         privacyPolicyWebsite: 'https://mewmer.com/privacy',
         licenseAgreementWebsite: 'https://mewmer.com/license',

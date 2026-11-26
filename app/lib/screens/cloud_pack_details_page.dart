@@ -95,6 +95,7 @@ class _CloudPackDetailsPageState extends State<CloudPackDetailsPage> {
         name: pack.title,
         publisher: pack.publisher,
         trayImageFileName: WhatsappStickerImage.fromFile(trayPath),
+        animatedStickerPack: pack.isAnimated,
         publisherWebsite: 'https://mewmer.com',
         privacyPolicyWebsite: 'https://mewmer.com/privacy',
         licenseAgreementWebsite: 'https://mewmer.com/license',

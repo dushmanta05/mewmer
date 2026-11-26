@@ -298,6 +298,7 @@ class _HomePageState extends State<HomePage> {
         name: pack.name,
         publisher: pack.publisher,
         trayImageFileName: WhatsappStickerImage.fromFile(trayFile.path),
+        animatedStickerPack: pack.isAnimated ?? false,
         publisherWebsite: 'https://mewmer.com',
         privacyPolicyWebsite: 'https://mewmer.com/privacy',
         licenseAgreementWebsite: 'https://mewmer.com/license',
