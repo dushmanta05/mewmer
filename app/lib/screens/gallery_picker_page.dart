@@ -51,49 +51,57 @@ class _GalleryPickerPageState extends State<GalleryPickerPage> {
 
   Future<void> _initGallery() async {
     setState(() => _isLoading = true);
-    final permission = await PhotoManager.requestPermissionExtend(
-      requestOption: const PermissionRequestOption(
-        androidPermission: AndroidPermission(
-          type: RequestType.image,
-          mediaLocation: false,
+    try {
+      final permission = await PhotoManager.requestPermissionExtend(
+        requestOption: const PermissionRequestOption(
+          androidPermission: AndroidPermission(
+            type: RequestType.image,
+            mediaLocation: false,
+          ),
         ),
-      ),
-    );
+      );
 
-    if (!permission.hasAccess) {
+      if (!permission.hasAccess) {
+        if (!mounted) return;
+        setState(() {
+          _hasPermission = false;
+          _isLoading = false;
+        });
+        return;
+      }
+
+      final albums = await PhotoManager.getAssetPathList(
+        type: RequestType.image,
+        filterOption: FilterOptionGroup(
+          orders: [
+            const OrderOption(type: OrderOptionType.createDate, asc: false),
+          ],
+        ),
+      );
+
+      for (final album in albums) {
+        _albumCounts[album.id] = await album.assetCountAsync;
+      }
+
+      final nonEmpty = albums.where((a) => (_albumCounts[a.id] ?? 0) > 0).toList();
+      if (!mounted) return;
+      setState(() {
+        _hasPermission = true;
+        _albums = nonEmpty;
+        _selectedAlbum = nonEmpty.isNotEmpty ? nonEmpty.first : null;
+      });
+
+      if (_selectedAlbum != null) {
+        await _loadAlbum(_selectedAlbum!);
+      } else {
+        setState(() => _isLoading = false);
+      }
+    } catch (_) {
       if (!mounted) return;
       setState(() {
         _hasPermission = false;
         _isLoading = false;
       });
-      return;
-    }
-
-    final albums = await PhotoManager.getAssetPathList(
-      type: RequestType.image,
-      filterOption: FilterOptionGroup(
-        orders: [
-          const OrderOption(type: OrderOptionType.createDate, asc: false),
-        ],
-      ),
-    );
-
-    for (final album in albums) {
-      _albumCounts[album.id] = await album.assetCountAsync;
-    }
-
-    final nonEmpty = albums.where((a) => (_albumCounts[a.id] ?? 0) > 0).toList();
-    if (!mounted) return;
-    setState(() {
-      _hasPermission = true;
-      _albums = nonEmpty;
-      _selectedAlbum = nonEmpty.isNotEmpty ? nonEmpty.first : null;
-    });
-
-    if (_selectedAlbum != null) {
-      await _loadAlbum(_selectedAlbum!);
-    } else {
-      setState(() => _isLoading = false);
     }
   }
 

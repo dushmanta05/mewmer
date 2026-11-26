@@ -585,19 +585,19 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
                               children: [
                                 Container(
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 3,
+                                    horizontal: 10,
+                                    vertical: 5,
                                   ),
                                   decoration: BoxDecoration(
                                     color: pack.isActuallyAnimated
                                         ? MewmerTheme.brandViolet.withValues(alpha: 0.2)
                                         : MewmerTheme.whatsappGreen.withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(8),
+                                    borderRadius: BorderRadius.circular(10),
                                   ),
                                   child: Text(
                                     pack.typeLabel,
                                     style: TextStyle(
-                                      fontSize: 11,
+                                      fontSize: 12,
                                       fontWeight: FontWeight.w600,
                                       color: pack.isActuallyAnimated
                                           ? MewmerTheme.brandViolet
@@ -608,12 +608,12 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
                                 const SizedBox(width: 8),
                                 Container(
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 3,
+                                    horizontal: 10,
+                                    vertical: 5,
                                   ),
                                   decoration: BoxDecoration(
                                     color: MewmerTheme.cardHover,
-                                    borderRadius: BorderRadius.circular(8),
+                                    borderRadius: BorderRadius.circular(10),
                                     border: Border.all(color: MewmerTheme.border),
                                   ),
                                   child: RichText(
@@ -623,14 +623,14 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
                                           text: '${stickers.length}',
                                           style: const TextStyle(
                                             fontWeight: FontWeight.bold,
-                                            fontSize: 12,
+                                            fontSize: 13,
                                             color: MewmerTheme.textPrimary,
                                           ),
                                         ),
                                         const TextSpan(
                                           text: ' / 30 stickers',
                                           style: TextStyle(
-                                            fontSize: 11,
+                                            fontSize: 12,
                                             color: MewmerTheme.textMuted,
                                           ),
                                         ),
