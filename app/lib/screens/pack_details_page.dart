@@ -200,7 +200,9 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
     final cloud = context.read<CloudProvider>();
     final nameController = TextEditingController(text: pack.name);
     final tagsController = TextEditingController(text: pack.tags.join(', '));
-    String? selectedStickerForTray;
+    String? selectedStickerForTray =
+        pack.stickerPaths.isNotEmpty ? pack.stickerPaths.first : null;
+    bool trayChanged = false;
     bool isSaving = false;
 
     await showDialog(
@@ -211,6 +213,9 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
         child: StatefulBuilder(
           builder: (context, setDialogState) => AlertDialog(
             insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+            titlePadding: const EdgeInsets.fromLTRB(24, 22, 24, 12),
+            contentPadding: const EdgeInsets.fromLTRB(24, 4, 24, 16),
+            actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
             title: const Text(
               'Edit Pack',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
@@ -225,21 +230,31 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
                     TextField(
                       controller: nameController,
                       enabled: !isSaving,
+                      style: const TextStyle(fontSize: 14),
                       decoration: const InputDecoration(
                         labelText: 'Pack Name',
                         hintText: 'Mewmer Cat',
-                        border: OutlineInputBorder(),
+                        isDense: true,
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 12,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 14),
                     TextField(
                       controller: tagsController,
                       enabled: !isSaving,
+                      style: const TextStyle(fontSize: 14),
                       decoration: const InputDecoration(
                         labelText: 'Tags',
                         hintText: 'meme, funny, cats',
                         helperText: 'Separate with commas (max 5)',
-                        border: OutlineInputBorder(),
+                        isDense: true,
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 12,
+                        ),
                       ),
                     ),
                     if (pack.stickerPaths.isNotEmpty) ...[
@@ -261,49 +276,58 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
                         ),
                       ),
                       const SizedBox(height: 10),
-                      SizedBox(
-                        height: 64,
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: pack.stickerPaths.length,
-                          separatorBuilder: (_, _) => const SizedBox(width: 8),
-                          itemBuilder: (context, idx) {
-                            final path = pack.stickerPaths[idx];
-                            final isSelected = selectedStickerForTray == path;
-                            return GestureDetector(
-                              onTap: isSaving
-                                  ? null
-                                  : () => setDialogState(
-                                        () => selectedStickerForTray = path,
-                                      ),
-                              child: Container(
-                                width: 64,
-                                height: 64,
-                                padding: const EdgeInsets.all(4),
-                                decoration: BoxDecoration(
-                                  color: MewmerTheme.cardHover,
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: isSelected
-                                        ? MewmerTheme.brandViolet
-                                        : MewmerTheme.border,
-                                    width: isSelected ? 2 : 1,
+                      ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxHeight: pack.stickerPaths.length > 4 ? 148 : 72,
+                        ),
+                        child: Scrollbar(
+                          child: GridView.builder(
+                            shrinkWrap: true,
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 4,
+                              crossAxisSpacing: 8,
+                              mainAxisSpacing: 8,
+                              childAspectRatio: 1,
+                            ),
+                            itemCount: pack.stickerPaths.length,
+                            itemBuilder: (context, idx) {
+                              final path = pack.stickerPaths[idx];
+                              final isSelected = selectedStickerForTray == path;
+                              return GestureDetector(
+                                onTap: isSaving
+                                    ? null
+                                    : () => setDialogState(() {
+                                          selectedStickerForTray = path;
+                                          trayChanged = true;
+                                        }),
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: BoxDecoration(
+                                    color: MewmerTheme.cardHover,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: isSelected
+                                          ? MewmerTheme.brandViolet
+                                          : MewmerTheme.border,
+                                      width: isSelected ? 2 : 1,
+                                    ),
                                   ),
-                                ),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: Image.file(
-                                    File(path),
-                                    fit: BoxFit.contain,
-                                    errorBuilder: (_, _, _) => const Icon(
-                                      Icons.broken_image_outlined,
-                                      color: MewmerTheme.muted,
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Image.file(
+                                      File(path),
+                                      fit: BoxFit.contain,
+                                      errorBuilder: (_, _, _) => const Icon(
+                                        Icons.broken_image_outlined,
+                                        color: MewmerTheme.muted,
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                            );
-                          },
+                              );
+                            },
+                          ),
                         ),
                       ),
                     ],
@@ -328,7 +352,8 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
                         setDialogState(() => isSaving = true);
                         try {
                           String? trayPath;
-                          if (selectedStickerForTray != null) {
+                          if (selectedStickerForTray != null &&
+                              (trayChanged || pack.trayImagePath == null)) {
                             final built = await cloud.buildTrayIconFromSticker(
                               File(selectedStickerForTray!),
                             );
