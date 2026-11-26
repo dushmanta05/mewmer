@@ -583,59 +583,32 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
                           children: [
                             Row(
                               children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 5,
+                                Text(
+                                  '${stickers.length} of 30 stickers',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                    color: MewmerTheme.textPrimary,
                                   ),
-                                  decoration: BoxDecoration(
-                                    color: pack.isActuallyAnimated
-                                        ? MewmerTheme.brandViolet.withValues(alpha: 0.2)
-                                        : MewmerTheme.whatsappGreen.withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
+                                ),
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 6),
                                   child: Text(
-                                    pack.typeLabel,
+                                    '·',
                                     style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: pack.isActuallyAnimated
-                                          ? MewmerTheme.brandViolet
-                                          : MewmerTheme.whatsappGreen,
+                                      color: MewmerTheme.textMuted,
+                                      fontWeight: FontWeight.bold,
                                     ),
                                   ),
                                 ),
-                                const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 5,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: MewmerTheme.cardHover,
-                                    borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(color: MewmerTheme.border),
-                                  ),
-                                  child: RichText(
-                                    text: TextSpan(
-                                      children: [
-                                        TextSpan(
-                                          text: '${stickers.length}',
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 13,
-                                            color: MewmerTheme.textPrimary,
-                                          ),
-                                        ),
-                                        const TextSpan(
-                                          text: ' / 30 stickers',
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color: MewmerTheme.textMuted,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
+                                Text(
+                                  pack.typeLabel,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: pack.isActuallyAnimated
+                                        ? MewmerTheme.brandViolet
+                                        : MewmerTheme.whatsappGreen,
                                   ),
                                 ),
                               ],
