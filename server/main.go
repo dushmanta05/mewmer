@@ -83,6 +83,7 @@ func main() {
 		r.With(appMiddleware.RequireAuth).Get("/me/packs", h.ListMyPacks)
 		r.With(appMiddleware.RequireAuth).Post("/packs", h.CreatePack)
 		r.With(appMiddleware.RequireAuth).Get("/packs/{id}", h.GetPack)
+		r.With(appMiddleware.RequireAuth).Patch("/packs/{id}", h.UpdatePack)
 		r.With(appMiddleware.RequireAuth).Delete("/packs/{id}", h.DeletePack)
 		r.With(appMiddleware.RequireAuth).Post("/packs/{id}/stickers", h.CreateSticker)
 		r.With(appMiddleware.RequireAuth).Delete("/stickers/{id}", h.DeleteSticker)

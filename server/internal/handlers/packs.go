@@ -131,6 +131,68 @@ func (h *Handler) GetPack(w http.ResponseWriter, r *http.Request) {
 	jsonResponse(w, http.StatusOK, pack)
 }
 
+func (h *Handler) UpdatePack(w http.ResponseWriter, r *http.Request) {
+	packID := chi.URLParam(r, "id")
+	user := middleware.User(r.Context())
+
+	existing, err := h.db.GetPackByIDWithStickers(r.Context(), packID, user.ID)
+	if err != nil {
+		errorResponse(w, http.StatusNotFound, "pack not found")
+		return
+	}
+
+	if err := r.ParseMultipartForm(maxTraySize); err != nil {
+		errorResponse(w, http.StatusBadRequest, "tray icon too large")
+		return
+	}
+
+	if title := strings.TrimSpace(r.FormValue("title")); title != "" {
+		existing.Title = title
+	}
+	if r.Form.Has("tags") {
+		existing.Tags = parseTags(r.FormValue("tags"))
+	}
+
+	oldTrayKey := existing.TrayImageKey
+	file, _, err := r.FormFile("tray")
+	if err == nil {
+		defer file.Close()
+		info, err := media.ValidateTray(file, maxTraySize)
+		if err != nil {
+			errorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		if seeker, ok := file.(io.Seeker); ok {
+			if _, err := seeker.Seek(0, io.SeekStart); err != nil {
+				errorResponse(w, http.StatusInternalServerError, "failed to rewind tray icon")
+				return
+			}
+		}
+		newKey := fmt.Sprintf("packs/%s/tray%s", packID, extensionForMime(info.MIME))
+		if err := h.store.Put(r.Context(), h.cfg.R2PrivateBucket, newKey, file, info.Size, info.MIME); err != nil {
+			errorResponse(w, http.StatusInternalServerError, "failed to store tray icon")
+			return
+		}
+		existing.TrayImageKey = newKey
+	}
+
+	if err := h.db.UpdatePack(r.Context(), existing); err != nil {
+		errorResponse(w, http.StatusInternalServerError, "failed to update pack")
+		return
+	}
+
+	if existing.TrayImageKey != oldTrayKey && oldTrayKey != "" {
+		_ = h.store.Delete(r.Context(), h.cfg.R2PrivateBucket, oldTrayKey)
+	}
+
+	existing.TrayImageKey = h.signedPrivateURL(r.Context(), existing.TrayImageKey)
+	for i := range existing.Stickers {
+		existing.Stickers[i].ImageKey = h.signedPrivateURL(r.Context(), existing.Stickers[i].ImageKey)
+	}
+
+	jsonResponse(w, http.StatusOK, existing)
+}
+
 func (h *Handler) DeletePack(w http.ResponseWriter, r *http.Request) {
 	packID := chi.URLParam(r, "id")
 	user := middleware.User(r.Context())

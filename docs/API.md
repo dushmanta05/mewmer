@@ -140,6 +140,18 @@ curl http://localhost:3030/api/v1/packs/<pack-id> \
   -H "Authorization: Bearer <token>"
 ```
 
+### Update a pack
+
+```bash
+curl -X PATCH http://localhost:3030/api/v1/packs/<pack-id> \
+  -H "Authorization: Bearer <token>" \
+  -F "title=Updated Pack" \
+  -F "tags=meme,cats" \
+  -F "tray=@tray-96x96.png"
+```
+
+All fields (`title`, `tags`, `tray`) are optional; only supplied fields are updated.
+
 ### Add a sticker to a pack
 
 ```bash

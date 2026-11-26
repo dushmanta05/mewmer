@@ -183,6 +183,24 @@ func (db *DB) CreateSticker(ctx context.Context, s *models.Sticker) error {
 	return tx.Commit(ctx)
 }
 
+func (db *DB) UpdatePack(ctx context.Context, p *models.StickerPack) error {
+	if db.Pool == nil {
+		return fmt.Errorf("database not connected")
+	}
+
+	query := `
+		UPDATE sticker_packs
+		SET title = $1, tray_image_key = $2, tags = $3, updated_at = NOW()
+		WHERE id = $4 AND user_id = $5
+		RETURNING updated_at
+	`
+	return db.Pool.QueryRow(
+		ctx,
+		query,
+		p.Title, p.TrayImageKey, p.Tags, p.ID, p.UserID,
+	).Scan(&p.UpdatedAt)
+}
+
 func (db *DB) DeletePack(ctx context.Context, packID, userID string) error {
 	if db.Pool == nil {
 		return fmt.Errorf("database not connected")
