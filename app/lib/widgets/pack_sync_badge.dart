@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../models/cloud_provider.dart';
 import '../models/sticker_provider.dart';
 import '../theme.dart';
+import 'mewmer_toast.dart';
 
 class PackSyncBadge extends StatelessWidget {
   final StickerPack pack;
@@ -20,20 +21,10 @@ class PackSyncBadge extends StatelessWidget {
     try {
       await cloud.syncLocalPack(local, pack);
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Synced "${pack.name}" to cloud'),
-          backgroundColor: MewmerTheme.whatsappGreen,
-        ),
-      );
+      MewmerToast.success(context, 'Synced "${pack.name}" to cloud');
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Sync failed: $e'),
-          backgroundColor: MewmerTheme.rose,
-        ),
-      );
+      MewmerToast.error(context, 'Sync failed: $e');
     }
   }
 

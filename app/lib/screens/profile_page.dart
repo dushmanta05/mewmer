@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../models/cloud_provider.dart';
 import '../models/sticker_provider.dart';
 import '../theme.dart';
+import '../widgets/mewmer_toast.dart';
 import 'login_page.dart';
 
 class ProfilePage extends StatelessWidget {
@@ -164,19 +165,15 @@ class ProfilePage extends StatelessWidget {
                                   try {
                                     await cloud.syncAll(stickerProvider);
                                     if (!context.mounted) return;
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('All packs synced with cloud'),
-                                        backgroundColor: MewmerTheme.whatsappGreen,
-                                      ),
+                                    MewmerToast.success(
+                                      context,
+                                      'All packs synced with cloud',
                                     );
                                   } catch (e) {
                                     if (!context.mounted) return;
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text('Sync failed: $e'),
-                                        backgroundColor: MewmerTheme.rose,
-                                      ),
+                                    MewmerToast.error(
+                                      context,
+                                      'Sync failed: $e',
                                     );
                                   }
                                 },
@@ -201,9 +198,7 @@ class ProfilePage extends StatelessWidget {
                           onPressed: () async {
                             await cloud.logout();
                             if (!context.mounted) return;
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Signed out')),
-                            );
+                            MewmerToast.info(context, 'Signed out');
                           },
                           icon: const Icon(
                             Icons.logout_rounded,

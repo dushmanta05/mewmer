@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../models/cloud_provider.dart';
 import '../models/sticker_provider.dart';
 import '../theme.dart';
+import '../widgets/mewmer_toast.dart';
 import 'pack_details_page.dart';
 
 class AllPacksPage extends StatefulWidget {
@@ -91,20 +92,13 @@ class _AllPacksPageState extends State<AllPacksPage> {
                         try {
                           await cloud.syncAll(stickerProvider);
                           if (!context.mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('All packs synced with cloud'),
-                              backgroundColor: MewmerTheme.whatsappGreen,
-                            ),
+                          MewmerToast.success(
+                            context,
+                            'All packs synced with cloud',
                           );
                         } catch (e) {
                           if (!context.mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Sync failed: $e'),
-                              backgroundColor: MewmerTheme.rose,
-                            ),
-                          );
+                          MewmerToast.error(context, 'Sync failed: $e');
                         }
                       },
                 icon: cloud.isSyncing

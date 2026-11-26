@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../models/cloud_models.dart';
 import '../models/cloud_provider.dart';
 import '../theme.dart';
+import '../widgets/mewmer_toast.dart';
 import 'cloud_pack_details_page.dart';
 import 'login_page.dart';
 
@@ -70,12 +71,7 @@ class _CloudPacksPageState extends State<CloudPacksPage> {
           );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Sync failed: $e'),
-          backgroundColor: MewmerTheme.rose,
-        ),
-      );
+      MewmerToast.error(context, 'Sync failed: $e');
     }
   }
 
@@ -92,9 +88,7 @@ class _CloudPacksPageState extends State<CloudPacksPage> {
   Future<void> _logout() async {
     await context.read<CloudProvider>().logout();
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Signed out of cloud')),
-    );
+    MewmerToast.info(context, 'Signed out of cloud');
   }
 
   Widget _buildTrayThumbnail(CloudProvider cloud, CloudPack pack) {

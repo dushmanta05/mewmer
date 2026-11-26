@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../models/cloud_provider.dart';
 import '../screens/login_page.dart';
 import '../theme.dart';
+import '../widgets/mewmer_toast.dart';
 
 Future<bool> showSaveToCloudFlow(
   BuildContext context, {
@@ -16,13 +17,9 @@ Future<bool> showSaveToCloudFlow(
     if (context.mounted) {
       final limitKb = isAnimated ? 500 : 100;
       final actualKb = (byteSize / 1024).toStringAsFixed(1);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Sticker is $actualKb KB, exceeding the $limitKb KB WhatsApp limit.',
-          ),
-          backgroundColor: MewmerTheme.rose,
-        ),
+      MewmerToast.error(
+        context,
+        'Sticker is $actualKb KB, exceeding the $limitKb KB WhatsApp limit.',
       );
     }
     return false;
@@ -111,15 +108,11 @@ class _SaveToCloudDialogState extends State<_SaveToCloudDialog> {
 
     final cloud = context.read<CloudProvider>();
     if (_createNew && _titleController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a cloud pack title')),
-      );
+      MewmerToast.warning(context, 'Please enter a cloud pack title');
       return;
     }
     if (!_createNew && _selectedPackId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a cloud pack')),
-      );
+      MewmerToast.warning(context, 'Please select a cloud pack');
       return;
     }
 
@@ -147,20 +140,10 @@ class _SaveToCloudDialogState extends State<_SaveToCloudDialog> {
 
       if (!mounted) return;
       Navigator.pop(context, true);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Sticker uploaded to cloud pack!'),
-          backgroundColor: MewmerTheme.whatsappGreen,
-        ),
-      );
+      MewmerToast.success(context, 'Sticker uploaded to cloud pack!');
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Cloud upload failed: $e'),
-          backgroundColor: MewmerTheme.rose,
-        ),
-      );
+      MewmerToast.error(context, 'Cloud upload failed: $e');
     } finally {
       if (mounted) {
         setState(() => _isUploading = false);

@@ -10,6 +10,7 @@ import 'package:image/image.dart' as img;
 import '../models/cloud_provider.dart';
 import '../models/sticker_provider.dart';
 import '../theme.dart';
+import '../widgets/mewmer_toast.dart';
 import '../widgets/pack_sync_badge.dart';
 import 'meme_editor_page.dart';
 
@@ -49,12 +50,7 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
         await cloud.downloadPackStickers(stickerProvider, pack);
       } catch (e) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to download stickers: $e'),
-            backgroundColor: MewmerTheme.rose,
-          ),
-        );
+        MewmerToast.error(context, 'Failed to download stickers: $e');
       }
     }
   }
@@ -63,13 +59,9 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
     if (_isExporting) return;
 
     if (pack.stickerPaths.length < 3) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Need ${3 - pack.stickerPaths.length} more stickers to add to WhatsApp (min 3)!',
-          ),
-          backgroundColor: MewmerTheme.amber,
-        ),
+      MewmerToast.warning(
+        context,
+        'Need ${3 - pack.stickerPaths.length} more stickers to add to WhatsApp (min 3)!',
       );
       return;
     }
@@ -127,17 +119,10 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
       await stickerPack.sendToWhatsApp();
 
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Pack added to WhatsApp!'),
-          backgroundColor: MewmerTheme.whatsappGreen,
-        ),
-      );
+      MewmerToast.success(context, 'Pack added to WhatsApp!');
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Export Error: $e')));
+      MewmerToast.error(context, 'Export Error: $e');
     } finally {
       if (mounted) {
         setState(() => _isExporting = false);
@@ -206,9 +191,7 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
       }
       _clearSelection();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Stickers removed from pack.')),
-      );
+      MewmerToast.info(context, 'Stickers removed from pack.');
     }
   }
 
@@ -369,11 +352,9 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
                               .toList();
                           if (parsedTags.length > 5) {
                             if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Maximum 5 tags allowed'),
-                                  backgroundColor: MewmerTheme.rose,
-                                ),
+                              MewmerToast.error(
+                                context,
+                                'Maximum 5 tags allowed',
                               );
                             }
                             return;
@@ -439,9 +420,7 @@ class _PackDetailsPageState extends State<PackDetailsPage> {
       await provider.deletePack(widget.packIdentifier);
       if (!mounted) return;
       Navigator.pop(context);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Sticker pack deleted.')));
+      MewmerToast.info(context, 'Sticker pack deleted.');
     }
   }
 

@@ -16,6 +16,7 @@ import 'profile_page.dart';
 import '../models/cloud_provider.dart';
 import '../models/sticker_provider.dart';
 import '../widgets/cat_branding.dart';
+import '../widgets/mewmer_toast.dart';
 import '../theme.dart';
 
 class HomePage extends StatefulWidget {
@@ -47,9 +48,7 @@ class _HomePageState extends State<HomePage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Picker Error: $e')));
+        MewmerToast.error(context, 'Picker Error: $e');
       }
     } finally {
       if (mounted) {
@@ -216,11 +215,9 @@ class _HomePageState extends State<HomePage> {
                     await provider.createPack(name, isAnimated: isAnimated);
                     if (!context.mounted) return;
                     Navigator.pop(dialogContext);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('${isAnimated ? "Animated" : "Static"} pack "$name" created!'),
-                        backgroundColor: MewmerTheme.whatsappGreen,
-                      ),
+                    MewmerToast.success(
+                      context,
+                      '${isAnimated ? "Animated" : "Static"} pack "$name" created!',
                     );
                   }
                 },
@@ -237,13 +234,9 @@ class _HomePageState extends State<HomePage> {
     if (_isExporting) return;
 
     if (pack.stickerPaths.length < 3) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Need ${3 - pack.stickerPaths.length} more stickers to create a pack (min 3)!',
-          ),
-          backgroundColor: MewmerTheme.amber,
-        ),
+      MewmerToast.warning(
+        context,
+        'Need ${3 - pack.stickerPaths.length} more stickers to create a pack (min 3)!',
       );
       return;
     }
@@ -293,17 +286,10 @@ class _HomePageState extends State<HomePage> {
       await stickerPack.sendToWhatsApp();
 
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Pack added to WhatsApp!'),
-          backgroundColor: MewmerTheme.whatsappGreen,
-        ),
-      );
+      MewmerToast.success(context, 'Pack added to WhatsApp!');
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Export Error: $e')));
+      MewmerToast.error(context, 'Export Error: $e');
     } finally {
       if (mounted) {
         setState(() => _isExporting = false);

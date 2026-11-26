@@ -13,6 +13,7 @@ import '../models/text_item.dart';
 import '../models/sticker_provider.dart';
 import '../widgets/draggable_text.dart';
 import '../widgets/cat_branding.dart';
+import '../widgets/mewmer_toast.dart';
 import '../theme.dart';
 
 class MemeEditorPage extends StatefulWidget {
@@ -64,12 +65,9 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
     });
 
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Inserted ${ext.toUpperCase()} from keyboard!'),
-          backgroundColor: MewmerTheme.whatsappGreen,
-          duration: const Duration(seconds: 2),
-        ),
+      MewmerToast.success(
+        context,
+        'Inserted ${ext.toUpperCase()} from keyboard!',
       );
     }
   }
@@ -300,12 +298,7 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
 
   Future<void> _captureSticker() async {
     if (_currentImageFile == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please add an image or GIF first!'),
-          backgroundColor: MewmerTheme.amber,
-        ),
-      );
+      MewmerToast.warning(context, 'Please add an image or GIF first!');
       return;
     }
 
@@ -425,13 +418,9 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
           if (webpBytes.length >= 500 * 1024) {
             if (mounted) {
               final kb = (webpBytes.length / 1024).toStringAsFixed(0);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    'Animated sticker is $kb KB (max 500 KB). Pick a shorter or simpler GIF.',
-                  ),
-                  backgroundColor: MewmerTheme.rose,
-                ),
+              MewmerToast.error(
+                context,
+                'Animated sticker is $kb KB (max 500 KB). Pick a shorter or simpler GIF.',
               );
             }
             return;
@@ -482,13 +471,9 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
         if (webpBytes.length >= 100 * 1024) {
           if (mounted) {
             final kb = (webpBytes.length / 1024).toStringAsFixed(0);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  'Static sticker is $kb KB (max 100 KB). Simplify the image or captions.',
-                ),
-                backgroundColor: MewmerTheme.rose,
-              ),
+            MewmerToast.error(
+              context,
+              'Static sticker is $kb KB (max 100 KB). Simplify the image or captions.',
             );
           }
           return;
@@ -505,9 +490,7 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+        MewmerToast.error(context, 'Error: $e');
       }
     }
   }
@@ -657,16 +640,16 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
                   onPressed: () async {
                     final packName = textController.text.trim();
                     if (createNew && packName.isEmpty) {
-                      ScaffoldMessenger.of(dialogContext).showSnackBar(
-                        const SnackBar(
-                          content: Text('Please enter a pack name'),
-                        ),
+                      MewmerToast.warning(
+                        dialogContext,
+                        'Please enter a pack name',
                       );
                       return;
                     }
                     if (!createNew && selectedPackId == null) {
-                      ScaffoldMessenger.of(dialogContext).showSnackBar(
-                        const SnackBar(content: Text('Please select a pack')),
+                      MewmerToast.warning(
+                        dialogContext,
+                        'Please select a pack',
                       );
                       return;
                     }
@@ -697,19 +680,18 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
 
                       if (mounted) {
                         Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Sticker saved and added to pack!'),
-                            backgroundColor: Colors.green,
-                          ),
+                        MewmerToast.success(
+                          context,
+                          'Sticker saved and added to pack!',
                         );
                         Navigator.pop(context);
                       }
                     } catch (e) {
                       if (mounted) {
                         Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Failed to save sticker: $e')),
+                        MewmerToast.error(
+                          context,
+                          'Failed to save sticker: $e',
                         );
                       }
                     }

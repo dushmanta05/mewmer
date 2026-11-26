@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../models/cloud_provider.dart';
 import '../theme.dart';
 import '../widgets/cat_branding.dart';
+import '../widgets/mewmer_toast.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -41,11 +42,9 @@ class _LoginPageState extends State<LoginPage> {
       Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(cloudProvider.errorMessage ?? 'Login failed: $e'),
-          backgroundColor: MewmerTheme.rose,
-        ),
+      MewmerToast.error(
+        context,
+        cloudProvider.errorMessage ?? 'Login failed: $e',
       );
     } finally {
       if (mounted) {

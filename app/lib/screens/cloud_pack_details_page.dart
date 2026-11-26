@@ -9,6 +9,7 @@ import 'package:whatsapp_stickers_injector/whatsapp_stickers.dart';
 import '../models/cloud_models.dart';
 import '../models/cloud_provider.dart';
 import '../theme.dart';
+import '../widgets/mewmer_toast.dart';
 
 class CloudPackDetailsPage extends StatefulWidget {
   final String packId;
@@ -35,12 +36,7 @@ class _CloudPackDetailsPageState extends State<CloudPackDetailsPage> {
       await context.read<CloudProvider>().fetchPackDetails(widget.packId);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to load pack: $e'),
-          backgroundColor: MewmerTheme.rose,
-        ),
-      );
+      MewmerToast.error(context, 'Failed to load pack: $e');
     }
   }
 
@@ -48,13 +44,9 @@ class _CloudPackDetailsPageState extends State<CloudPackDetailsPage> {
     if (_isExporting) return;
 
     if (pack.stickers.length < 3) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Need ${3 - pack.stickers.length} more stickers to add to WhatsApp (min 3)!',
-          ),
-          backgroundColor: MewmerTheme.amber,
-        ),
+      MewmerToast.warning(
+        context,
+        'Need ${3 - pack.stickers.length} more stickers to add to WhatsApp (min 3)!',
       );
       return;
     }
@@ -118,20 +110,10 @@ class _CloudPackDetailsPageState extends State<CloudPackDetailsPage> {
       await whatsappPack.sendToWhatsApp();
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Pack added to WhatsApp!'),
-          backgroundColor: MewmerTheme.whatsappGreen,
-        ),
-      );
+      MewmerToast.success(context, 'Pack added to WhatsApp!');
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Export Error: $e'),
-          backgroundColor: MewmerTheme.rose,
-        ),
-      );
+      MewmerToast.error(context, 'Export Error: $e');
     } finally {
       if (mounted) {
         setState(() => _isExporting = false);
@@ -162,17 +144,10 @@ class _CloudPackDetailsPageState extends State<CloudPackDetailsPage> {
     try {
       await cloud.deleteSticker(widget.packId, sticker.id);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Sticker deleted from cloud')),
-      );
+      MewmerToast.info(context, 'Sticker deleted from cloud');
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Delete failed: $e'),
-          backgroundColor: MewmerTheme.rose,
-        ),
-      );
+      MewmerToast.error(context, 'Delete failed: $e');
     }
   }
 
@@ -200,17 +175,10 @@ class _CloudPackDetailsPageState extends State<CloudPackDetailsPage> {
       await cloud.deletePack(widget.packId);
       if (!mounted) return;
       Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Cloud pack deleted')),
-      );
+      MewmerToast.info(context, 'Cloud pack deleted');
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Delete failed: $e'),
-          backgroundColor: MewmerTheme.rose,
-        ),
-      );
+      MewmerToast.error(context, 'Delete failed: $e');
     }
   }
 
