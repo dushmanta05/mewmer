@@ -366,7 +366,7 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
             return;
           }
 
-          final List<Uint8List> frameWebPs = [];
+          final List<Uint8List> processedPngFrames = [];
           final List<int> frameDurations = [];
 
           int step = 1;
@@ -386,33 +386,55 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
             }
 
             final img.Image processedFrame = _processFrame(frame, textOverlay);
-
-            final Uint8List pngBytes = Uint8List.fromList(
-              img.encodePng(processedFrame),
+            processedPngFrames.add(
+              Uint8List.fromList(img.encodePng(processedFrame)),
             );
-            final Uint8List webpFrameBytes =
-                await FlutterImageCompress.compressWithList(
-                  pngBytes,
-                  format: CompressFormat.webp,
-                  quality: 30,
-                );
-
-            frameWebPs.add(webpFrameBytes);
             frameDurations.add(duration * step);
             accumulatedDuration += duration * step;
 
-            if (frameWebPs.length >= 20) {
+            if (processedPngFrames.length >= 20) {
               break;
             }
           }
 
-          webpBytes = WebPMuxer.assembleAnimatedWebP(
-            frameWebPs,
-            frameDurations,
-          );
+          webpBytes = Uint8List(0);
+          for (final quality in [45, 30, 18, 10]) {
+            final List<Uint8List> frameWebPs = [];
+            for (final pngBytes in processedPngFrames) {
+              final Uint8List webpFrameBytes =
+                  await FlutterImageCompress.compressWithList(
+                    pngBytes,
+                    format: CompressFormat.webp,
+                    quality: quality,
+                  );
+              frameWebPs.add(webpFrameBytes);
+            }
+            webpBytes = WebPMuxer.assembleAnimatedWebP(
+              frameWebPs,
+              frameDurations,
+            );
+            if (webpBytes.length < 500 * 1024) {
+              break;
+            }
+          }
 
           if (mounted) {
             Navigator.pop(context);
+          }
+
+          if (webpBytes.length >= 500 * 1024) {
+            if (mounted) {
+              final kb = (webpBytes.length / 1024).toStringAsFixed(0);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    'Animated sticker is $kb KB (max 500 KB). Pick a shorter or simpler GIF.',
+                  ),
+                  backgroundColor: MewmerTheme.rose,
+                ),
+              );
+            }
+            return;
           }
         } catch (e) {
           if (mounted) {
@@ -445,11 +467,32 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
           img.encodePng(resized),
         );
 
-        webpBytes = await FlutterImageCompress.compressWithList(
-          rawResizedBytes,
-          format: CompressFormat.webp,
-          quality: 75,
-        );
+        webpBytes = Uint8List(0);
+        for (final quality in [75, 55, 35, 20]) {
+          webpBytes = await FlutterImageCompress.compressWithList(
+            rawResizedBytes,
+            format: CompressFormat.webp,
+            quality: quality,
+          );
+          if (webpBytes.length < 100 * 1024) {
+            break;
+          }
+        }
+
+        if (webpBytes.length >= 100 * 1024) {
+          if (mounted) {
+            final kb = (webpBytes.length / 1024).toStringAsFixed(0);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Static sticker is $kb KB (max 100 KB). Simplify the image or captions.',
+                ),
+                backgroundColor: MewmerTheme.rose,
+              ),
+            );
+          }
+          return;
+        }
       }
 
       final tempDir = await getTemporaryDirectory();
