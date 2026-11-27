@@ -204,9 +204,10 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
       text: 'mewmer.com',
       position: const Offset(100, 100),
       color: Colors.white,
-      fontStyle: _fonts[0],
-      isMemeStyle: true,
-      useCaps: true,
+      fontStyle: _fonts[2],
+      fontSize: 30.0,
+      isMemeStyle: false,
+      useCaps: false,
     );
     setState(() {
       _textItems.add(newItem);
