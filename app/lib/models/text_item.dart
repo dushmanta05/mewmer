@@ -14,6 +14,7 @@ class TextItem {
   Color outlineColor;
   bool useCaps;
   bool hasShadow;
+  double opacity;
 
   TextItem({
     required this.text,
@@ -28,5 +29,6 @@ class TextItem {
     this.outlineColor = Colors.black,
     this.useCaps = true,
     this.hasShadow = false,
+    this.opacity = 1.0,
   });
 }

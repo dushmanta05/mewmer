@@ -165,7 +165,10 @@ class _DraggableTextState extends State<DraggableText> {
                               },
                             ),
                           )
-                        : _buildTextWidget(),
+                        : Opacity(
+                            opacity: widget.item.opacity.clamp(0.0, 1.0),
+                            child: _buildTextWidget(),
+                          ),
                   ),
                 ),
               ),

@@ -184,11 +184,13 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
 
   final List<Color> _colors = [
     Colors.white,
+    const Color(0xFF9CA3AF),
     Colors.black,
     MewmerTheme.brandViolet,
     MewmerTheme.whatsappGreen,
     MewmerTheme.amber,
     MewmerTheme.rose,
+    const Color(0xFF38BDF8),
   ];
 
   final List<TextStyle> _fonts = [
@@ -1175,6 +1177,8 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: _colors.map((color) {
+                final isSelected =
+                    _selectedItem!.color.toARGB32() == color.toARGB32();
                 return GestureDetector(
                   onTap: () => setState(() => _selectedItem!.color = color),
                   child: Container(
@@ -1182,22 +1186,47 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
                     width: 30,
                     height: 30,
                     decoration: BoxDecoration(
-                      color: color,
+                      color: color.withValues(alpha: _selectedItem!.opacity),
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: _selectedItem!.color == color
+                        color: isSelected
                             ? MewmerTheme.brandViolet
                             : MewmerTheme.border,
-                        width: _selectedItem!.color == color ? 2.5 : 1.5,
+                        width: isSelected ? 2.5 : 1.5,
                       ),
-                      boxShadow: [
-                        if (color.a < 1)
-                          const BoxShadow(color: Colors.white24, blurRadius: 2),
-                      ],
                     ),
                   ),
                 );
               }).toList(),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: Row(
+              children: [
+                const Text(
+                  'Opacity: ',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                ),
+                Expanded(
+                  child: Slider(
+                    value: _selectedItem!.opacity,
+                    min: 0.2,
+                    max: 1.0,
+                    divisions: 16,
+                    onChanged: (val) {
+                      setState(() {
+                        _selectedItem!.opacity = val;
+                      });
+                    },
+                  ),
+                ),
+                Text(
+                  '${(_selectedItem!.opacity * 100).round()}%',
+                  style: const TextStyle(fontSize: 12),
+                ),
+              ],
             ),
           ),
         ],
