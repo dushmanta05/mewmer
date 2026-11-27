@@ -773,9 +773,9 @@ class _MemeEditorPageState extends State<MemeEditorPage> {
                         overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
                       ),
                       child: Slider(
-                        value: _imageScale,
+                        value: _imageScale.clamp(0.4, 4.0),
                         min: 0.4,
-                        max: 3.5,
+                        max: 4.0,
                         activeColor: MewmerTheme.brandViolet,
                         inactiveColor: MewmerTheme.cardHover,
                         onChanged: (val) {
